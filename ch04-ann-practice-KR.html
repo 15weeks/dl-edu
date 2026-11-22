@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 4장 · ANN - II</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="4" data-base="ch04-ann-practice">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 4장</p>
+  <h1>ANN - II</h1>
+  <p class="topic">회귀, 분류, 깊이와 너비</p>
+  <p class="lead">3장의 network를 실제 문제에 쓴다: 숫자 맞히기(회귀), 두 무리 나누기, 세 종류 꽃 나누기. 그리고 층을 몇 개, neuron을 몇 개 쓸지 실험으로 본다.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: 회귀, 분류와 learning rate, 비선형이 필요한 이유, 여러 class, 깊이와 너비" style="font-family: var(--sans);">
+      <defs><marker id="m4-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 90L108 48" stroke="var(--sig)" stroke-width="2"/><g fill="var(--miss)"><circle cx="38" cy="80" r="3.2"/><circle cx="50" cy="82" r="3.2"/><circle cx="62" cy="68" r="3.2"/><circle cx="76" cy="66" r="3.2"/><circle cx="88" cy="52" r="3.2"/><circle cx="100" cy="56" r="3.2"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① 회귀</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">숫자 맞히기 · 1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)"><circle cx="36" cy="60" r="3.5"/><circle cx="46" cy="76" r="3.5"/><circle cx="32" cy="82" r="3.5"/><circle cx="50" cy="56" r="3.5"/></g><g fill="var(--miss)"><rect x="84" y="56" width="7" height="7"/><rect x="94" y="72" width="7" height="7"/><rect x="100" y="54" width="7" height="7"/><rect x="86" y="80" width="7" height="7"/></g><path d="M68 46V94" stroke="var(--ink)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② 분류, η</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">2~3절</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g stroke="var(--sig)" stroke-width="1.4" fill="none"><path d="M26 50L56 50M26 66L56 66M26 82L56 82"/><path d="M80 50L96 66L112 50M80 66L96 82L112 66M80 82L96 92L112 82"/></g><path d="M60 66H74" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m4-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ 왜 비선형?</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">activation · 4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 46H62V94H26Z" fill="var(--sigwash)"/><path d="M62 46H110V70H62Z" fill="var(--wash)"/><path d="M62 70H110V94H62Z" fill="var(--okwash)"/><path d="M62 46V94M62 70H110" stroke="var(--ink)" stroke-width="1.6"/><circle cx="44" cy="70" r="4" fill="var(--sig)"/><rect x="82" y="54" width="7" height="7" fill="var(--miss)"/><path d="M86 76L91 85H81Z" fill="var(--ok)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ 여러 class</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">iris, softmax · 5절</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g fill="var(--surface)" stroke="var(--ink)"><circle cx="24" cy="70" r="4"/><circle cx="44" cy="48" r="4"/><circle cx="44" cy="59" r="4"/><circle cx="44" cy="70" r="4"/><circle cx="44" cy="81" r="4"/><circle cx="44" cy="92" r="4"/><circle cx="64" cy="70" r="4"/><circle cx="78" cy="70" r="4"/><circle cx="90" cy="60" r="4"/><circle cx="90" cy="80" r="4"/><circle cx="102" cy="60" r="4"/><circle cx="102" cy="80" r="4"/><circle cx="114" cy="70" r="4"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ 넓게 vs 깊게</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">parameter 수 · 6절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m4-arrow)"/><path d="M304 85H318" marker-end="url(#m4-arrow)"/><path d="M456 85H470" marker-end="url(#m4-arrow)"/><path d="M608 85H622" marker-end="url(#m4-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">PyTorch: Sequential과 class, 같은 model 두 가지 쓰기</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">7절</text></a>
+      <a href="#s8"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">학습한 model을 이해할 수 있나?</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">weight 들여다보기 · 8절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="회귀"><span class="no">1</span>ANN으로 회귀: 숫자 맞히기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>class가 아니라 숫자(키, 가격)를 예측하려면? loss가 작으면 좋은 model인가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>회귀</dt><dd><b>regression</b>. 연속된 숫자를 예측하는 문제.</dd>
+    <dt>MSE</dt><dd><b>mean squared error</b>. (ŷ − y)²의 평균. 회귀의 loss.</dd>
+    <dt>r</dt><dd><b>correlation</b> (상관계수). ŷ와 y가 함께 움직이는 정도, −1~1.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Co{\hat y} = \Cb{w}\,x + \Cv{b}, \qquad \text{MSE} = \frac1N\sum_i (\Co{\hat y_i} - y_i)^2, \qquad r = \text{corr}(\Co{\hat y},\, y)"></div>
+  <ul class="legend"><li>출력층에 activation이 없다 (linear): 어떤 숫자든 낼 수 있게</li><li><b>MSE</b> 크기의 오차</li><li><b>r</b> 모양이 맞는 정도</li></ul>
+  <div class="calc">
+    <p class="h">예제: 같은 x, 같은 잡음(0.5), 기울기만 m = 1과 m = 0</p>
+    <div class="eq" data-tex="m = 1:\ \text{MSE} = 0.247,\ r = 0.88 \qquad\qquad m = 0:\ \text{MSE} = 0.247,\ r = 0.27"></div>
+    <div class="mean"><b>→ 뜻.</b> MSE는 같은데 m = 0이면 x로 y를 거의 설명하지 못한다. loss 하나만 보지 말고 r(또는 그림)도 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li><b>학습</b>: 파란 직선이 점선(진짜 기울기)으로 간다.</li>
+        <li>m = 0으로 놓고 학습: MSE는 비슷한데 r이 작다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>진짜 기울기 m <input type="range" id="i1m" min="-2" max="2" step="0.1" value="1"><output id="o1m"></output></label>
+      <label>잡음 <input type="range" id="i1s" min="0.1" max="2" step="0.1" value="0.5"><output id="o1s"></output></label>
+      <button type="button" id="b1run">학습</button>
+      <button type="button" id="b1reset">처음으로</button>
+    </div>
+    <canvas id="cv1" aria-label="점 60개와 학습하는 직선, epoch마다 MSE"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 회귀 = 출력에 activation 없이 숫자를 내고 MSE로 학습. loss가 작아도 r로 "설명하는가"를 함께 본다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="2 class 분류"><span class="no">2</span>두 무리 분류 (qwerties)</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>두 무리가 가까워질수록 정확도는 어떻게 되나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>qwerties</dt><dd>Udemy 강의에서 쓰는 연습 data 이름. 중심이 다른 두 점 무리.</dd>
+    <dt>정확도</dt><dd><b>accuracy</b>. 맞힌 수 ÷ 전체.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{class} = \begin{cases}1 & \sigma(z) > 0.5\\ 0 & \text{아니면}\end{cases}, \qquad \text{정확도} = \frac{\text{맞힌 수}}{\text{전체}}"></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>d를 줄인다: 두 무리가 겹치고 오른쪽 곡선의 주황 점이 내려간다. slider를 움직일 때마다 2-8-1 network를 다시 학습한다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>거리 d <input type="range" id="i2d" min="0.5" max="6" step="0.5" value="4"><output id="o2d"></output></label>
+    </div>
+    <canvas id="cv2" aria-label="두 무리와 학습한 경계, 거리에 따른 정확도"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> data가 겹치면 어떤 network도 100%를 못 한다. 정확도의 한계는 data가 정한다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="learning rate 비교"><span class="no">3</span>learning rate 비교 실험</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>같은 network를 learning rate만 바꿔 학습하면? 한 번만 돌려 보고 판단해도 되나?</p></div>
+  <p class="say">2절의 data(d = 4)로 2-16-1 network(ReLU)를 1000 epoch 학습. learning rate 28개 × seed 5개를 PyTorch로 미리 돌렸다. 회색 점 = seed 하나, 파란 선 = 평균.</p>
+  <div class="calc">
+    <p class="h">결과</p>
+    <div class="eq" data-tex="\Co{\eta} = 0.001:\ 65\% \qquad \Co{\eta} = 0.01:\ 95\% \qquad \Co{\eta} = 0.1 \sim 2:\ 98\% \qquad \Co{\eta} = 3:\ 96\%"></div>
+    <div class="mean"><b>→ 뜻.</b> 너무 작으면 1000 epoch 안에 다 배우지 못한다. 넓은 범위에서 잘 되고, 아주 크면 다시 조금 나빠진다. seed마다 결과가 달라서 실험은 여러 번 돌려 평균을 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>learning rate <input type="range" id="i3lr" min="0" max="27" step="1" value="14"><output id="o3lr"></output></label>
+    </div>
+    <canvas id="cv3" aria-label="learning rate에 따른 정확도와, 고른 learning rate의 loss 곡선"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> learning rate는 넓은 범위를 log 눈금으로 훑고, seed를 여러 번 돌려 평균으로 고른다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="왜 비선형인가"><span class="no">4</span>층을 쌓으려면 비선형이 필요하다</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>activation 없이 층만 여러 개 쌓으면 더 똑똑해지나?</p></div>
+  <div class="eq" data-tex="\Cb{W_2}\big(\Cg{W_1}\mathbf x + \mathbf b_1\big) + \mathbf b_2 \;=\; \underbrace{(\Cb{W_2}\Cg{W_1})}_{\Co{W}}\,\mathbf x + \underbrace{(\Cb{W_2}\mathbf b_1 + \mathbf b_2)}_{\Co{\mathbf b}}"></div>
+  <p class="say">말로: 선형 층 두 개는 행렬 하나(W = W₂W₁)와 같다. 열 개를 쌓아도 하나다. 층 사이의 activation이 이것을 막는다.</p>
+  <div class="calc">
+    <p class="h">예제</p>
+    <div class="eq" data-tex="\Cb{\begin{bmatrix}0.8 & -0.6\\0.6 & 0.8\end{bmatrix}}\Cg{\begin{bmatrix}1 & 0.5\\-0.5 & 1\end{bmatrix}} = \Co{\begin{bmatrix}1.1 & -0.2\\0.2 & 1.1\end{bmatrix}}, \qquad \mathbf x = (1, 2):\ \text{두 층} = \text{한 층} = (0.86,\ 2.62)"></div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b4play">곱해서 합치기</button></div>
+    <canvas id="cv4a" aria-label="W2 곱하기 W1을 칸마다 계산해 행렬 하나로 합치기"></canvas>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li>격자 한 장과 점 3개를 두 층에 통과시킨다. 왼쪽 = 입력, 가운데 = 1층 뒤, 오른쪽 = 2층 뒤.</li></ul>
+      <p class="tag">해 볼 것</p>
+      <ol class="try"><li>없음 → ReLU → tanh: activation이 없으면 격자가 끝까지 곧은 평행선이다. ReLU는 접고, tanh는 휜다.</li></ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g4act"><span>층 사이 activation</span><button type="button" data-v="none" aria-pressed="true">없음</button><button type="button" data-v="relu" aria-pressed="false">ReLU</button><button type="button" data-v="tanh" aria-pressed="false">tanh</button></div>
+    </div>
+    <canvas id="cv4b" aria-label="격자가 두 층을 지나며 변하는 모습"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> activation이 없으면 깊은 network도 직선 하나. 비선형 activation이 공간을 접고 휘어야 층을 쌓는 의미가 생긴다.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="3 class: iris"><span class="no">5</span>여러 class: iris 꽃 세 종류</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>class가 셋 이상이면 출력을 어떻게 만드나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>iris</dt><dd>붓꽃 150송이(세 종류 × 50)의 꽃잎·꽃받침 크기. 1936년부터 쓰인 유명한 연습 data.</dd>
+    <dt>softmax</dt><dd>점수 여러 개를 합이 1인 확률로 (1장 5절).</dd>
+    <dt>CE</dt><dd><b>cross-entropy</b>. −ln(정답 class의 확률).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{출력 3개 } z_1, z_2, z_3 \;\xrightarrow{\text{softmax}}\; \Co{p_k} = \frac{e^{z_k}}{e^{z_1} + e^{z_2} + e^{z_3}}, \qquad L = -\ln \Co{p_{\text{정답}}}"></div>
+  <ul class="legend"><li>출력 neuron 수 = class 수</li><li><b class="c-miss">p</b> class마다 확률, 합 = 1</li><li>답 = 가장 큰 p (argmax)</li></ul>
+  <div class="calc">
+    <p class="h">data 한눈에 (꽃잎 길이, 너비의 평균, cm)</p>
+    <div class="eq" data-tex="\Cb{\text{setosa}}\ (1.46,\ 0.25), \qquad \Co{\text{versicolor}}\ (4.26,\ 1.33), \qquad \Cg{\text{virginica}}\ (5.55,\ 2.03)"></div>
+    <div class="mean"><b>→ 뜻.</b> setosa는 멀리 떨어져 쉽고, versicolor와 virginica는 조금 겹친다. 2-8-3 network는 약 96%를 맞힌다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li><b>학습</b>: 세 색 영역이 자란다.</li>
+        <li>그림을 눌러 + 를 옮긴다: 경계 근처에서는 막대 두 개가 비슷해진다 (헷갈린다).</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b5run">학습</button>
+      <button type="button" id="b5reset">처음으로</button>
+    </div>
+    <canvas id="cv5" aria-label="iris 꽃잎 길이와 너비, 세 class 경계, 고른 점의 softmax 확률"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> class가 K개면 출력 K개 + softmax + cross-entropy. 답은 가장 큰 확률의 class.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="깊이, 너비, parameter"><span class="no">6</span>깊이와 너비, parameter 세기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>neuron을 넓게 늘릴까, 층을 깊게 쌓을까? parameter는 몇 개가 되나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>너비</dt><dd><b>breadth, width</b>. 한 층의 neuron 수.</dd>
+    <dt>깊이</dt><dd><b>depth</b>. 숨은 층의 수.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{한 층의 parameter} = \underbrace{n_{\text{in}} \times n_{\text{out}}}_{\Cb{W}} + \underbrace{n_{\text{out}}}_{\Cv{\mathbf b}}"></div>
+  <div class="calc">
+    <p class="h">예제: 2-16-16-3</p>
+    <div class="eq" data-tex="(2 \times 16 + 16) + (16 \times 16 + 16) + (16 \times 3 + 3) = 48 + 272 + 51 = 371"></div>
+    <div class="mean"><b>→ 뜻.</b> parameter는 너비의 제곱으로 는다 (16×16). 너비 32면 같은 깊이에서 약 4배.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>깊이 <input type="range" id="i6d" min="1" max="5" step="1" value="2"><output id="o6d"></output></label>
+      <label>너비 <input type="range" id="i6w" min="1" max="32" step="1" value="16"><output id="o6w"></output></label>
+      <div class="seg" id="g6o"><span>출력</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="10" aria-pressed="false">10</button></div>
+    </div>
+    <canvas id="cv6a" aria-label="층 크기와 층마다의 parameter 수"></canvas>
+    <div class="read" id="r6a" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li>spiral data를 깊이 1~5 × 너비 2~32 network로 학습(Adam, 1500 epoch, seed 3개 평균, PyTorch로 미리 계산). 칸 = 시험 정확도, 작은 숫자 = parameter 수. 칸을 누르면 위 계산기가 그 network로 바뀐다.</li></ul>
+    </div>
+    <canvas id="cv6b" aria-label="깊이와 너비에 따른 시험 정확도 격자"></canvas>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 너무 좁으면(너비 2~4) 깊어도 못 배운다. 충분히 넓으면 깊이가 조금 도움이 된다. "많을수록 좋다"가 아니라 실험으로 고른다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Sequential vs class"><span class="no">7</span>PyTorch: Sequential과 class</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>같은 model(2-16-16-3)을 PyTorch에서 쓰는 두 방법은?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch.nn as nn
+# 1) Sequential: 층을 차례로 나열
+net = nn.Sequential(
+    nn.Linear(2, 16), nn.ReLU(),
+    nn.Linear(16, 16), nn.ReLU(),
+    nn.Linear(16, 3))</code></pre></div>
+    <div class="codebox"><pre><code>import torch, torch.nn as nn
+# 2) class: forward를 직접 쓴다
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(2, 16)
+        self.fc2 = nn.Linear(16, 16)
+        self.out = nn.Linear(16, 3)
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.out(x)</code></pre></div>
+  </div>
+  <p class="say">두 model의 parameter 수: 371과 371 (같다). Sequential은 짧고, class는 중간에 분기·조건·여러 입력을 넣을 수 있다.</p>
+  <p class="key"><b>기억할 한 줄.</b> 일직선 model은 Sequential, 길이 갈라지거나 특별한 계산이 있으면 class.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="이해할 수 있나"><span class="no">8</span>학습한 model을 이해할 수 있나</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>5절의 iris network가 "왜" 그렇게 답하는지 weight를 보면 알 수 있나?</p></div>
+  <div class="stage">
+    <canvas id="cv8" aria-label="학습한 iris network의 weight 그림과 행렬"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="say">작은 network도 weight 51개가 서로 얽혀 있다. 큰 model은 수백만~수십억 개. 그래서 "무엇을 보나"는 따로 연구한다: 층의 feature map 보기(11장), latent 공간(10장), attention 지도(14장).</p>
+  <p class="key"><b>기억할 한 줄.</b> 숫자는 다 볼 수 있지만 뜻은 바로 읽히지 않는다. 이해하려면 그림과 실험이 따로 필요하다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="정리, 약자 사전"><span class="no">9</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 회귀</td><td>출력 linear + MSE, r도 본다</td><td>MSE 0.247, r 0.88 vs 0.27</td></tr>
+      <tr><td>2 분류</td><td>겹치면 100%는 못 한다</td><td>d = 4: 약 98%</td></tr>
+      <tr><td>3 learning rate</td><td>log 눈금으로 훑고 seed 평균</td><td>0.001: 65%, 0.1~2: 98%</td></tr>
+      <tr><td>4 비선형</td><td>선형 층 여러 개 = 행렬 하나</td><td>W₂W₁ = [[1.1, −0.2], [0.2, 1.1]]</td></tr>
+      <tr><td>5 여러 class</td><td>출력 K개 + softmax + CE</td><td>iris 약 96%</td></tr>
+      <tr><td>6 깊이·너비</td><td>층마다 n_in × n_out + n_out</td><td>2-16-16-3 = 371</td></tr>
+      <tr><td>7 PyTorch</td><td>Sequential 또는 class</td><td>371 = 371</td></tr>
+      <tr><td>8 이해</td><td>숫자는 보여도 뜻은 안 보인다</td><td>weight 51개</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(5장 Overfitting)에서는 학습 data에서는 잘 되는데 새 data에서는 안 되는 문제와 그 해법을 본다. 숫자와 미리 돌린 실험은 <code>tools/ch04_numbers.py</code> (PyTorch)로 만들었다.</p>
+  <h3 id="s9b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>accuracy</b></td><td>–</td><td>정확도</td><td>맞힌 수 ÷ 전체.</td><td class="num">2</td></tr>
+      <tr><td><b>argmax</b></td><td>argument of the maximum</td><td>최댓값의 자리</td><td>확률이 가장 큰 class.</td><td class="num">5</td></tr>
+      <tr><td><b>CE</b></td><td>cross-entropy</td><td>교차 엔트로피</td><td>−ln(정답 class의 확률).</td><td class="num">5</td></tr>
+      <tr><td><b>depth, width</b></td><td>–</td><td>깊이, 너비</td><td>숨은 층 수, 한 층의 neuron 수.</td><td class="num">6</td></tr>
+      <tr><td><b>iris</b></td><td>Fisher's iris data set</td><td>붓꽃 data</td><td>세 종류 붓꽃 150송이의 크기.</td><td class="num">5</td></tr>
+      <tr><td><b>MSE</b></td><td>mean squared error</td><td>평균 제곱 오차</td><td>회귀의 loss.</td><td class="num">1</td></tr>
+      <tr><td><b>nn.Module</b></td><td>–</td><td>–</td><td>PyTorch model class의 바탕.</td><td class="num">7</td></tr>
+      <tr><td><b>r</b></td><td>Pearson correlation</td><td>상관계수</td><td>함께 움직이는 정도, −1~1.</td><td class="num">1</td></tr>
+      <tr><td><b>ReLU</b></td><td>rectified linear unit</td><td>–</td><td>max(0, z). 음수를 0으로.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>seed</b></td><td>random seed</td><td>씨앗</td><td>무작위 시작값. 바꿔 가며 여러 번 돌린다.</td><td class="num">3</td></tr>
+      <tr><td><b>Sequential</b></td><td>nn.Sequential</td><td>–</td><td>층을 차례로 나열해 만드는 model.</td><td class="num">7</td></tr>
+      <tr><td><b>softmax</b></td><td>–</td><td>소프트맥스</td><td>점수를 합이 1인 확률로.</td><td class="num">5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch04_data.js"></script>
+<script src="ch04.js"></script>
+</body>
+</html>

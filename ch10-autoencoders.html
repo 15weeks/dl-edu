@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 10 · Autoencoder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="10" data-base="ch10-autoencoders">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 10</p>
+  <h1>Autoencoder</h1>
+  <p class="topic">Autoencoders and latent space</p>
+  <p class="lead">A network that squeezes a picture into a few numbers (encoder) and then unpacks them back into a picture (decoder). It needs no labels: the input is the target. Removing noise, filling in hidden parts, and latent space, which leads to the generative models of chapter 15.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: compress and rebuild, denoising, bottleneck size, restoring hidden parts, latent space" style="font-family: var(--sans);">
+      <defs><marker id="m10-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M30 48L62 60V78L30 90Z" fill="var(--surface)" stroke="var(--sig)"/><rect x="63" y="60" width="10" height="18" fill="var(--vio)" opacity="0.8"/><path d="M106 48L74 60V78L106 90Z" fill="var(--surface)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Compress, rebuild</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--muted)" opacity="0.6"><rect x="30" y="50" width="4" height="4"/><rect x="40" y="62" width="4" height="4"/><rect x="34" y="78" width="4" height="4"/><rect x="48" y="52" width="4" height="4"/><rect x="50" y="84" width="4" height="4"/></g><path d="M38 56Q46 48 50 70T38 88" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M60 69H76" stroke="var(--muted)" marker-end="url(#m10-arrow)"/><path d="M90 56Q98 48 102 70T90 88" fill="none" stroke="var(--ok)" stroke-width="3"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Denoising</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 2</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M30 50Q44 80 104 86" fill="none" stroke="var(--fa)" stroke-width="2.2"/><circle cx="30" cy="50" r="3" fill="var(--fa)"/><circle cx="104" cy="86" r="3" fill="var(--fa)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Bottleneck size</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 3</text></g></a>
+      <a href="#s4"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="40" y="46" width="56" height="44" fill="none" stroke="var(--line)"/><path d="M58 50Q72 46 76 58T58 86" fill="none" stroke="var(--ink)" stroke-width="3"/><rect x="40" y="60" width="56" height="12" fill="var(--surface)" stroke="var(--fa)" stroke-dasharray="4 3"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Filling in</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 4</text></g></a>
+      <a href="#s5"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g opacity="0.8"><circle cx="38" cy="56" r="3" fill="var(--sig)"/><circle cx="44" cy="62" r="3" fill="var(--sig)"/><circle cx="36" cy="66" r="3" fill="var(--sig)"/><circle cx="84" cy="54" r="3" fill="var(--miss)"/><circle cx="92" cy="60" r="3" fill="var(--miss)"/><circle cx="88" cy="50" r="3" fill="var(--miss)"/><circle cx="62" cy="84" r="3" fill="var(--ok)"/><circle cx="70" cy="86" r="3" fill="var(--ok)"/><circle cx="66" cy="78" r="3" fill="var(--ok)"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Latent space</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 5</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m10-arrow)"/><path d="M304 85H318" marker-end="url(#m10-arrow)"/><path d="M456 85H470" marker-end="url(#m10-arrow)"/><path d="M608 85H622" marker-end="url(#m10-arrow)"/></g>
+      <a href="#s6"><rect x="16" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="160" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Tied weights: decoder = encoder flipped</text><text x="160" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 6</text></a>
+      <a href="#s7"><rect x="320" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="540" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">New pictures from latent space: a bridge to chapter 15</text><text x="540" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 7</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Compress, rebuild"><span class="no">1</span>Autoencoders: compress, then rebuild</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can a 196-pixel digit be squeezed into 16 numbers and drawn again?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>encoder</dt><dd>The front network that shrinks a picture x into a short code z.</dd>
+    <dt>decoder</dt><dd>The back network that unpacks the code z into a picture x̂.</dd>
+    <dt>bottleneck, latent code</dt><dd>The narrowest layer in the middle, and its values z (the hidden code).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cv{z} = \text{enc}(\Cb{x}), \qquad \Co{\hat{x}} = \text{dec}(\Cv{z}), \qquad L = \frac{1}{196}\sum_{i} (\Co{\hat{x}_i} - \Cb{x_i})^2"></div>
+  <ul class="legend"><li class="c-sig"><b>x</b> input picture (196 pixels)</li><li class="c-vio"><b>z</b> latent code (16 numbers)</li><li class="c-miss"><b>x̂</b> rebuilt picture</li></ul>
+  <p class="say">In words: the input goes in the target slot as well. Because everything must pass through the narrow middle, the network learns to keep only "what matters in a digit" in 16 numbers.</p>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b1next">Other digits</button></div>
+    <canvas id="cv1" aria-label="Original digits, the 16-number code bars and the rebuilt digits"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Autoencoder = encoder (shrink) + decoder (unpack); loss = rebuild error. It learns without labels.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Denoising"><span class="no">2</span>Denoising autoencoders</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if noise goes into the input while the target stays clean?</p></div>
+  <div class="eq" data-tex="L = \big\| \text{dec}(\text{enc}(\Cr{\tilde{x}})) - \Cb{x} \big\|^2, \qquad \Cr{\tilde{x}} = \Cb{x} + \Cr{\text{noise}}"></div>
+  <ul class="legend"><li class="c-fa"><b>x̃</b> noisy input</li><li class="c-sig"><b>x</b> clean target</li></ul>
+  <div class="calc">
+    <p class="h">RESULTS: 10,000 test images, MSE against the original</p>
+    <div class="eq" data-tex="\text{noise } 0.2: 0.022 \to \Cg{0.016} \qquad 0.4: 0.081 \to \Cg{0.021} \qquad 0.6: 0.150 \to \Cg{0.029}"></div>
+    <div class="mean"><b>→ Meaning.</b> The more noise, the bigger the gain (at 0.6 the error drops to a fifth). Noise does not fit the "shape of a digit", so it cannot squeeze through the narrow code.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>noise size <input type="range" id="i2s" min="0" max="0.8" step="0.02" value="0.4"><output id="o2s"></output></label>
+      <button type="button" id="b2next">Other digit</button>
+    </div>
+    <canvas id="cv2" aria-label="Noisy input, autoencoder output and the original"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Spoil the input, keep the target clean, and the autoencoder becomes a noise eraser.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Bottleneck size"><span class="no">3</span>How many units the bottleneck needs</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How much better is the rebuild with 1, 2, …, 64 units in the middle?</p></div>
+  <div class="calc">
+    <p class="h">RESULTS: network 196-128-k-128-196, 6 epochs, test MSE</p>
+    <div class="eq" data-tex="k = 1: \Cr{0.041} \quad 2: 0.032 \quad 4: 0.021 \quad 8: 0.013 \quad 16: 0.0075 \quad 32: 0.0038 \quad 64: \Cg{0.0027}"></div>
+    <div class="mean"><b>→ Meaning.</b> The first few units bring the biggest gains; beyond 32 little changes. Too narrow gives a blurry "average digit"; wider is sharper but compresses less.</div>
+  </div>
+  <div class="stage"><canvas id="cv3" aria-label="Rebuild error against bottleneck size, and the rebuilt digits"></canvas></div>
+  <p class="key"><b>One line to remember.</b> A narrower bottleneck compresses harder and blurs more. The bend in the error curve marks a good size.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Filling in"><span class="no">4</span>Restoring occluded parts</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If part of the picture is blacked out, can the network bring the shape back?</p></div>
+  <div class="calc">
+    <p class="h">RESULTS: 10,000 test images with rows 6–9 (4 rows) hidden</p>
+    <div class="eq" data-tex="\text{hidden input}: 0.043 \;\to\; \text{restored}: \Cg{0.023}"></div>
+    <div class="mean"><b>→ Meaning.</b> When training the network of section 2, random bands of 2–5 rows were hidden along with the noise. So it reads the remaining strokes and fills in "for this digit, the middle should look like this". If the hidden part is what decides the digit, it may fill in a different digit.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>first hidden row <input type="range" id="i4r" min="0" max="13" step="1" value="5"><output id="o4r"></output></label>
+      <label>rows <input type="range" id="i4h" min="1" max="8" step="1" value="4"><output id="o4h"></output></label>
+      <button type="button" id="b4next">Other digit</button>
+    </div>
+    <canvas id="cv4" aria-label="Input with rows hidden, autoencoder output and the original"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> A network that saw hidden parts in training fills them in "plausibly" at test time. It does not know the truth.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Latent space"><span class="no">5</span>The latent code and latent space</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With a code of only 2 numbers, where on a plane do the digits land?</p></div>
+  <div class="eq" data-tex="\Cb{x} \in \mathbb{R}^{196} \;\xrightarrow{\text{enc}}\; \Cv{z} = (z_1, z_2) \in \mathbb{R}^{2} \;\xrightarrow{\text{dec}}\; \Co{\hat{x}} \in \mathbb{R}^{196}"></div>
+  <p class="say">In words: each picture becomes one point on a plane. Click or drag on the plane below and the decoder draws the picture at that spot. Test MSE 0.030 (blurrier than with 16 numbers, since there are only 2).</p>
+  <div class="stage">
+    <canvas id="cv5" aria-label="The 2-D latent space and the picture the decoder draws at the chosen spot"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Latent space = where the codes live. Similar pictures gather close together, and moving between them changes the picture smoothly.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Tied weights"><span class="no">6</span>Tied weights</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if the decoder has no weights of its own and reuses the encoder weights, flipped (transposed)?</p></div>
+  <div class="stage">
+    <svg viewBox="0 0 640 190" role="img" aria-label="Tied weights: the encoder uses W, the decoder uses the transpose of W" style="font-family: var(--sans); width: 100%; height: auto;">
+      <defs><marker id="m10-a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <rect x="20" y="40" width="40" height="110" rx="6" fill="var(--sigwash)" stroke="var(--sig)"/><text x="40" y="100" font-size="13" text-anchor="middle" fill="var(--sig)" font-weight="700">x</text><text x="40" y="168" font-size="11" text-anchor="middle" fill="var(--muted)">196</text>
+      <path d="M64 95H176" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m10-a6)"/>
+      <rect x="86" y="62" width="70" height="26" rx="5" fill="var(--surface)" stroke="var(--ink)"/><text x="121" y="80" font-size="13" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)">W</text>
+      <text x="121" y="116" font-size="10.5" text-anchor="middle" fill="var(--muted)">32×196</text>
+      <rect x="180" y="70" width="40" height="50" rx="6" fill="var(--wash)" stroke="var(--vio)"/><text x="200" y="100" font-size="13" text-anchor="middle" fill="var(--vio)" font-weight="700">z</text><text x="200" y="138" font-size="11" text-anchor="middle" fill="var(--muted)">32</text>
+      <path d="M224 95H336" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m10-a6)"/>
+      <rect x="246" y="62" width="70" height="26" rx="5" fill="var(--okwash)" stroke="var(--ok)"/><text x="281" y="80" font-size="13" text-anchor="middle" fill="var(--ok)" font-family="var(--mono)">Wᵀ</text>
+      <text x="281" y="116" font-size="10.5" text-anchor="middle" fill="var(--muted)">same numbers, flipped</text>
+      <rect x="340" y="40" width="40" height="110" rx="6" fill="var(--wash)" stroke="var(--miss)"/><text x="360" y="100" font-size="13" text-anchor="middle" fill="var(--miss)" font-weight="700">x</text><text x="360" y="90" font-size="11" text-anchor="middle" fill="var(--miss)" font-weight="700">^</text><text x="360" y="168" font-size="11" text-anchor="middle" fill="var(--muted)">196</text>
+      <path d="M121 58C121 26 281 26 281 58" fill="none" stroke="var(--ok)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="201" y="26" font-size="11" text-anchor="middle" fill="var(--ok)">one matrix, shared</text>
+      <g font-size="12" fill="var(--ink)"><text x="410" y="56" font-weight="700">Test MSE, 8 epochs</text>
+      <text x="410" y="84">tied</text><rect x="470" y="73" width="89" height="14" fill="var(--ok)" opacity="0.8"/><text x="566" y="84" font-family="var(--mono)">0.0053</text>
+      <text x="410" y="108">separate</text><rect x="470" y="97" width="97" height="14" fill="var(--muted)" opacity="0.6"/><text x="574" y="108" font-family="var(--mono)">0.0058</text>
+      <text x="410" y="140" font-weight="700">Parameters</text>
+      <text x="410" y="162">tied 6,500 · separate 12,772</text></g>
+    </svg>
+  </div>
+  <div class="eq" data-tex="\Cv{z} = \text{ReLU}(\Cb{W} x + b_1), \qquad \Co{\hat{x}} = \sigma(\Cg{W^{\top}} \Cv{z} + b_2)"></div>
+  <div class="calc">
+    <p class="h">RESULTS: 196-32-196, same training settings</p>
+    <div class="eq" data-tex="\text{tied}: 6{,}500 \text{ parameters}, \ \text{MSE } \Cg{0.0053} \qquad \text{separate}: 12{,}772, \ \text{MSE } 0.0058"></div>
+    <div class="mean"><b>→ Meaning.</b> Half the parameters, and in this experiment the error was even slightly smaller. Tying forces the encoder and decoder to fit each other, which acts like regularization (chapter 5).</div>
+  </div>
+  <div class="codebox"><pre><code>z    = torch.relu(x @ W.T + b1)          # encoder: W (32×196)
+xhat = torch.sigmoid(z @ W + b2)         # decoder: the same W, transposed</code></pre></div>
+  <p class="key"><b>One line to remember.</b> Tied weights: decoder = Wᵀ. Half the parameters, similar or better results.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="New pictures from latent"><span class="no">7</span>Bridge to generative models: new images from latent space</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If any point in latent space goes into the decoder, does a new digit come out?</p></div>
+  <div class="eq" data-tex="\Cv{z}(t) = (1 - t)\,\Cb{z_A} + t\,\Co{z_B}, \qquad t = 0, \tfrac{1}{8}, \dots, 1"></div>
+  <ul class="legend"><li class="c-sig"><b>z_A</b> code of digit A</li><li class="c-miss"><b>z_B</b> code of digit B</li><li class="c-vio"><b>z(t)</b> a point on the line between them</li></ul>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b7a">Change A</button>
+      <button type="button" id="b7b">Change B</button>
+      <button type="button" id="b7r">6 random points</button>
+    </div>
+    <canvas id="cv7" aria-label="A straight line in latent space and the pictures the decoder draws"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>This chapter's autoencoder</th><th>Chapter 15's generative models</th></tr></thead>
+    <tbody>
+      <tr><td>Latent space has gaps and an arbitrary shape</td><td>VAE: shapes latent space like a normal distribution → any sampled point works</td></tr>
+      <tr><td>Removes noise in one go (section 2)</td><td>Diffusion: removes noise a little at a time, many times → a new picture from pure noise</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> Between the data the pictures change smoothly, but nothing says where to sample. Setting that rule is the job of a generative model.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Summary, dictionary"><span class="no">8</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Autoencoder</td><td>encoder + decoder, input = target</td><td>196 → 16 → 196, MSE 0.015</td></tr>
+      <tr><td>2 Denoising</td><td>spoiled input, clean target</td><td>noise 0.6: 0.150 → 0.029</td></tr>
+      <tr><td>3 Bottleneck</td><td>narrower is blurrier</td><td>1 unit 0.041, 64 units 0.0027</td></tr>
+      <tr><td>4 Occlusion</td><td>fills hidden parts plausibly</td><td>0.043 → 0.023</td></tr>
+      <tr><td>5 Latent space</td><td>similar pictures gather</td><td>2-number code, MSE 0.030</td></tr>
+      <tr><td>6 Tied weights</td><td>decoder = Wᵀ</td><td>6,500 vs 12,772 parameters</td></tr>
+      <tr><td>7 Bridge to generation</td><td>smooth in between, no sampling rule</td><td>chapter 15: VAE, diffusion</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 11, CNN - I) covers convolution, which looks at a picture as a 2-D grid instead of one long row. The numbers were computed with <code>tools/ch10_numbers.py</code> (PyTorch, MNIST shrunk to 14×14); the page's figures recompute them in the browser from the same weights (int8).</p>
+  <h3 id="s8b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>AE</b></td><td>autoencoder</td><td>A network that shrinks, then rebuilds.</td><td class="num">1</td></tr>
+      <tr><td><b>bottleneck</b></td><td>bottleneck layer</td><td>The narrowest layer in the middle.</td><td class="num">1, 3</td></tr>
+      <tr><td><b>DAE</b></td><td>denoising autoencoder</td><td>Rebuilds a clean picture from a spoiled one.</td><td class="num">2</td></tr>
+      <tr><td><b>decoder</b></td><td>decoder</td><td>Code → picture.</td><td class="num">1</td></tr>
+      <tr><td><b>encoder</b></td><td>encoder</td><td>Picture → code.</td><td class="num">1</td></tr>
+      <tr><td><b>latent</b></td><td>latent code / space</td><td>The middle layer's values and the space they live in.</td><td class="num">5</td></tr>
+      <tr><td><b>occlusion</b></td><td>occlusion</td><td>Part of a picture being hidden.</td><td class="num">4</td></tr>
+      <tr><td><b>tied</b></td><td>tied weights</td><td>The decoder uses the transpose of the encoder weights.</td><td class="num">6</td></tr>
+      <tr><td><b>VAE</b></td><td>variational autoencoder</td><td>A generative model whose latent space follows a normal distribution (chapter 15).</td><td class="num">7</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch10_data.js"></script>
+<script src="ch10.js"></script>
+</body>
+</html>

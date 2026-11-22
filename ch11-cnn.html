@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 11 · CNN - I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="11" data-base="ch11-cnn">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 11</p>
+  <h1>CNN - I</h1>
+  <p class="topic">Convolution and pooling</p>
+  <p class="lead">Look at a picture as a 2-D grid instead of unrolling it into a line. A small kernel slides over the picture and finds the same pattern (a stroke, an edge) wherever it is, and pooling shrinks the picture. Fewer parameters than the FFN of chapter 8, and higher accuracy.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: sliding kernel, stride and padding, transpose convolution, pooling, following shapes" style="font-family: var(--sans);">
+      <defs><marker id="m11-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g stroke="var(--line)" fill="var(--surface)"><rect x="34" y="44" width="48" height="48"/></g><path d="M34 60H82M34 76H82M50 44V92M66 44V92" stroke="var(--line)"/><rect x="34" y="44" width="32" height="32" fill="none" stroke="var(--miss)" stroke-width="2.4"/><path d="M84 68H96" stroke="var(--muted)" marker-end="url(#m11-arrow)"/><rect x="98" y="58" width="18" height="18" fill="var(--sigwash)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Sliding kernel</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 1–2</text></g></a>
+      <a href="#s3"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="36" y="44" width="48" height="48" fill="none" stroke="var(--line)" stroke-dasharray="3 3"/><rect x="42" y="50" width="36" height="36" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="36" y="44" width="22" height="22" fill="none" stroke="var(--miss)" stroke-width="2"/><rect x="50" y="44" width="22" height="22" fill="none" stroke="var(--ok)" stroke-width="2" stroke-dasharray="4 3"/><text x="98" y="72" font-size="11" fill="var(--muted)" font-family="var(--mono)">S,P</text><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Stride, padding</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 3</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="30" y="58" width="20" height="20" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M54 68H66" stroke="var(--muted)" marker-end="url(#m11-arrow)"/><rect x="70" y="46" width="44" height="44" fill="var(--wash)" stroke="var(--miss)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Transpose conv</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="28" y="46" width="44" height="44" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M28 68H72M50 46V90" stroke="var(--sig)"/><path d="M76 68H88" stroke="var(--muted)" marker-end="url(#m11-arrow)"/><rect x="92" y="57" width="22" height="22" fill="var(--sigwash)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Pooling</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 5</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><rect x="22" y="50" width="22" height="36" fill="var(--surface)" stroke="var(--ok)"/><rect x="52" y="56" width="18" height="24" fill="var(--surface)" stroke="var(--ok)"/><rect x="56" y="52" width="18" height="24" fill="var(--surface)" stroke="var(--ok)"/><rect x="82" y="60" width="12" height="16" fill="var(--surface)" stroke="var(--ok)"/><rect x="86" y="56" width="12" height="16" fill="var(--surface)" stroke="var(--ok)"/><rect x="106" y="48" width="6" height="40" fill="var(--wash)" stroke="var(--miss)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Following shapes</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 6</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m11-arrow)"/><path d="M304 85H318" marker-end="url(#m11-arrow)"/><path d="M456 85H470" marker-end="url(#m11-arrow)"/><path d="M608 85H622" marker-end="url(#m11-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Draw a digit → CNN; shifted digits; Gaussian widths</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 7</text></a>
+      <a href="#s8"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Transforms, DataLoader, design practice</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">sections 8–9</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Sliding kernel"><span class="no">1</span>Convolution: a kernel sliding over the image</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can one small grid of numbers find where a picture has a "vertical edge"?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>CNN</dt><dd><b>convolutional neural network</b>. A neural network with convolution layers.</dd>
+    <dt>kernel (filter)</dt><dd>A small grid of weights that slides over the picture (3×3 here).</dd>
+    <dt>feature map</dt><dd>The output picture the kernel makes as it slides: a map of "where, and how strongly, this pattern appears".</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Co{y_{i,j}} = \sum_{m=0}^{2} \sum_{n=0}^{2} \Cb{x_{i+m,\, j+n}} \cdot \Cv{k_{m,n}} \;(+\, b)"></div>
+  <ul class="legend"><li class="c-sig"><b>x</b> input picture</li><li class="c-vio"><b>k</b> kernel</li><li class="c-miss"><b>y</b> output (feature map)</li></ul>
+  <p class="say">In words: lay the kernel over the picture, multiply the 9 overlapping cells pairwise and add them all up: one output cell. Move one step and repeat. The same kernel is used across the whole picture (weight sharing).</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the single output cell (2, 0)</p>
+    <p>Multiply the window at rows 2–4, columns 0–2 of the input by the vertical-edge kernel cell by cell, and add.</p>
+    <div class="eq" data-tex="\Cb{\begin{bmatrix} 0 & 0 & 1 \\ 0 & 0 & 1 \\ 0 & 0 & 1 \end{bmatrix}} \odot \Cv{\begin{bmatrix} -1 & 0 & 1 \\ -1 & 0 & 1 \\ -1 & 0 & 1 \end{bmatrix}} \;\to\; 1 \cdot 1 + 1 \cdot 1 + 1 \cdot 1 = \Co{3}"></div>
+    <div class="mean"><b>→ Meaning.</b> Dark on the left and bright on the right gives a large positive number, the reverse a large negative one, and a flat area 0. This kernel is a "vertical-edge detector". (Deep learning's convolution is the mathematician's cross-correlation: the kernel is not flipped.)</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g1k"><span>kernel</span><button type="button" data-v="v" aria-pressed="true">vertical edge</button><button type="button" data-v="h" aria-pressed="false">horizontal edge</button><button type="button" data-v="blur" aria-pressed="false">blur</button></div>
+      <button type="button" id="b1step">One step</button>
+      <button type="button" id="b1play">Play from start</button>
+    </div>
+    <canvas id="cv1" aria-label="A 3×3 kernel sliding over a 7×7 input and the 5×5 output"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Convolution = slide a small kernel, multiply cell by cell, add. The same kernel finds the same pattern anywhere in the picture.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Feature maps, kernels"><span class="no">2</span>Feature maps and kernels</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How does the output change when the kernel numbers change? What do a trained CNN's kernels look like?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g2k"><span>preset kernel</span><button type="button" data-v="v" aria-pressed="true">vertical edge</button><button type="button" data-v="h" aria-pressed="false">horizontal edge</button><button type="button" data-v="blur" aria-pressed="false">blur</button><button type="button" data-v="sharp" aria-pressed="false">sharpen</button><button type="button" data-v="id" aria-pressed="false">identity</button></div>
+      <button type="button" id="b2next">Other digit</button>
+    </div>
+    <canvas id="cv2" aria-label="A digit, an editable 3×3 kernel and the output feature map"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+    <canvas id="cv2b" aria-label="The 8 kernels and 8 feature maps of the trained CNN's first layer"></canvas>
+  </div>
+  <div class="eq" data-tex="\text{Conv2d}(\Cb{C_{\text{in}}}, \Co{C_{\text{out}}}, k): \quad \text{weight} = (\Co{C_{\text{out}}}, \Cb{C_{\text{in}}}, k, k), \qquad \text{parameters} = \Co{C_{\text{out}}} \cdot \Cb{C_{\text{in}}} \cdot k^2 + \Co{C_{\text{out}}}"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: this chapter's MNIST CNN</p>
+    <div class="eq" data-tex="\text{Conv2d}(1, 8, 5): 8 \cdot 1 \cdot 25 + 8 = 208 \qquad \text{Conv2d}(8, 16, 5): 16 \cdot 8 \cdot 25 + 16 = 3{,}216"></div>
+    <div class="mean"><b>→ Meaning.</b> One kernel makes one feature map (8 kernels → 8 maps). A second-layer kernel looks at all 8 maps of the layer before (5×5×8). The kernels above were not set by hand but learned. In the feature maps, some highlight whole strokes, some one side of a stroke, some the background.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Number of kernels = output channels = feature maps. The weight shape is (C_out, C_in, k, k).</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Stride, padding"><span class="no">3</span>Stride, padding and the output-size formula</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If the kernel moves two cells at a time, or the picture gets a border of zeros, how many cells does the output have?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>N, K</dt><dd>Cells along one side of the input and of the kernel.</dd>
+    <dt>S (stride)</dt><dd>How many cells the kernel moves at a time.</dd>
+    <dt>P (padding)</dt><dd>How many rings of zeros go around the edge.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Co{O} = \left\lfloor \frac{\Cb{N} + 2\Cg{P} - \Cv{K}}{\Cr{S}} \right\rfloor + 1"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLES</p>
+    <div class="eq" data-tex="\begin{aligned} N{=}28,\ K{=}5,\ P{=}2,\ S{=}1&: \tfrac{28 + 4 - 5}{1} + 1 = 28 \\ N{=}28,\ K{=}3,\ P{=}1,\ S{=}2&: \left\lfloor \tfrac{27}{2} \right\rfloor + 1 = 14 \\ N{=}32,\ K{=}3,\ P{=}0,\ S{=}1&: \tfrac{32 - 3}{1} + 1 = 30 \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> Padding (K − 1)/2 with stride 1 keeps the size ("same"); stride 2 halves it. Without padding, every layer loses K − 1 cells.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>input N <input type="range" id="i3n" min="4" max="10" step="1" value="7"><output id="o3n"></output></label>
+      <label>kernel K <input type="range" id="i3k" min="1" max="5" step="1" value="3"><output id="o3k"></output></label>
+      <label>stride S <input type="range" id="i3s" min="1" max="3" step="1" value="2"><output id="o3s"></output></label>
+      <label>padding P <input type="range" id="i3p" min="0" max="2" step="1" value="1"><output id="o3p"></output></label>
+    </div>
+    <canvas id="cv3" aria-label="The padded input, the first and second kernel positions, and the output size"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> O = ⌊(N + 2P − K)/S⌋ + 1. Every CNN shape calculation is this one line.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Transpose convolution"><span class="no">4</span>Transpose convolution</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If convolution shrinks a picture, what layer grows it back? (the decoder of chapter 10, U-Net in chapter 12)</p></div>
+  <div class="eq" data-tex="\Co{O} = (\Cb{N} - 1) \cdot \Cr{S} - 2P + \Cv{K}"></div>
+  <p class="say">In words: each input cell stamps (its value × the kernel) onto the output like a rubber stamp. Stamps are placed stride cells apart, and where they overlap they add up.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 2×2 input, 3×3 kernel (all ones), stride 2</p>
+    <div class="eq" data-tex="\Cb{\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}} \;\to\; \Co{\begin{bmatrix} 1 & 1 & 3 & 2 & 2 \\ 1 & 1 & 3 & 2 & 2 \\ 4 & 4 & 10 & 6 & 6 \\ 3 & 3 & 7 & 4 & 4 \\ 3 & 3 & 7 & 4 & 4 \end{bmatrix}}, \qquad O = (2 - 1) \cdot 2 + 3 = 5"></div>
+    <div class="mean"><b>→ Meaning.</b> The centre 10 = 1 + 2 + 3 + 4: all four stamps overlap there. The kernel is learned too, so the layer learns "how to grow". (Checked with PyTorch <code>F.conv_transpose2d</code>.)</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g4s"><span>stride</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="true">2</button></div>
+      <button type="button" id="b4step">Stamp next cell</button>
+      <button type="button" id="b4all">Stamp all</button>
+    </div>
+    <canvas id="cv4" aria-label="One input cell stamping the kernel onto the output"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <div class="codebox"><pre><code>up = nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2)   # (16, 7, 7) → (8, 15, 15)</code></pre></div>
+  <p class="key"><b>One line to remember.</b> Transpose convolution = stamp value × kernel and add. It grows the picture: O = (N − 1)S − 2P + K.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Pooling"><span class="no">5</span>Max and mean pooling; pool or stride?</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What is the simplest way to halve a feature map?</p></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 4×4 → 2×2 (one value per 2×2 block)</p>
+    <div class="eq" data-tex="\Cb{\begin{bmatrix} 1 & 3 & 2 & 0 \\ 4 & 2 & 1 & 1 \\ 0 & 1 & 5 & 2 \\ 2 & 0 & 3 & 4 \end{bmatrix}} \;\xrightarrow{\text{max}}\; \Co{\begin{bmatrix} 4 & 2 \\ 2 & 5 \end{bmatrix}} \qquad \xrightarrow{\text{mean}}\; \Cg{\begin{bmatrix} 2.5 & 1 \\ 0.75 & 3.5 \end{bmatrix}}"></div>
+    <div class="mean"><b>→ Meaning.</b> Max keeps only "was the pattern in this block?": if the pattern moves by a cell or two, the answer often stays the same. There are no parameters to learn.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b5ch">Other feature map</button>
+      <button type="button" id="b5next">Other digit</button>
+    </div>
+    <canvas id="cv5" aria-label="A 28×28 feature map reduced to 14×14 and 7×7 by max and mean pooling"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Way to shrink</th><th>Code</th><th>Parameters</th><th>Character</th></tr></thead>
+    <tbody>
+      <tr><td>max pool</td><td><code>nn.MaxPool2d(2)</code></td><td>0</td><td>A fixed rule. Fast, and robust to small shifts.</td></tr>
+      <tr><td>stride-2 conv</td><td><code>nn.Conv2d(8, 8, 3, stride=2, padding=1)</code></td><td>584</td><td>Learns how to shrink as well. Common in large modern networks (ResNet and others).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> Pooling = one value per 2×2 block (max or mean). Half the size, zero parameters.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Following shapes"><span class="no">6</span>The canonical CNN and following its shapes</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How does the tensor's (C, H, W) change from layer to layer?</p></div>
+  <div class="eq" data-tex="\big[\, \text{conv} \to \text{ReLU} \to \text{pool} \,\big] \times n \;\to\; \text{flatten} \;\to\; \text{Linear}"></div>
+  <div class="stage">
+    <div class="ctl"><div class="seg" id="g6n"><span>network</span><button type="button" data-v="mnist" aria-pressed="true">this chapter's MNIST CNN</button><button type="button" data-v="fmnist" aria-pressed="false">FMNIST CNN (section 9)</button><button type="button" data-v="cifar" aria-pressed="false">same design, CIFAR10</button></div></div>
+    <canvas id="cv6" aria-label="The tensor's (C, H, W) and the parameter count at every layer"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="row2">
+    <div class="codebox"><pre><code># (batch, C, H, W)
+x = torch.zeros(1, 1, 28, 28)
+for layer in net:
+    x = layer(x)
+    print(type(layer).__name__, tuple(x.shape))</code></pre></div>
+    <div class="codebox"><pre><code>Conv2d (1, 8, 28, 28)
+ReLU (1, 8, 28, 28)
+MaxPool2d (1, 8, 14, 14)
+Conv2d (1, 16, 14, 14)
+ReLU (1, 16, 14, 14)
+MaxPool2d (1, 16, 7, 7)
+Flatten (1, 784)
+Linear (1, 10)</code></pre></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Channels grow while H and W shrink. The flatten length C × H × W is the input size of the first Linear.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="MNIST, Gaussians, feature maps"><span class="no">7</span>Classifying MNIST and Gaussians; looking inside feature maps</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What does a CNN do better than an FFN?</p></div>
+  <div class="calc">
+    <p class="h">RESULTS: MNIST 28×28, 3 epochs, 10,000 test images (PyTorch)</p>
+    <div class="eq" data-tex="\text{CNN}: \Cg{98.6\%}\ (11{,}274 \text{ parameters}) \qquad \text{FFN 784-64-10}: 96.2\%\ (50{,}890)"></div>
+    <div class="mean"><b>→ Meaning.</b> Less than a quarter of the parameters, and more accurate. Sharing one kernel across the picture needs few weights, and it uses what pictures are like: nearby cells belong together.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b7clear">Clear</button>
+      <button type="button" id="b7sample">Load an MNIST digit</button>
+    </div>
+    <canvas id="cv7" aria-label="A drawing grid, the 16 layer-2 feature maps and the CNN probabilities"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULTS: digits moved sideways (no shifting during training)</p>
+    <div class="eq" data-tex="2 \text{ px}: \text{CNN } \Cg{95.9\%},\ \text{FFN } \Cr{71.1\%} \qquad 4 \text{ px}: \text{CNN } 72.3\%,\ \text{FFN } \Cr{29.6\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> The same kernel finds the same pattern anywhere, and pooling absorbs small shifts, so the CNN holds up far better. Move the digit a lot and the CNN drops too: it is not fully shift-invariant.</div>
+  </div>
+  <div class="stage"><canvas id="cv7b" aria-label="CNN and FFN accuracy against the number of pixels shifted"></canvas></div>
+  <div class="calc">
+    <p class="h">RESULTS: Gaussian width classification (4,000 training, 1,000 test images)</p>
+    <div class="eq" data-tex="\text{CNN}: \Cg{99.7\%}\ (794 \text{ parameters}) \qquad \text{FFN 1024-8-2}: 91.2\%\ (8{,}218)"></div>
+    <div class="mean"><b>→ Meaning.</b> The task is to measure the "width" of a round blob wherever it sits. Wherever it moves, the same kernel measures the same shape.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b7g">Other examples</button></div>
+    <canvas id="cv7c" aria-label="Examples of narrow and wide Gaussian pictures"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> A CNN uses what pictures are like ("nearby cells, same pattern anywhere") with few weights. That is why it is more accurate and more robust to shifts.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Transforms, DataLoader"><span class="no">8</span>Image transforms and custom DataLoaders</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do we alter the training pictures a little every time? How do we feed our own data to a DataLoader?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b8roll">Draw again</button>
+      <button type="button" id="b8next">Other garment</button>
+    </div>
+    <canvas id="cv8" aria-label="One clothing picture with one transform applied at a time"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <div class="codebox"><pre><code>from torchvision import transforms as T
+train_tf = T.Compose([
+    T.RandomRotation(15),
+    T.RandomAffine(0, translate=(0.1, 0.1)),
+    T.ToTensor(),                      # PIL → (C, H, W), 0 to 1
+    T.Normalize((0.5,), (0.5,)),       # → −1 to 1
+])
+test_tf = T.Compose([T.ToTensor(), T.Normalize((0.5,), (0.5,))])</code></pre></div>
+  <div class="codebox"><pre><code>class MyData(torch.utils.data.Dataset):
+    def __init__(self, imgs, labels, tf=None):
+        self.imgs, self.labels, self.tf = imgs, labels, tf
+    def __len__(self):
+        return len(self.imgs)
+    def __getitem__(self, i):          # one at a time, transformed on the fly
+        x = self.imgs[i]
+        if self.tf: x = self.tf(x)
+        return x, self.labels[i]
+loader = torch.utils.data.DataLoader(
+    MyData(imgs, labels, train_tf), batch_size=64, shuffle=True)</code></pre></div>
+  <p class="key"><b>One line to remember.</b> Random transforms on training data only; Normalize on both training and test. A Dataset needs just __len__ and __getitem__.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Design practice"><span class="no">9</span>Design practice: EMNIST, CIFAR10, FMNIST</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When the data changes, which parts of the network change? How well does it recognise clothes (FMNIST)?</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Data</th><th>Input (C, H, W)</th><th>Classes</th><th>What to change</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>FMNIST (10 kinds of clothing)</td><td>(1, 28, 28)</td><td>10</td><td>Same shape as MNIST, harder</td><td>89.95% (5 epochs, 105,866 parameters)</td></tr>
+      <tr><td>EMNIST letters (handwritten alphabet)</td><td>(1, 28, 28)</td><td>26</td><td>Last Linear to 26. torchvision labels run 1–26, so subtract 1</td><td>try it yourself</td></tr>
+      <tr><td>CIFAR10 (colour photos)</td><td>(3, 32, 32)</td><td>10</td><td>First conv C_in = 3; flatten = 32 × 8 × 8 = 2,048 (section 6)</td><td>try it yourself</td></tr>
+    </tbody>
+  </table></div>
+  <div class="stage">
+    <canvas id="cv9" aria-label="Confusion matrix of the FMNIST CNN"></canvas>
+    <div class="read" id="r9" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULTS: 10,000 FMNIST test images, recall per class (chapter 9, section 2)</p>
+    <div class="eq" data-tex="\text{Shirt}: \Cr{68.6\%} \quad \text{Coat}: 79.0\% \quad \text{T-shirt}: 88.0\% \quad \dots \quad \text{Trouser}: 98.2\% \quad \text{Sandal}: \Cg{99.0\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> Shirts, T-shirts, pullovers and coats are hard to tell apart in 28×28 grey even for people. Don't look only at overall accuracy; use the confusion matrix to see where it goes wrong (click a cell for its count).</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Match three things (input channels, picture size → flatten, number of classes) and the same design runs on other data.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="Summary, dictionary"><span class="no">10</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Convolution</td><td>slide a kernel, multiply, add</td><td>vertical edge: 3</td></tr>
+      <tr><td>2 Feature maps</td><td>kernels = feature maps</td><td>Conv2d(1, 8, 5): 208 parameters</td></tr>
+      <tr><td>3 Stride, padding</td><td>O = ⌊(N + 2P − K)/S⌋ + 1</td><td>28 → 14 (K 3, P 1, S 2)</td></tr>
+      <tr><td>4 Transpose conv</td><td>stamp and add; grows</td><td>2×2 → 5×5, centre 10</td></tr>
+      <tr><td>5 Pooling</td><td>one per 2×2, 0 parameters</td><td>stride conv: 584</td></tr>
+      <tr><td>6 Shapes</td><td>channels ↑, H·W ↓, flatten = C·H·W</td><td>(16, 7, 7) → 784</td></tr>
+      <tr><td>7 CNN vs FFN</td><td>fewer weights, more accurate, shift-robust</td><td>98.6% vs 96.2%</td></tr>
+      <tr><td>8 Transforms</td><td>random changes on training data only</td><td>Rotation, Affine, Erasing</td></tr>
+      <tr><td>9 Design</td><td>C_in, flatten, number of classes</td><td>FMNIST 89.95%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 12, CNN - II) borrows large pretrained CNNs (transfer learning) and looks at structures such as U-Net. The numbers were computed with <code>tools/ch11_numbers.py</code> (PyTorch); the drawing and feature-map figures run the same CNN weights (int8, test accuracy 98.56%) in the browser.</p>
+  <h3 id="s10b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>channel (C)</b></td><td>channel</td><td>How many values sit on one cell of a picture (grey 1, colour 3, or the number of feature maps).</td><td class="num">2, 6</td></tr>
+      <tr><td><b>CIFAR10</b></td><td>Canadian Institute for Advanced Research, 10 classes</td><td>32×32 colour photos of 10 kinds.</td><td class="num">9</td></tr>
+      <tr><td><b>CNN</b></td><td>convolutional neural network</td><td>A neural network with convolution layers.</td><td class="num">1</td></tr>
+      <tr><td><b>EMNIST</b></td><td>Extended MNIST</td><td>Handwritten letters and digits.</td><td class="num">9</td></tr>
+      <tr><td><b>feature map</b></td><td>feature map</td><td>The output picture of one kernel.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>FMNIST</b></td><td>Fashion-MNIST</td><td>28×28 grey pictures of 10 kinds of clothing.</td><td class="num">9</td></tr>
+      <tr><td><b>K (kernel)</b></td><td>kernel, filter</td><td>The small sliding grid of weights.</td><td class="num">1, 3</td></tr>
+      <tr><td><b>P (padding)</b></td><td>padding</td><td>Zeros put around the edge.</td><td class="num">3</td></tr>
+      <tr><td><b>pooling</b></td><td>max / mean pooling</td><td>Shrinking each block to its maximum or mean.</td><td class="num">5</td></tr>
+      <tr><td><b>S (stride)</b></td><td>stride</td><td>How many cells the kernel moves at a time.</td><td class="num">3</td></tr>
+      <tr><td><b>transpose conv</b></td><td>transposed convolution</td><td>A layer that grows a picture by stamping value × kernel.</td><td class="num">4</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch11_data.js"></script>
+<script src="ch11.js"></script>
+</body>
+</html>

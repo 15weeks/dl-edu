@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 7장 · Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="7" data-base="ch07-optimizers">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 7장</p>
+  <h1>Optimizer</h1>
+  <p class="topic">mini-batch, optimizer, learning rate</p>
+  <p class="lead">2장의 gradient descent를 실제로 빠르고 안정되게 만드는 방법들: data를 조금씩 나눠 쓰기(mini-batch), 속도 쌓기(momentum), 방향마다 걸음 맞추기(RMSprop, Adam), 시간에 따라 걸음 줄이기(schedule), 그리고 이 설정들을 고르는 법.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: mini-batch, momentum, RMSprop과 Adam, optimizer 경주, learning rate schedule" style="font-family: var(--sans);">
+      <defs><marker id="m7-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sigwash)" stroke="var(--sig)"><rect x="40" y="58" width="44" height="28" rx="3"/><rect x="46" y="52" width="44" height="28" rx="3"/><rect x="52" y="46" width="44" height="28" rx="3"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① mini-batch</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">조금씩 나눠 · 1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 52Q70 96 112 84" fill="none" stroke="var(--line)" stroke-width="2"/><circle cx="76" cy="86" r="7" fill="var(--sig)"/><path d="M40 70L60 82" stroke="var(--sig)" stroke-width="1.4" stroke-dasharray="3 2"/><path d="M84 88H104" stroke="var(--sig)" stroke-width="2" marker-end="url(#m7-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② momentum</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">속도 쌓기 · 2절</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M40 86H80" stroke="var(--miss)" stroke-width="2.4" marker-end="url(#m7-arrow)"/><path d="M40 86V50" stroke="var(--miss)" stroke-width="2.4" marker-end="url(#m7-arrow)"/><path d="M90 86H100M90 86V82" stroke="var(--muted)" stroke-width="1"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ RMSprop, Adam</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">방향마다 걸음 · 3절</text></g></a>
+      <a href="#s4"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="none" stroke-width="1.8"><path d="M26 50C50 60 70 80 106 86" stroke="var(--muted)"/><path d="M26 50C40 80 80 90 106 86" stroke="var(--sig)"/><path d="M26 50C60 52 90 70 106 86" stroke="var(--ok)"/><path d="M26 50L106 86" stroke="var(--miss)"/></g><circle cx="106" cy="86" r="4" fill="var(--ink)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ 비교 경주</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">4절</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M26 50C60 52 80 92 112 92" fill="none" stroke="var(--miss)" stroke-width="2.2"/><path d="M26 56H52V72H80V84H112" fill="none" stroke="var(--muted)" stroke-width="1.4"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ η schedule</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">처음 크게, 나중 작게 · 6절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m7-arrow)"/><path d="M304 85H318" marker-end="url(#m7-arrow)"/><path d="M456 85H470" marker-end="url(#m7-arrow)"/><path d="M608 85H622" marker-end="url(#m7-arrow)"/></g>
+      <a href="#s5"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Adam + L2 vs AdamW: weight decay를 어디에 넣나</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">5절</text></a>
+      <a href="#s7"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">설정 고르기: 격자 vs 무작위</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">7절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="mini-batch"><span class="no">1</span>mini-batch 학습과 batch 크기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>data가 백만 개면 한 걸음마다 백만 개의 gradient를 다 더해야 하나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>batch</dt><dd>한 걸음에 쓰는 sample 묶음. B = 그 크기.</dd>
+    <dt>SGD</dt><dd><b>stochastic gradient descent</b>. 무작위로 고른 batch로 걷는 GD.</dd>
+    <dt>epoch</dt><dd>data 전체를 한 번 다 쓰는 것 = N / B 걸음.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cb{\mathbf g_B} = \frac{1}{\Co{B}} \sum_{i \in \text{batch}} \nabla L_i, \qquad \text{흔들림의 분산} \propto \frac{1}{\Co{B}}, \qquad \text{epoch마다 걸음} = \frac{N}{\Co{B}}"></div>
+  <ul class="legend"><li><b class="c-sig">g_B</b> batch로 잰 gradient (전체 gradient의 어림)</li><li><b class="c-miss">B</b> 작으면 걸음이 많고 흔들리고, 크면 걸음이 적고 곧다</li></ul>
+  <div class="calc">
+    <p class="h">예제: N = 256</p>
+    <div class="eq" data-tex="B = 1: 256\text{걸음/epoch} \qquad B = 32: 8\text{걸음} \qquad B = 256: 1\text{걸음}, \qquad B\ 4\text{배} \Rightarrow \text{흔들림 } \tfrac12"></div>
+    <div class="mean"><b>→ 뜻.</b> 작은 batch는 싸고 자주 걷지만 방향이 흔들린다(이 흔들림이 오히려 overfitting을 조금 막기도 한다). GPU에서는 32~256이 흔하다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g1b"><span>batch 크기</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="8" aria-pressed="true">8</button><button type="button" data-v="32" aria-pressed="false">32</button><button type="button" data-v="256" aria-pressed="false">256 (전체)</button></div>
+      <button type="button" id="b1seed">다른 무작위</button>
+    </div>
+    <canvas id="cv1" aria-label="batch마다 다른 gradient와 3 epoch의 경로"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> mini-batch = 전체 gradient를 batch로 어림해 자주 걷는다. batch가 작을수록 흔들리고, 클수록 곧지만 비싸다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="momentum"><span class="no">2</span>SGD와 momentum</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>2장 8절의 길쭉한 골짜기에서 완만한 방향으로 기어가는 문제를 어떻게 푸나? 굴러가는 공처럼 속도를 기억한다.</p></div>
+  <div class="eq" data-tex="\Cb{\mathbf v} \leftarrow \Co{\beta}\,\Cb{\mathbf v} + \Cg{\mathbf g}, \qquad \mathbf w \leftarrow \mathbf w - \eta\,\Cb{\mathbf v}"></div>
+  <ul class="legend"><li><b class="c-sig">v</b> 속도: 지난 gradient들의 누적</li><li><b class="c-miss">β</b> 기억하는 정도 (보통 0.9)</li><li><b class="c-ok">g</b> 이번 gradient</li><li>같은 방향이 계속되면 속도가 쌓인다 (굴러가는 공처럼)</li></ul>
+  <div class="calc">
+    <p class="h">예제: f = (x² + 50y²)/2, (−4.5, 1)에서 η = 0.035로 40걸음</p>
+    <div class="eq" data-tex="\text{SGD}: f = 0.59\ (x = -1.08) \qquad \text{momentum } (\Co{\beta} = 0.8): f = 0.0066"></div>
+    <div class="mean"><b>→ 뜻.</b> 같은 η인데 momentum이 90배 낮다. 완만한 x 방향으로 속도가 쌓여 빨리 간다. 대신 가파른 y 방향으로는 출렁인다: β = 0.9면 이 골짜기에서 너무 출렁여 오히려 늦다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>β <input type="range" id="i2b" min="0" max="0.95" step="0.05" value="0.8"><output id="o2b"></output></label></div>
+    <canvas id="cv2" aria-label="길쭉한 골짜기에서 SGD와 momentum의 경로"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> momentum = gradient를 쌓아 속도로 걷는다. 일관된 방향은 빨라지고, β가 너무 크면 출렁인다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="RMSprop, Adam"><span class="no">3</span>RMSprop과 Adam</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>방향마다 가파른 정도가 다르면, 방향마다 걸음 크기를 따로 정할 수 없나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>RMSprop</dt><dd><b>root mean square propagation</b>. gradient 크기의 이동 평균으로 나눈다.</dd>
+    <dt>Adam</dt><dd><b>adaptive moment estimation</b>. momentum + RMSprop.</dd>
+    <dt>m̂, v̂</dt><dd>처음 몇 걸음의 치우침(0에서 시작)을 바로잡은 m, v.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{RMSprop}: \Cv{s} \leftarrow \rho\,\Cv{s} + (1-\rho)\,g^2, \quad w \leftarrow w - \eta\,\frac{g}{\sqrt{\Cv{s}} + \varepsilon}"></div>
+  <div class="eq" data-tex="\text{Adam}: \Cb{m} \leftarrow \beta_1 \Cb{m} + (1-\beta_1)\,g, \quad \Cv{v} \leftarrow \beta_2 \Cv{v} + (1-\beta_2)\,g^2, \quad w \leftarrow w - \eta\,\frac{\Cb{\hat m}}{\sqrt{\Cv{\hat v}} + \varepsilon}"></div>
+  <ul class="legend"><li><b class="c-sig">m</b> 방향의 평균 (momentum)</li><li><b class="c-vio">s, v</b> 크기의 평균: 가파른 방향일수록 크다 → 나누면 걸음이 작아진다</li><li>Adam 기본값: η = 0.001, β₁ = 0.9, β₂ = 0.999</li></ul>
+  <div class="calc">
+    <p class="h">예제: 2절과 같은 골짜기, 40걸음</p>
+    <div class="eq" data-tex="\text{SGD } (\eta\ 0.035): 0.59 \qquad \text{RMSprop } (\eta\ 0.2): 2.8\times10^{-6} \qquad \text{Adam } (\eta\ 0.2): 0.24"></div>
+    <div class="mean"><b>→ 뜻.</b> g/√s ≈ 부호만 남긴 걸음이라 x, y가 같은 크기로 줄어든다. 이 골짜기에서는 RMSprop이 가장 빠르고, Adam은 momentum 때문에 조금 넘친다. 어떤 optimizer가 언제나 이기지는 않는다.</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv3" aria-label="같은 골짜기에서 SGD, RMSprop, Adam의 경로"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> RMSprop·Adam = 방향마다 gradient 크기로 나눠 걸음을 맞춘다. Adam은 거기에 momentum까지. 대부분의 딥러닝의 기본값.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="optimizer 비교"><span class="no">4</span>optimizer 비교</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>굽은 골짜기와 진짜 network에서는 누가 빠른가?</p></div>
+  <div class="calc">
+    <p class="h">결과: f = (1 − x)² + 5(y − x²)², (−1.5, 2.2)에서 300걸음</p>
+    <div class="eq" data-tex="\text{SGD}\ 3.2\times10^{-3} \qquad \text{momentum}\ 3.2\times10^{-6} \qquad \text{RMSprop}\ 4.7\times10^{-3} \qquad \text{Adam}\ 2.4\times10^{-8}"></div>
+    <div class="mean"><b>→ 뜻.</b> 굽은 골짜기에서는 momentum과 Adam이 바닥까지 간다. η는 optimizer마다 따로 맞춰야 한다 (같은 η로 비교하면 불공평하다).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try"><li><b>경주</b>: 네 공이 동시에 출발한다. 지도를 누르면 출발점이 바뀐다.</li></ol>
+    </div>
+    <div class="ctl"><button type="button" id="b4play">경주</button></div>
+    <canvas id="cv4" aria-label="굽은 골짜기 위 네 optimizer의 경로와 loss"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try"><li><b>네 가지 같이 학습</b>: 같은 network, 같은 출발 weight. loss가 0.37 근처 평평한 곳(plateau)에 한동안 머무는데, RMSprop·Adam이 먼저 빠져나온다.</li></ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b4brun">네 가지 같이 학습</button>
+      <button type="button" id="b4breset">처음으로</button>
+    </div>
+    <canvas id="cv4b" aria-label="moons 분류에서 네 optimizer의 학습 loss"></canvas>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 처음에는 Adam(η ≈ 0.001)으로 시작한다. 마지막 성능을 짜낼 때 SGD + momentum + schedule도 시도한다.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Adam + L2, AdamW"><span class="no">5</span>Adam + L2와 AdamW</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>5장의 L2(weight decay)를 Adam과 같이 쓰면 그대로 작동하나?</p></div>
+  <div class="eq" data-tex="\text{Adam + L2}: g \leftarrow g + \Cr{\lambda w} \;\;(\text{그 뒤 } \sqrt{\hat v}\text{로 나뉜다}), \qquad \text{AdamW}: w \leftarrow w - \eta\Big(\frac{\hat m}{\sqrt{\hat v} + \varepsilon} + \Cg{\lambda w}\Big)"></div>
+  <p class="say">말로: Adam + L2는 벌점도 gradient에 섞여 √v로 나뉜다. gradient가 큰 weight는 벌도 작게 받는다. AdamW는 벌을 따로 빼서 모든 weight에 똑같이 준다.</p>
+  <div class="stage">
+    <div class="ctl"><label>둘째 weight의 gradient 크기 <input type="range" id="i5g" min="0.01" max="10" step="0.01" value="1"><output id="o5g"></output></label></div>
+    <canvas id="cv5" aria-label="Adam + L2와 AdamW에서 weight가 줄어드는 비율"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <div class="codebox"><pre><code>torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.01)    # Adam + L2 (벌이 √v로 나뉜다)
+torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)   # AdamW (벌을 따로, 요즘 기본)</code></pre></div>
+  <p class="key"><b>기억할 한 줄.</b> Adam에 weight decay를 쓸 때는 AdamW. Transformer(14장)도 AdamW로 학습한다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="learning rate schedule"><span class="no">6</span>learning rate decay와 schedule</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>2장 6절의 "처음엔 크게, 나중엔 작게"를 어떤 모양으로?</p></div>
+  <div class="eq" data-tex="\text{step}: \eta_0\,\gamma^{\lfloor t/s \rfloor}, \qquad \text{exp}: \eta_0\,\gamma^{t}, \qquad \text{cosine}: \eta_{\min} + \tfrac12(\eta_0 - \eta_{\min})\Big(1 + \cos\frac{\pi t}{T}\Big)"></div>
+  <ul class="legend"><li><b>η₀</b> 처음 η</li><li><b>γ</b> 줄이는 비율</li><li><b>T</b> 전체 epoch</li><li><b>warmup</b> 처음 몇 epoch은 0에서 천천히 올린다 (Adam·Transformer에서 흔함)</li></ul>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g6k"><button type="button" data-v="const" aria-pressed="false">고정</button><button type="button" data-v="step" aria-pressed="false">계단</button><button type="button" data-v="exp" aria-pressed="false">지수</button><button type="button" data-v="cos" aria-pressed="true">cosine</button></div>
+      <label>warmup <input type="range" id="i6w" min="0" max="20" step="1" value="0"><output id="o6w"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="epoch마다 learning rate의 여러 schedule"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="codebox"><pre><code>opt = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=100)   # StepLR, ExponentialLR도 있다
+for epoch in range(100):
+    train_one_epoch(model, opt)       # 그 안에서 opt.step()
+    sched.step()                      # epoch마다 η를 바꾼다</code></pre></div>
+  <p class="key"><b>기억할 한 줄.</b> schedule = 처음엔 크게 걸어 빨리 가고 끝에서 작게 걸어 바닥에 앉는다. cosine(+ warmup)이 요즘 흔하다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="metaparameter 고르기"><span class="no">7</span>metaparameter 고르는 법</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>η, batch, β, λ, 층 수 … 고를 것이 많다. 어떻게 찾나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>metaparameter</dt><dd>hyperparameter라고도 한다. 학습이 아니라 사람이 정하는 설정.</dd>
+    <dt>grid search</dt><dd>값을 격자로 정해 모두 시도.</dd>
+    <dt>random search</dt><dd>범위 안에서 무작위로 시도.</dd>
+  </dl></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li>왼쪽: 9번 시도한 설정. 가로 설정만 성능을 크게 바꾼다 (진할수록 좋다). 오른쪽: 가로 설정에 대한 성능 곡선과 시도한 값.</li></ul>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g7m"><button type="button" data-v="grid" aria-pressed="true">격자</button><button type="button" data-v="random" aria-pressed="false">무작위</button></div>
+      <button type="button" id="b7seed">다른 무작위</button>
+    </div>
+    <canvas id="cv7" aria-label="격자 탐색과 무작위 탐색 비교"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>설정</th><th>흔한 시작값</th><th>훑는 법</th></tr></thead>
+    <tbody>
+      <tr><td>learning rate η</td><td>Adam 0.001, SGD 0.01~0.1</td><td>log 눈금 (10⁻⁵ ~ 10⁻¹)</td></tr>
+      <tr><td>batch 크기</td><td>32 ~ 256</td><td>2의 거듭제곱</td></tr>
+      <tr><td>momentum β, Adam β₁</td><td>0.9</td><td>거의 고정</td></tr>
+      <tr><td>weight decay λ</td><td>10⁻⁴ ~ 10⁻²</td><td>log 눈금</td></tr>
+      <tr><td>dropout p</td><td>0.1 ~ 0.5</td><td>몇 개만</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> 넓게 무작위로(η는 log 눈금) → 좋은 곳 주변을 좁혀서 다시. 판단은 dev data로 (5장).</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="정리, 약자 사전"><span class="no">8</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 mini-batch</td><td>batch로 어림해 자주 걷는다</td><td>N 256, B 32 → 8걸음/epoch</td></tr>
+      <tr><td>2 momentum</td><td>속도를 쌓아 완만한 방향으로 빨리</td><td>0.59 → 0.0066</td></tr>
+      <tr><td>3 RMSprop, Adam</td><td>방향마다 크기로 나눈다</td><td>RMSprop 2.8×10⁻⁶</td></tr>
+      <tr><td>4 비교</td><td>η를 각자 맞춰 비교, 기본은 Adam</td><td>굽은 골짜기 Adam 2.4×10⁻⁸</td></tr>
+      <tr><td>5 AdamW</td><td>weight decay를 따로</td><td>gradient 100배 → 벌 100배 차이 (Adam + L2)</td></tr>
+      <tr><td>6 schedule</td><td>처음 크게, 나중 작게</td><td>cosine: 0.1 → 0.001</td></tr>
+      <tr><td>7 고르기</td><td>무작위, log 눈금, 좁혀 가기</td><td>9번에 서로 다른 값 9개 vs 3개</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(8장 FFN)에서는 손글씨 숫자(MNIST)로 FFN 하나를 끝까지 만들고, data를 다루는 실전 문제를 본다. 이 장의 숫자는 browser의 같은 계산(ch07.js)으로 확인했다.</p>
+  <h3 id="s8b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>Adam</b></td><td>adaptive moment estimation</td><td>–</td><td>momentum + 방향마다 걸음 맞추기.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>AdamW</b></td><td>Adam with decoupled weight decay</td><td>–</td><td>weight decay를 따로 하는 Adam.</td><td class="num">5</td></tr>
+      <tr><td><b>batch</b></td><td>mini-batch</td><td>미니배치</td><td>한 걸음에 쓰는 sample 묶음.</td><td class="num">1</td></tr>
+      <tr><td><b>β, β₁, β₂, ρ</b></td><td>beta, rho</td><td>–</td><td>이동 평균이 과거를 기억하는 정도.</td><td class="num">2, 3</td></tr>
+      <tr><td><b>cosine schedule</b></td><td>cosine annealing</td><td>–</td><td>η를 cos 모양으로 줄이기.</td><td class="num">6</td></tr>
+      <tr><td><b>metaparameter</b></td><td>hyperparameter</td><td>초매개변수</td><td>사람이 정하는 학습 설정.</td><td class="num">7</td></tr>
+      <tr><td><b>momentum</b></td><td>–</td><td>모멘텀</td><td>gradient의 이동 평균으로 걷기.</td><td class="num">2</td></tr>
+      <tr><td><b>plateau</b></td><td>–</td><td>평평한 구간</td><td>loss가 한동안 안 줄어드는 곳.</td><td class="num">4</td></tr>
+      <tr><td><b>RMSprop</b></td><td>root mean square propagation</td><td>–</td><td>gradient 크기의 평균으로 나눈다.</td><td class="num">3</td></tr>
+      <tr><td><b>SGD</b></td><td>stochastic gradient descent</td><td>확률적 경사 하강법</td><td>batch로 걷는 GD.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>warmup</b></td><td>learning-rate warmup</td><td>–</td><td>처음에 η를 0에서 천천히 올리기.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch07.js"></script>
+</body>
+</html>

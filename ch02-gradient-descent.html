@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 2 · Gradient descent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="2" data-base="ch02-gradient-descent">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 2</p>
+  <h1>Gradient descent</h1>
+  <p class="topic">Derivatives and how models learn</p>
+  <p class="lead">A model "learns" by nudging its numbers, a little at a time, in the direction that makes the loss (how wrong it is) smaller. The derivative (slope) tells it which direction. This chapter leans on pictures more than words: move the figures, then check the numbers in the grey boxes.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: loss, slope, a step the other way, step size and starting point, the gradient of several variables, and the gradient multiplied through a deep network" style="font-family: var(--sans);">
+      <defs><marker id="m2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 52Q68 112 108 52" fill="none" stroke="var(--sig)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Loss</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">how wrong · section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 52Q68 112 108 52" fill="none" stroke="var(--sig)" stroke-width="2.2"/><path d="M28 59.5L68 89.5" stroke="var(--ok)" stroke-width="2.4"/><circle cx="48" cy="74.5" r="3.5" fill="var(--ok)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Slope = derivative</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 2–4</text></g></a>
+      <a href="#s5"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M28 52Q68 112 108 52" fill="none" stroke="var(--sig)" stroke-width="2.2"/><circle cx="44" cy="71" r="5" fill="var(--miss)"/><path d="M50 78L62 82" stroke="var(--ok)" stroke-width="2" marker-end="url(#m2-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Step the other way</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">gradient descent · section 5</text></g></a>
+      <a href="#s6"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 52Q68 112 108 52" fill="none" stroke="var(--sig)" stroke-width="2.2"/><path d="M36 62.8L96 67.3L45.6 72.6L85.6 76.2L58.4 80.3" fill="none" stroke="var(--miss)" stroke-width="1.6"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Step size, start</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 6–7</text></g></a>
+      <a href="#s8"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><ellipse cx="68" cy="68" rx="44" ry="18" fill="none" stroke="var(--line)" stroke-width="1.5"/><ellipse cx="68" cy="68" rx="28" ry="11" fill="none" stroke="var(--line)" stroke-width="1.5"/><ellipse cx="68" cy="68" rx="12" ry="4.5" fill="var(--sigwash)" stroke="var(--sig)" stroke-width="1.5"/><path d="M100 62L84 67" stroke="var(--fa)" stroke-width="2" marker-end="url(#m2-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Many variables</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">gradient vector · section 8</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m2-arrow)"/><path d="M304 85H318" marker-end="url(#m2-arrow)"/><path d="M456 85H470" marker-end="url(#m2-arrow)"/><path d="M608 85H622" marker-end="url(#m2-arrow)"/></g>
+      <a href="#s5"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="236" y="174" font-size="15" font-weight="700" text-anchor="middle" fill="var(--ink)">new w = w − <tspan fill="var(--miss)">η</tspan> × <tspan fill="var(--ok)">slope</tspan></text><text x="236" y="192" font-size="10.5" text-anchor="middle" fill="var(--muted)">this one line is all of deep-learning training (η = step size)</text></a>
+      <a href="#s9"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">And in a deep network?</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">the gradient is multiplied layer by layer · section 9</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="What learning means"><span class="no">1</span>What it means for a model to "learn"</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How does a computer find the line ŷ = w·x that passes closest to four points?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>parameter</dt><dd>A number the model adjusts as it learns. Here there is only one, w.</dd>
+    <dt>ŷ</dt><dd>"y hat": the model's prediction. y is the correct answer.</dd>
+    <dt>loss, L</dt><dd>How wrong the model is, as a single number. Smaller is better.</dd>
+    <dt>MSE</dt><dd><b>mean squared error</b>. A loss that squares each error and takes the mean.</dd>
+  </dl></div>
+  <div class="eq" data-tex="L(\Cb{w}) = \frac{1}{n}\sum_{i=1}^{n} \big(\Cb{w}\,x_i - y_i\big)^2"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> the number we adjust</li><li><b>w·xᵢ</b> prediction ŷ</li><li><b>yᵢ</b> correct answer</li><li><b>n</b> number of points (4)</li></ul>
+  <p class="say">In words: square the gap between prediction and answer, then take the mean.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the loss at w = 1, then one step</p>
+    <div class="eq" data-tex="L(1) = \frac{(1-2.1)^2 + (2-3.9)^2 + (3-6.2)^2 + (4-7.8)^2}{4} = \frac{1.21 + 3.61 + 10.24 + 14.44}{4} = 7.375"></div>
+    <div class="eq" data-tex="\Cb{w}_{\text{new}} = 1 - \Co{0.03} \times (\Cg{-14.85}) = 1.45 \quad\Rightarrow\quad L = 2.25"></div>
+    <div class="mean"><b>→ Meaning.</b> A slope of −14.85 says "making w larger lowers the loss". One step takes the loss from 7.38 to 2.25. After 10 steps w = 1.99, the best value.</div>
+  </div>
+  <div class="stage mapstage short">
+    <svg viewBox="0 0 780 168" role="img" aria-label="The training loop: predict, loss, slope, update, repeat" style="font-family: var(--sans);">
+      <defs><marker id="m2b-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="20" font-size="13" font-weight="600" fill="var(--ink)">The training loop: repeating this is what "learning" means</text>
+      <rect x="16" y="34" width="170" height="74" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="101" y="56" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Predict</text><text x="101" y="76" font-size="12" text-anchor="middle" fill="var(--sig)">ŷ = w·x</text><text x="101" y="96" font-size="10.5" text-anchor="middle" fill="var(--muted)">w = 1 → 1, 2, 3, 4</text>
+      <rect x="214" y="34" width="170" height="74" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="299" y="56" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Loss</text><text x="299" y="76" font-size="12" text-anchor="middle" fill="var(--fa)">L = mean(ŷ − y)²</text><text x="299" y="96" font-size="10.5" text-anchor="middle" fill="var(--muted)">7.38</text>
+      <rect x="412" y="34" width="170" height="74" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="497" y="56" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Slope</text><text x="497" y="76" font-size="12" text-anchor="middle" fill="var(--ok)">dL/dw</text><text x="497" y="96" font-size="10.5" text-anchor="middle" fill="var(--muted)">−14.85</text>
+      <rect x="610" y="34" width="154" height="74" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="687" y="56" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Update</text><text x="687" y="76" font-size="12" text-anchor="middle" fill="var(--ink)">w ← w − <tspan fill="var(--miss)">η</tspan>·<tspan fill="var(--ok)">dL/dw</tspan></text><text x="687" y="96" font-size="10.5" text-anchor="middle" fill="var(--muted)">1 → 1.45</text>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M186 71H212" marker-end="url(#m2b-arrow)"/><path d="M384 71H410" marker-end="url(#m2b-arrow)"/><path d="M582 71H608" marker-end="url(#m2b-arrow)"/><path d="M687 108V136H101V112" stroke-dasharray="4 3" marker-end="url(#m2b-arrow)"/></g>
+      <text x="394" y="154" font-size="11" text-anchor="middle" fill="var(--muted)">back to ① with the new w → the more loops, the lower the loss</text>
+    </svg>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Press <b>One step</b> a few times: the line on the left moves onto the points and the ball on the right rolls to the bottom.</li>
+        <li>Set the w slider to 3: the red errors flip to the other side and the slope turns positive.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>w <input type="range" id="i1w" min="0" max="4" step="0.01" value="1"><output id="o1w"></output></label>
+      <button type="button" id="b1step">One step</button>
+      <button type="button" id="b1run">10 steps</button>
+      <button type="button" id="b1reset">Reset</button>
+    </div>
+    <canvas id="cv1" aria-label="Four points and a line, and the loss curve as a function of w"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Learning = repeat predict → loss → slope → update until the loss is small.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Derivatives, polynomials"><span class="no">2</span>Derivatives: the slope graph</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If we measure the slope at every point of a curve, what do we get?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>f′(x)</dt><dd><b>derivative</b>. The slope at x. Read it "f prime of x".</dd>
+    <dt>h</dt><dd>A very small change in x.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cg{f'(x)} = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h} \qquad\qquad \frac{d}{dx}\,x^{\Cb{n}} = \Cb{n}\,x^{\Cb{n}-1}"></div>
+  <ul class="legend"><li><b class="c-ok">f′(x)</b> slope = rate of change for a tiny change</li><li><b class="c-sig">n</b> the power comes down in front and drops by one</li></ul>
+  <p class="say">Examples: x² → 2x, x³ → 3x², x³ − 3x → 3x² − 3 (differentiate each added term on its own).</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the slope of x³ at x = 2</p>
+    <div class="eq" data-tex="\frac{2.001^3 - 2^3}{0.001} = 12.006 \;\approx\; \Cb{3} \times 2^{\Cb{2}} = 12"></div>
+    <div class="mean"><b>→ Meaning.</b> Near x = 2, a small increase in x makes x³ grow 12 times as much. The rule and the direct measurement agree.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li><b>Draw the slope graph</b>: the tangent on top moves and draws the graph below.</li>
+        <li>On x³ − 3x, set x = ±1: the tangent is flat and the graph below reads 0.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g2f"><span>f(x)</span><button type="button" data-v="x2" aria-pressed="false">x²</button><button type="button" data-v="x3" aria-pressed="true">x³</button><button type="button" data-v="cub" aria-pressed="false">x³ − 3x</button></div>
+      <label>x <input type="range" id="i2x" min="-2.2" max="2.2" step="0.05" value="1"><output id="o2x"></output></label>
+      <button type="button" id="b2trace">Draw the slope graph</button>
+    </div>
+    <canvas id="cv2" aria-label="The function and its tangent on top, the slope graph below"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> The derivative is a new graph made of the slope at every point. For polynomials, xⁿ → n·xⁿ⁻¹.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Finding the minimum"><span class="no">3</span>Finding the bottom with derivatives</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How does the derivative show where the loss is smallest (the bottom)?</p></div>
+  <div class="eq" data-tex="\Cg{f'(x)} = 0 \quad\Rightarrow\quad \text{a bottom or a top} \qquad\quad \Cg{-} \to \Cr{+} \;=\; \text{bottom}"></div>
+  <ul class="legend"><li><b class="c-ok">green</b> f′ &lt; 0, downhill</li><li><b class="c-fa">red</b> f′ &gt; 0, uphill</li><li>where downhill turns into uphill = a bottom</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the bottom of f(x) = x² − 4x + 5</p>
+    <div class="eq" data-tex="\Cg{f'(x)} = 2x - 4 = 0 \;\Rightarrow\; x = 2, \qquad f(2) = 4 - 8 + 5 = 1"></div>
+    <div class="mean"><b>→ Meaning.</b> x = 2 is the bottom: on either side f(1.9) = f(2.1) = 1.01, higher. But when the formula is complicated we cannot solve f′ = 0 by hand. That is why the next sections walk down a little at a time.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>x³ − 3x: f′ = 0 in two places. One is a bottom, the other a top.</li>
+        <li>x⁴/4 − x²: two bottoms. This comes back in section 7.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g3f"><span>f(x)</span><button type="button" data-v="a" aria-pressed="true">x² − 4x + 5</button><button type="button" data-v="b" aria-pressed="false">x³ − 3x</button><button type="button" data-v="c" aria-pressed="false">x⁴/4 − x²</button></div>
+      <label>x <input type="range" id="i3x" min="-0.5" max="4.5" step="0.05" value="3.5"><output id="o3x"></output></label>
+    </div>
+    <canvas id="cv3" aria-label="A curve coloured by the sign of its slope, with a sign strip"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> At a bottom the slope is 0, with downhill (−) on its left and uphill (+) on its right.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Product, chain rule"><span class="no">4</span>The product rule and the chain rule</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do we differentiate a product of functions, or a function inside a function? A neural network is many functions stacked inside each other, so the chain rule is the key.</p></div>
+  <h3 id="s4a" data-short="Product rule">Product rule</h3>
+  <div class="eq" data-tex="(\Cb{u}\,\Cg{v})' = \Cb{u'}\,\Cg{v} + \Cb{u}\,\Cg{v'}"></div>
+  <p class="say">In words: when a rectangle u × v grows, the new area = the right strip (v·Δu) + the top strip (u·Δv). The corner is so small it vanishes.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: y = x²·(x + 1) at x = 2</p>
+    <div class="eq" data-tex="y' = \Cb{2x}\cdot\Cg{(x+1)} + \Cb{x^2}\cdot\Cg{1} = 4 \times 3 + 4 \times 1 = 16"></div>
+    <div class="mean"><b>→ Meaning.</b> Multiplying out y = x³ + x² and differentiating gives 3·4 + 2·2 = 16 too. Same answer.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>x <input type="range" id="i4x" min="1" max="3" step="0.1" value="2"><output id="o4x"></output></label>
+      <label>Δx <input type="range" id="i4d" min="0" max="0.5" step="0.01" value="0.3"><output id="o4d"></output></label>
+    </div>
+    <canvas id="cv4a" aria-label="A rectangle u times v and the strips it gains"></canvas>
+    <div class="read" id="r4a" aria-live="polite"></div>
+  </div>
+  <h3 id="s4b" data-short="Chain rule">A function inside a function (chain rule)</h3>
+  <div class="eq" data-tex="\frac{dy}{dx} = \Co{\frac{dy}{du}} \times \Cg{\frac{du}{dx}}"></div>
+  <p class="say">In words: when x changes a little, u changes du/dx times as much, and y changes dy/du times that. The stretch factors multiply.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: y = (3x + 1)² at x = 1 (u = 3x + 1 = 4)</p>
+    <div class="eq" data-tex="\frac{dy}{dx} = \Co{2u} \times \Cg{3} = 2 \cdot 4 \cdot 3 = 24"></div>
+    <div class="mean"><b>→ Meaning.</b> If x grows by 0.1, u grows by 0.3 and y by about 8 × 0.3 = 2.4. The three rulers below show this. Backprop in chapter 3 does this multiplication layer by layer.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>All three rulers have the same tick spacing. The shaded cell = a small change. Going down, the cell gets several times wider.</li></ul>
+    </div>
+    <div class="ctl">
+      <label>x <input type="range" id="i4bx" min="0" max="1.5" step="0.05" value="1"><output id="o4bx"></output></label>
+      <label>dx <input type="range" id="i4bd" min="0.01" max="0.3" step="0.01" value="0.1"><output id="o4bd"></output></label>
+      <button type="button" id="b4bplay">Move x</button>
+    </div>
+    <canvas id="cv4b" aria-label="Three rulers with the same scale: small changes in x, u and y"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> The derivative of nested functions = the product of each layer's stretch factor (the chain rule).</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Gradient descent in 1D"><span class="no">5</span>Gradient descent: one step against the slope</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When we cannot solve f′ = 0, how do we find the bottom? Look at the slope and walk down a little at a time.</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>GD</dt><dd><b>gradient descent</b>. Taking small steps against the slope.</dd>
+    <dt>η, LR</dt><dd>eta, the <b>learning rate</b>. The number that sets the size of each step.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cb{x}_{\text{new}} = \Cb{x} \;-\; \Co{\eta} \times \Cg{f'(x)}"></div>
+  <ul class="legend"><li><b class="c-sig">x</b> where we are now</li><li><b class="c-miss">η</b> step size</li><li><b class="c-ok">f′(x)</b> slope here</li><li><b>−</b> go the opposite way to the slope</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: f(x) = (x − 2)² + 1, x = 5, η = 0.1</p>
+    <div class="eq" data-tex="\Cg{f'(5)} = 2(5-2) = 6, \qquad \Cb{x}_{\text{new}} = 5 - \Co{0.1} \times \Cg{6} = 4.4, \qquad f:\ 10 \to 6.76"></div>
+    <div class="mean"><b>→ Meaning.</b> The slope is positive → move left. Near the bottom the slope gets smaller, so the steps shrink by themselves: 4.4, 3.92, 3.54, 3.23, …</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Press <b>One step</b> a few times: the steps get shorter (because the slope gets smaller).</li>
+        <li>Drag the ball to the left of the bottom (x = 0): the slope is negative → it moves right.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>η <input type="range" id="i5e" min="0.01" max="0.5" step="0.01" value="0.1"><output id="o5e"></output></label>
+      <button type="button" id="b5step">One step</button>
+      <button type="button" id="b5run">10 steps</button>
+      <button type="button" id="b5reset">Reset</button>
+    </div>
+    <canvas id="cv5" aria-label="A ball stepping down a loss curve, and the loss at each step"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> x ← x − η·f′(x). Big slope, big step; small slope, small step.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Learning rate"><span class="no">6</span>The learning rate: step size</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What happens when η is too small or too large?</p></div>
+  <div class="eq" data-tex="x_{t+1} - 2 \;=\; (1 - 2\Co{\eta})\,(x_t - 2)"></div>
+  <p class="say">In words: every step multiplies the distance to the bottom (x = 2) by (1 − 2η). That one factor decides between four outcomes.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>η</th><th class="num">factor 1 − 2η</th><th>What happens</th><th class="num">x after 10 steps</th></tr></thead>
+    <tbody>
+      <tr><td>0.02</td><td class="num">0.96</td><td>barely shrinks: <b class="c-miss">slow</b></td><td class="num">3.99</td></tr>
+      <tr><td>0.2</td><td class="num">0.6</td><td>shrinks steadily: <b class="c-ok">about right</b></td><td class="num">2.02</td></tr>
+      <tr><td>0.9</td><td class="num">−0.8</td><td>flips sign as it shrinks: <b class="c-miss">zigzag</b></td><td class="num">2.32</td></tr>
+      <tr><td>1.05</td><td class="num">−1.1</td><td>keeps growing: <b class="c-fa">divergence</b></td><td class="num">9.78</td></tr>
+    </tbody>
+  </table></div>
+  <div class="stage">
+    <canvas id="cv6a" aria-label="Four learning rates side by side"></canvas>
+  </div>
+  <div class="calc">
+    <p class="h">A LEARNING RATE THAT SHRINKS (dynamic learning rate)</p>
+    <div class="eq" data-tex="\Co{\eta_t} = \frac{\Co{\eta_0}}{1 + t/5}"></div>
+    <div class="mean"><b>→ Meaning.</b> Take big steps first to move fast, then small steps to settle at the bottom. Even η₀ = 1.05, which diverged before, arrives at x = 2.00 after 30 steps.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>η = 0.1 and 0.9 end up in the same place after 10 steps (2.32), because 0.8¹⁰ = (−0.8)¹⁰.</li>
+        <li>Set η = 1.05, then switch to <b>Shrinking</b>: the divergence stops.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>η <input type="range" id="i6e" min="0.01" max="1.1" step="0.01" value="0.9"><output id="o6e"></output></label>
+      <div class="seg" id="g6m"><button type="button" data-v="fixed" aria-pressed="true">Fixed</button><button type="button" data-v="decay" aria-pressed="false">Shrinking</button></div>
+    </div>
+    <canvas id="cv6b" aria-label="x at each step"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Small η is slow, large η zigzags, larger still diverges. Big steps first and small steps later is the usual fix.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Local minima, saddles"><span class="no">7</span>Local minima and saddle points</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if there are several bottoms? What if the slope is 0 but it is not a bottom?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>global minimum</dt><dd>The lowest bottom of all.</dd>
+    <dt>local minimum</dt><dd>A bottom lower than its surroundings, but not the lowest.</dd>
+    <dt>saddle point</dt><dd>A bottom in one direction and a top in another, shaped like a saddle.</dd>
+  </dl></div>
+  <h3 id="s7a" data-short="Local minimum">Two valleys</h3>
+  <div class="eq" data-tex="f(x) = \tfrac14 x^4 - x^2 + \tfrac14 x, \qquad \Cg{f'(x)} = x^3 - 2x + \tfrac14 = 0 \;\Rightarrow\; x = \Cg{-1.47},\ 0.13,\ \Co{1.35}"></div>
+  <p class="say">GD only looks at the ground under its feet, so where it starts decides which valley it ends in.</p>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Click anywhere on the curve: a ball rolls from there. The strip below shows which valley each starting point ends in.</li>
+        <li><b>20 random starts</b>: some get trapped in the side valley.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>η <input type="range" id="i7e" min="0.01" max="0.45" step="0.01" value="0.05"><output id="o7e"></output></label>
+      <button type="button" id="b7roll">Roll again</button>
+      <button type="button" id="b7rand">20 random starts</button>
+    </div>
+    <canvas id="cv7a" aria-label="A loss with two valleys and a map of starting points"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <h3 id="s7b" data-short="Saddle point">Slope 0, but not a bottom</h3>
+  <div class="eq" data-tex="f(x, y) = x^2 + \tfrac14 y^4 - \tfrac12 y^2, \qquad \nabla f(0, 0) = (0,\ 0)"></div>
+  <p class="say">At (0, 0) it is a bottom along x and a top along y. Starting with y = 0, the slope along y is always 0, so GD stops here.</p>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>A contour map: deeper blue is lower; lines join points of equal height. Orange = the path GD walked. Click the map to start there.</li></ul>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b7s0">Start at y = 0</button>
+      <button type="button" id="b7s1">Start at y = 0.001</button>
+    </div>
+    <canvas id="cv7b" aria-label="A contour map with a saddle point and the GD path"></canvas>
+    <div class="read" id="r7b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> GD only sees what is under its feet. Depending on the start it can get trapped in a local minimum or linger near a saddle point.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="2D, gradient vector"><span class="no">8</span>Two variables: the gradient vector</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With several parameters, what is "the slope"? (Real models have millions.)</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>∂f/∂x</dt><dd><b>partial derivative</b>. The slope when only x changes a little and everything else stays put.</dd>
+    <dt>∇f</dt><dd>"nabla f", the <b>gradient</b>. The vector of partial derivatives. It points straight uphill.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cr{\nabla f} = \Big(\Cb{\frac{\partial f}{\partial x}},\ \Cv{\frac{\partial f}{\partial y}}\Big), \qquad (x, y)_{\text{new}} = (x, y) - \Co{\eta}\,\Cr{\nabla f}"></div>
+  <ul class="legend"><li><b class="c-sig">∂f/∂x</b> slope across</li><li><b class="c-vio">∂f/∂y</b> slope up and down</li><li><b class="c-fa">∇f</b> the two combined = uphill</li><li><b>−η∇f</b> one step the other way</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: f = x² + 3y², one step from (2, 1) with η = 0.1</p>
+    <div class="eq" data-tex="\Cr{\nabla f} = (\Cb{2x},\ \Cv{6y}) = (\Cb{4},\ \Cv{6}), \qquad (2, 1) - \Co{0.1}\,(4, 6) = (1.6,\ 0.4), \qquad f:\ 7 \to 3.04"></div>
+    <div class="mean"><b>→ Meaning.</b> The same rule as in 1D, applied to each variable. ∇f is perpendicular to the contour lines (it is the steepest direction).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Click anywhere on the map: the red ∇f is always perpendicular to the contours, and the orange path heads the other way.</li>
+        <li>Stretch k = 10: a narrow valley makes the path zigzag (normalization in chapter 6 and momentum in chapter 7 fix this).</li>
+        <li><b>Ascent</b>: follow the same arrow uphill (the loss grows).</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>stretch k <input type="range" id="i8k" min="1" max="10" step="0.5" value="3"><output id="o8k"></output></label>
+      <label>η <input type="range" id="i8e" min="0.01" max="0.3" step="0.01" value="0.1"><output id="o8e"></output></label>
+      <div class="seg" id="g8d"><button type="button" data-v="-1" aria-pressed="true">Descent (go down)</button><button type="button" data-v="1" aria-pressed="false">Ascent (go up)</button></div>
+      <button type="button" id="b8run">Roll again</button>
+    </div>
+    <canvas id="cv8" aria-label="The gradient and the GD path on the contours of f = x² + k y²"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> The gradient is an arrow made of the slope along each variable. Walking against it updates every parameter at once.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Vanishing, exploding"><span class="no">9</span>A first look at vanishing and exploding gradients</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With 10 layers, the chain rule multiplies 10 stretch factors together. What if each factor is below 1, or above 1?</p></div>
+  <div class="eq" data-tex="\Cr{g_1} = \underbrace{\Co{a} \times \Co{a} \times \cdots \times \Co{a}}_{10\text{ layers}} \times g_{\text{out}} = \Co{a}^{10}\, g_{\text{out}}"></div>
+  <ul class="legend"><li><b class="c-miss">a</b> one layer's factor</li><li><b class="c-fa">g₁</b> the gradient reaching layer 1</li><li><b>g_out</b> the gradient at the output (= 1)</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE</p>
+    <div class="eq" data-tex="0.25^{10} = 9.5 \times 10^{-7}, \qquad 1^{10} = 1, \qquad 1.5^{10} = 57.7"></div>
+    <div class="mean"><b>→ Meaning.</b> 0.25 is the largest slope a sigmoid has. With 10 layers, layer 1 gets about a millionth of the gradient and barely learns (vanishing). With 1.5 it is 58 times too big (exploding). The fixes come in chapter 6 (ReLU, normalization) and chapter 9 (weight initialization).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>a <input type="range" id="i9a" min="0.2" max="1.6" step="0.05" value="0.25"><output id="o9a"></output></label>
+      <div class="seg" id="g9p"><button type="button" data-v="0.25" aria-pressed="true">0.25 (sigmoid)</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="1.5" aria-pressed="false">1.5</button></div>
+      <button type="button" id="b9play">Send backprop</button>
+    </div>
+    <canvas id="cv9" aria-label="Gradient bars that shrink or grow as they are multiplied layer by layer"></canvas>
+    <div class="read" id="r9" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> In a deep network the gradient is a power of the per-layer factor. Stray a little from 1 and it vanishes or explodes.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="Summary, dictionary"><span class="no">10</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Learning</td><td>repeat predict → loss → slope → update</td><td>w 1 → 1.45, L 7.38 → 2.25</td></tr>
+      <tr><td>2 Derivative</td><td>the slope at each point, xⁿ → n·xⁿ⁻¹</td><td>(x³)′ = 12 at x = 2</td></tr>
+      <tr><td>3 Bottom</td><td>f′ = 0, downhill → uphill</td><td>x² − 4x + 5: x = 2, f = 1</td></tr>
+      <tr><td>4 Chain rule</td><td>nested functions = product of stretch factors</td><td>(3x + 1)²: 8 × 3 = 24</td></tr>
+      <tr><td>5 GD</td><td>x ← x − η·f′(x)</td><td>5 − 0.1 × 6 = 4.4</td></tr>
+      <tr><td>6 Learning rate</td><td>distance × (1 − 2η): slow, right, zigzag, diverge</td><td>η 1.05 → × (−1.1)</td></tr>
+      <tr><td>7 Local min, saddle</td><td>the start decides whether GD gets trapped or stalls</td><td>x = −1.47 vs 1.35</td></tr>
+      <tr><td>8 Gradient</td><td>arrow of partial derivatives, perpendicular to contours</td><td>∇f(2, 1) = (4, 6)</td></tr>
+      <tr><td>9 Vanishing</td><td>multiplied at every layer, it vanishes or explodes</td><td>0.25¹⁰ = 9.5 × 10⁻⁷</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 3, ANN - I) joins neurons into a network and uses this chapter's chain rule to compute backprop. Every example number was checked in NumPy and PyTorch with <code>tools/ch02_numbers.py</code>.</p>
+  <h3 id="s10b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>∂f/∂x</b></td><td>partial derivative</td><td>The slope when only x changes a little.</td><td class="num">8</td></tr>
+      <tr><td><b>∇f</b></td><td>gradient (nabla)</td><td>The arrow of partial derivatives; points straight uphill.</td><td class="num">8</td></tr>
+      <tr><td><b>η, LR</b></td><td>eta, learning rate</td><td>The size of one step.</td><td class="num">5, 6</td></tr>
+      <tr><td><b>f′(x)</b></td><td>derivative</td><td>The slope at x.</td><td class="num">2</td></tr>
+      <tr><td><b>GD</b></td><td>gradient descent</td><td>Small steps against the slope.</td><td class="num">5</td></tr>
+      <tr><td><b>global / local minimum</b></td><td>–</td><td>The lowest bottom / a bottom lower only than its surroundings.</td><td class="num">7</td></tr>
+      <tr><td><b>loss, L</b></td><td>loss function</td><td>How wrong the model is, as one number.</td><td class="num">1</td></tr>
+      <tr><td><b>MSE</b></td><td>mean squared error</td><td>The mean of the squared errors.</td><td class="num">1</td></tr>
+      <tr><td><b>parameter</b></td><td>–</td><td>A number the model adjusts as it learns.</td><td class="num">1</td></tr>
+      <tr><td><b>saddle point</b></td><td>–</td><td>Slope 0, but a top in one direction.</td><td class="num">7</td></tr>
+      <tr><td><b>ŷ</b></td><td>y hat</td><td>The model's prediction.</td><td class="num">1</td></tr>
+      <tr><td><b>vanishing / exploding gradient</b></td><td>–</td><td>Multiplied at every layer, the gradient shrinks towards 0 or grows too large.</td><td class="num">9</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="ch02.js"></script>
+</body>
+</html>

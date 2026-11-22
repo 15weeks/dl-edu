@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 8장 · FFN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="8" data-base="ch08-ffn-data-gpu">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 8장</p>
+  <h1>FFN</h1>
+  <p class="topic">MNIST, data 다루기, GPU</p>
+  <p class="lead">손글씨 숫자(MNIST)로 FFN 하나를 끝까지 만든다. 이 page 안에 실제로 학습한 network가 들어 있어서, 숫자를 그리면 바로 답한다. 그리고 FFN이 못 하는 것, data를 다루는 실전 문제(크기, 불균형, 늘리기), 저장과 GPU를 본다.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: 사진 펼치기, 숫자 분류, 섞기와 밀기, universal approximation, data 다루기" style="font-family: var(--sans);">
+      <defs><marker id="m8-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="24" y="48" width="36" height="36" fill="var(--wash)" stroke="var(--ink)"/><path d="M34 54V78M48 54C40 54 40 66 48 66S56 78 46 78" fill="none" stroke="var(--ink)" stroke-width="2"/><path d="M64 66H74" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m8-arrow)"/><rect x="78" y="62" width="36" height="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① 펼치기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">28×28 → 784 · 1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M30 80C32 50 56 50 52 64S30 82 56 82" fill="none" stroke="var(--ink)" stroke-width="2.4"/><g fill="var(--sig)" opacity="0.6"><rect x="70" y="76" width="5" height="8"/><rect x="77" y="80" width="5" height="4"/><rect x="84" y="50" width="5" height="34"/><rect x="91" y="78" width="5" height="6"/><rect x="98" y="80" width="5" height="4"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② 숫자 그리기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">MNIST · 2~3절</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--ink)"><rect x="26" y="50" width="6" height="6"/><rect x="40" y="64" width="6" height="6"/><rect x="30" y="76" width="6" height="6"/><rect x="48" y="52" width="6" height="6"/><rect x="44" y="80" width="6" height="6"/></g><path d="M74 48V88" stroke="var(--line)"/><path d="M86 52V84M98 52C88 52 88 66 98 66S106 84 92 84" fill="none" stroke="var(--fa)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ 섞기, 밀기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">FFN의 한계 · 4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 80C40 80 42 56 56 56S70 86 84 86S100 52 110 52" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3"/><path d="M26 80H40V58H56V70H70V86H86V60H110" fill="none" stroke="var(--miss)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ 무엇이든 흉내</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">universal approx. · 5절</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><circle cx="50" cy="68" r="20" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M50 68L50 48A20 20 0 0 1 58 50Z" fill="var(--miss)"/><g fill="var(--ink)" opacity="0.7"><rect x="80" y="50" width="12" height="12"/><rect x="96" y="56" width="12" height="12" transform="rotate(12 102 62)"/><rect x="84" y="70" width="12" height="12" transform="rotate(-10 90 76)"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ data 다루기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">크기, 불균형, 늘리기 · 6~7절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m8-arrow)"/><path d="M304 85H318" marker-end="url(#m8-arrow)"/><path d="M456 85H470" marker-end="url(#m8-arrow)"/><path d="M608 85H622" marker-end="url(#m8-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑥ 가장 좋은 model 저장하기, 불러오기, GPU로 옮기기</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">8절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="FFN"><span class="no">1</span>fully-connected·feedforward network</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>사진을 3장의 network에 넣으려면? 숫자 784개를 한 줄로 늘어놓는다.</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>FFN</dt><dd><b>feedforward network</b>. 앞으로만 흐르는 network. 3~7장의 network가 모두 이것.</dd>
+    <dt>fully-connected</dt><dd>(완전 연결). 앞 층의 모든 값이 다음 층의 모든 neuron에 이어진다. PyTorch의 nn.Linear.</dd>
+    <dt>MNIST</dt><dd><b>Modified National Institute of Standards and Technology</b> 손글씨 숫자 data. 학습 60,000장, 시험 10,000장, 28 × 28.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\underbrace{28 \times 28}_{\text{사진}} \;\to\; \underbrace{\mathbf x \in \mathbb R^{784}}_{\text{한 줄}}, \qquad \text{1층 parameter} = 784 \times n_1 + n_1"></div>
+  <div class="calc">
+    <p class="h">예제: 이 장의 network (2×2 평균으로 14 × 14 = 196 입력)</p>
+    <div class="eq" data-tex="196\text{-}64\text{-}10:\quad (196 \times 64 + 64) + (64 \times 10 + 10) = 12{,}608 + 650 = 13{,}258"></div>
+    <div class="mean"><b>→ 뜻.</b> 펼치는 순간 "어느 칸이 어느 칸 옆인지"라는 정보는 network에게 따로 주어지지 않는다. 4절에서 이것이 무슨 뜻인지 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b1play">펼치기 / 접기</button>
+      <button type="button" id="b1next">다른 숫자</button>
+    </div>
+    <canvas id="cv1" aria-label="28 × 28 숫자 사진을 784칸 한 줄로 펼치는 animation"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> FFN에 사진을 넣으려면 pixel을 한 줄로 펼친다. 모든 입력이 모든 neuron에 이어진다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="MNIST 분류"><span class="no">2</span>MNIST 숫자 분류</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습한 network는 내가 그린 숫자도 맞힐까?</p></div>
+  <div class="eq" data-tex="x' = \frac{x}{255}\;(0 \sim 1), \qquad \mathbf h = \text{ReLU}(W_1 \mathbf x + \mathbf b_1), \qquad \Co{\mathbf p} = \text{softmax}(W_2 \mathbf h + \mathbf b_2)"></div>
+  <ul class="legend"><li>pixel 0~255를 0~1로 (6장 정규화)</li><li><b class="c-miss">p</b> 숫자 10개의 확률</li></ul>
+  <div class="calc">
+    <p class="h">결과 (PyTorch, Adam, 5 epoch)</p>
+    <div class="eq" data-tex="\text{시험 10,000장 정확도} = \Cg{95.8\%} \quad (\text{weight를 8-bit로 줄여 page에 넣어도 같다})"></div>
+    <div class="mean"><b>→ 뜻.</b> 작은 network(parameter 1만 3천 개)도 손글씨를 꽤 읽는다. 그린 숫자는 MNIST처럼 크기를 맞추고 무게 중심을 가운데로 옮긴 뒤 넣는다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li><b>지우기</b> 후 왼쪽 칸에 숫자를 그린다: 가운데 그림이 network가 실제로 보는 것, 오른쪽이 답.</li>
+        <li>4와 9, 3과 8처럼 비슷한 숫자를 애매하게 그려 본다: 막대 두 개가 비슷해진다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b2clear">지우기</button>
+      <button type="button" id="b2sample">시험 숫자 불러오기</button>
+    </div>
+    <canvas id="cv2" aria-label="숫자를 그리는 칸, network 입력, 확률 막대"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> MNIST FFN = 픽셀을 0~1로, 펼쳐서, 196-64-10, softmax. 약 96%.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="학습 전후 weight"><span class="no">3</span>학습 전후의 weight</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습하면 weight는 어떻게 바뀌나? 숨은 neuron은 무엇을 보나?</p></div>
+  <div class="calc">
+    <p class="h">1층 weight의 표준편차</p>
+    <div class="eq" data-tex="\text{학습 전}: 0.041 \;\Rightarrow\; \text{학습 뒤}: 0.20"></div>
+    <div class="mean"><b>→ 뜻.</b> 처음에는 작고 고른 무작위 값. 학습하면서 넓게 퍼진다. 한 neuron의 weight 196개를 다시 14 × 14로 접으면 "이 자리에 잉크가 있으면 +, 없어야 하면 −"인 무늬가 보인다.</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv3" aria-label="학습 전후 weight 분포와 숨은 neuron의 weight 무늬"></canvas>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 학습 = 작은 무작위 weight가 숫자 모양에 맞는 무늬로 바뀌는 것.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="섞기, 밀기"><span class="no">4</span>섞은 MNIST, 민 MNIST: FFN이 못 보는 것</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>FFN은 숫자의 "모양"을 아는가, 아니면 "몇 번째 칸"만 아는가?</p></div>
+  <div class="calc">
+    <p class="h">결과 (PyTorch, 같은 network)</p>
+    <div class="eq" data-tex="\text{pixel을 섞어서 학습}: 95.7\% \;(\text{원래 } 95.8\%) \qquad \text{1칸 밀기}: 92.2\%,\ \ 2\text{칸}: 73.8\%,\ \ 3\text{칸}: 49.1\%"></div>
+    <div class="mean"><b>→ 뜻.</b> 사람은 섞은 그림을 못 읽지만 FFN은 똑같이 배운다: 칸 사이의 이웃 관계를 쓰지 않기 때문. 그래서 숫자를 2~3칸만 밀어도 무너진다. 이 둘을 고친 것이 CNN(11장)이다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b4next">다른 숫자</button></div>
+    <canvas id="cv4a" aria-label="원래 숫자와 pixel을 섞은 숫자"></canvas>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>오른쪽으로 민 칸 <input type="range" id="i4s" min="0" max="6" step="1" value="0"><output id="o4s"></output></label>
+      <button type="button" id="b4bnext">다른 숫자</button>
+    </div>
+    <canvas id="cv4b" aria-label="민 숫자, network의 답, 민 칸 수에 따른 정확도"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> FFN은 "몇 번째 칸에 잉크가 있나"로 본다. 이웃 관계도, 옮겨도 같은 모양이라는 것도 모른다.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="universal approximation"><span class="no">5</span>universal approximation theorem</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>숨은 층 하나짜리 FFN은 어떤 함수까지 흉내 낼 수 있나?</p></div>
+  <div class="eq" data-tex="f(x) \;\approx\; b + \sum_{i=1}^{\Co{N}} \Cb{v_i}\,\sigma\big(w_i x + c_i\big) \qquad (\Co{N}\text{이 충분히 크면 원하는 만큼 가깝게})"></div>
+  <ul class="legend"><li>sigmoid 하나 = 계단 하나</li><li><b class="c-sig">v</b> 계단 높이</li><li><b class="c-miss">N</b> 계단 수 = 숨은 neuron 수</li></ul>
+  <div class="calc">
+    <p class="h">예제: 목표 곡선을 계단 N개로 (가장 큰 오차)</p>
+    <div class="eq" data-tex="\Co{N} = 2: 0.49 \qquad \Co{N} = 6: 0.12 \qquad \Co{N} = 12: 0.072 \qquad \Co{N} = 25: 0.010"></div>
+    <div class="mean"><b>→ 뜻.</b> "흉내 낼 수 있다"는 보장일 뿐, 그 weight를 학습으로 찾을 수 있다거나 적은 data로 일반화한다는 보장은 아니다. 그래서 실제로는 깊고 구조가 있는 network를 쓴다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>숨은 neuron N <input type="range" id="i5n" min="1" max="30" step="1" value="6"><output id="o5n"></output></label></div>
+    <canvas id="cv5" aria-label="sigmoid 계단 N개의 합으로 곡선 흉내 내기"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 숨은 층 하나로도 어떤 연속 함수든 흉내 낼 수 있다 (neuron이 충분하면). 찾기 쉽다는 뜻은 아니다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Dataset, data 크기"><span class="no">6</span>Dataset과 DataLoader, data 크기와 network 크기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>내 data를 PyTorch에 넣는 틀은? data가 많아야 하나, network가 커야 하나?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch
+from torch.utils.data import Dataset, DataLoader
+class Digits(Dataset):                       # 내 data의 틀: 세 함수만 쓴다
+    def __init__(self, X, y): self.X, self.y = X, y
+    def __len__(self): return len(self.X)    # 몇 개?
+    def __getitem__(self, i): return self.X[i], self.y[i]   # i번째 하나
+ds = Digits(torch.rand(1000, 196), torch.randint(0, 10, (1000,)))
+dl = DataLoader(ds, batch_size=64, shuffle=True)
+xb, yb = next(iter(dl))
+print(len(ds), len(dl), xb.shape, yb.shape)</code></pre></div>
+    <div class="codebox"><pre><code>1000 16 torch.Size([64, 196]) torch.Size([64])</code></pre></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: 학습 data 수 × 숨은 neuron 수 (PyTorch, 3000걸음씩)</p>
+    <div class="eq" data-tex="\text{숨은 8개}: 78.8\% \to 90.8\% \qquad \text{숨은 256개}: 81.6\% \to 96.7\% \qquad (300\text{장} \to 60{,}000\text{장})"></div>
+    <div class="mean"><b>→ 뜻.</b> data가 적으면 network를 키워도 소용이 적다(81.6% vs 78.8%). data가 많아지면 큰 network가 그것을 살린다(96.7% vs 90.8%). 둘은 함께 키운다.</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv6" aria-label="학습 data 수와 network 너비에 따른 시험 정확도"></canvas>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> Dataset = __len__ + __getitem__. 성능은 data 양과 network 크기가 함께 정한다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="불균형, augmentation"><span class="no">7</span>불균형 data, oversampling, augmentation</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"정상" 95%, "고장" 5%인 data라면? data가 모자라면 늘릴 수 있나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>recall</dt><dd>(재현율). 적은 class 가운데 찾아낸 비율 (9장에서 자세히).</dd>
+    <dt>oversampling</dt><dd>적은 class를 여러 번 넣어 수를 맞추기.</dd>
+    <dt>augmentation</dt><dd>(증강). 조금 움직이고 돌리고 잡음을 넣어 새 학습 예제를 만들기.</dd>
+  </dl></div>
+  <div class="calc">
+    <p class="h">예제: 400개 중 적은 class 5% (20개)</p>
+    <div class="eq" data-tex="\text{그대로}: \text{정확도 } 94.8\%,\ \text{recall } \Cr{0\%} \qquad \text{oversampling}: \text{정확도 } 80.2\%,\ \text{recall } \Cg{95\%}"></div>
+    <div class="mean"><b>→ 뜻.</b> 그대로 학습하면 "전부 많은 class"라고 답해서 정확도 95%를 받는다. 적은 class를 맞추려면 수를 맞추거나(oversampling), loss에 무게를 주고, 정확도 말고 recall을 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>적은 class 비율 <input type="range" id="i7m" min="5" max="50" step="5" value="5"><output id="o7m"></output></label>
+      <div class="seg" id="g7o"><span>oversampling</span><button type="button" data-v="off" aria-pressed="true">끄기</button><button type="button" data-v="on" aria-pressed="false">켜기</button></div>
+    </div>
+    <canvas id="cv7a" aria-label="불균형 data와 학습한 경계"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b7aug">다시 만들기</button></div>
+    <canvas id="cv7b" aria-label="숫자 하나를 조금씩 바꾼 새 학습 그림들"></canvas>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 불균형이면 정확도에 속는다: 수를 맞추고 recall을 본다. data가 모자라면 의미를 해치지 않는 변형으로 늘린다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="저장, GPU"><span class="no">8</span>model 저장, 가장 좋은 model 남기기, GPU</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습이 끝나면 무엇을 남기나? 어느 epoch의 것을? GPU로는 어떻게 옮기나?</p></div>
+  <div class="stage">
+    <canvas id="cv8" aria-label="epoch마다 학습·dev 정확도와 가장 좋은 epoch"></canvas>
+  </div>
+  <div class="calc">
+    <p class="h">결과 (학습 1000장으로 일부러 overfitting)</p>
+    <div class="eq" data-tex="\text{epoch 25}: \text{dev } \Cg{88.3\%} \;(\text{가장 좋음}) \qquad \text{epoch 40}: \text{학습 } 99.3\%,\ \text{dev } 88.1\%"></div>
+    <div class="mean"><b>→ 뜻.</b> 마지막 epoch가 가장 좋은 것이 아니다. dev가 가장 좋았던 순간의 weight를 따로 저장해 둔다 (early stopping의 생각).</div>
+  </div>
+  <div class="codebox"><pre><code>import copy, torch
+best_acc, best_state = 0.0, None
+for epoch in range(40):
+    train_one_epoch(net, opt)                       # 학습
+    dev_acc = evaluate(net, dev_loader)             # dev로 재기 (eval mode, 5장)
+    if dev_acc > best_acc:
+        best_acc, best_state = dev_acc, copy.deepcopy(net.state_dict())
+torch.save(best_state, "best.pt")                   # 저장: weight만 (state_dict)
+net.load_state_dict(torch.load("best.pt"))          # 불러오기
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+net = net.to(device)                                # model을 GPU로
+xb, yb = xb.to(device), yb.to(device)               # data도 같은 장치로</code></pre></div>
+  <p class="say">GPU는 같은 계산(행렬 곱)을 수천 개 동시에 한다. model과 data가 같은 장치에 있어야 하고, 바꿀 것은 .to(device) 두 줄뿐이다. Apple 칩은 "mps".</p>
+  <p class="key"><b>기억할 한 줄.</b> state_dict를 저장하고, dev가 가장 좋았던 것을 남기고, model과 data를 같은 device로.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="정리, 약자 사전"><span class="no">9</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 FFN</td><td>pixel을 한 줄로, 모두 연결</td><td>196-64-10 = 13,258</td></tr>
+      <tr><td>2 MNIST</td><td>0~1로, softmax 10개</td><td>95.8%</td></tr>
+      <tr><td>3 weight</td><td>무작위 → 숫자 모양 무늬</td><td>표준편차 0.041 → 0.20</td></tr>
+      <tr><td>4 섞기, 밀기</td><td>FFN은 이웃·이동을 모른다</td><td>섞어도 95.7%, 3칸 밀면 49.1%</td></tr>
+      <tr><td>5 UAT</td><td>숨은 층 하나로 무엇이든 흉내</td><td>N = 25: 오차 0.010</td></tr>
+      <tr><td>6 data 크기</td><td>data와 network를 함께 키운다</td><td>256개: 81.6% → 96.7%</td></tr>
+      <tr><td>7 불균형</td><td>정확도에 속지 말고 recall</td><td>5%: recall 0% → 95%</td></tr>
+      <tr><td>8 저장, GPU</td><td>가장 좋은 dev의 state_dict, .to(device)</td><td>epoch 25: 88.3%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(9장 Metrics·Init)에서는 정확도 말고 무엇을 재야 하는지와 weight를 처음에 어떻게 놓아야 하는지 본다. MNIST network와 실험은 <code>tools/ch08_numbers.py</code> (PyTorch)로 만들었다. data: MNIST (LeCun, Cortes, Burges).</p>
+  <h3 id="s9b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>augmentation</b></td><td>data augmentation</td><td>data 증강</td><td>변형으로 학습 예제를 늘린다.</td><td class="num">7</td></tr>
+      <tr><td><b>Dataset</b></td><td>torch.utils.data.Dataset</td><td>–</td><td>__len__과 __getitem__을 가진 data 틀.</td><td class="num">6</td></tr>
+      <tr><td><b>device</b></td><td>–</td><td>장치</td><td>계산할 곳: cpu, cuda(NVIDIA GPU), mps(Apple).</td><td class="num">8</td></tr>
+      <tr><td><b>early stopping</b></td><td>–</td><td>조기 종료</td><td>dev가 가장 좋을 때 멈추거나 그때를 남긴다.</td><td class="num">8</td></tr>
+      <tr><td><b>FFN</b></td><td>feedforward network</td><td>순방향 신경망</td><td>앞으로만 흐르는 완전 연결 network.</td><td class="num">1</td></tr>
+      <tr><td><b>GPU</b></td><td>graphics processing unit</td><td>그래픽 처리 장치</td><td>같은 계산을 수천 개 동시에.</td><td class="num">8</td></tr>
+      <tr><td><b>MNIST</b></td><td>Modified National Institute of Standards and Technology</td><td>–</td><td>손글씨 숫자 data, 28 × 28.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>oversampling</b></td><td>–</td><td>과표집</td><td>적은 class를 여러 번 넣는다.</td><td class="num">7</td></tr>
+      <tr><td><b>recall</b></td><td>–</td><td>재현율</td><td>적은 class 가운데 찾아낸 비율.</td><td class="num">7</td></tr>
+      <tr><td><b>state_dict</b></td><td>state dictionary</td><td>–</td><td>model의 weight 묶음. 저장 단위.</td><td class="num">8</td></tr>
+      <tr><td><b>UAT</b></td><td>universal approximation theorem</td><td>보편 근사 정리</td><td>숨은 층 하나로 연속 함수를 흉내 낼 수 있다.</td><td class="num">5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch08_data.js"></script>
+<script src="ch08.js"></script>
+</body>
+</html>

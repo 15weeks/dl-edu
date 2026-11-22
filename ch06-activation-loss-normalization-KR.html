@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 6장 · Activation·Loss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="6" data-base="ch06-activation-loss-normalization">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 6장</p>
+  <h1>Activation·Loss</h1>
+  <p class="topic">activation function, loss function, normalization</p>
+  <p class="lead">network를 만들 때 고르는 세 가지: 층 사이의 비선형(activation), 틀린 정도를 재는 법(loss), 숫자 크기를 맞추는 법(normalization). 각각 무엇을 고르면 학습이 잘 되는지 그림으로 비교한다.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: activation, vanishing gradient, loss, data normalization, batch normalization, wine data" style="font-family: var(--sans);">
+      <defs><marker id="m6-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 86C56 86 60 52 110 52" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M26 80H66L110 46" fill="none" stroke="var(--ok)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① activation</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sigmoid, ReLU … · 1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--fa)" opacity="0.8"><rect x="30" y="86" width="10" height="4"/><rect x="44" y="82" width="10" height="8"/><rect x="58" y="74" width="10" height="16"/><rect x="72" y="62" width="10" height="28"/><rect x="86" y="46" width="10" height="44"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② 사라지는 gradient</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">2절</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M28 46C34 84 60 90 108 92" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M28 62C60 70 80 84 108 92" fill="none" stroke="var(--miss)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ loss 고르기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">MSE vs CE · 3~4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><ellipse cx="44" cy="70" rx="20" ry="7" fill="none" stroke="var(--sig)" stroke-width="1.6"/><ellipse cx="44" cy="70" rx="10" ry="3.5" fill="none" stroke="var(--sig)" stroke-width="1.6"/><circle cx="94" cy="70" r="14" fill="none" stroke="var(--ok)" stroke-width="1.6"/><circle cx="94" cy="70" r="7" fill="none" stroke="var(--ok)" stroke-width="1.6"/><path d="M66 70H78" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m6-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ 크기 맞추기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">z-score · 5절</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g fill="var(--sig)"><circle cx="76" cy="54" r="3"/><circle cx="88" cy="54" r="3"/><circle cx="96" cy="54" r="3"/><circle cx="104" cy="54" r="3"/></g><g fill="var(--ok)"><circle cx="40" cy="84" r="3"/><circle cx="56" cy="84" r="3"/><circle cx="68" cy="84" r="3"/><circle cx="82" cy="84" r="3"/></g><path d="M90 60L66 78" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m6-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ batch norm</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">층 안에서 맞추기 · 6절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m6-arrow)"/><path d="M304 85H318" marker-end="url(#m6-arrow)"/><path d="M456 85H470" marker-end="url(#m6-arrow)"/><path d="M608 85H622" marker-end="url(#m6-arrow)"/></g>
+      <a href="#s4"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">문제 → 출력층 → loss → PyTorch 이름 짝 표</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">4절</text></a>
+      <a href="#s7"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">진짜 data: 포도주 1599병</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">정규화 하나로 62% → 75% · 7절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="activation 함수들"><span class="no">1</span>activation function: sigmoid, tanh, ReLU 계열</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>4장에서 비선형이 꼭 필요하다고 했다. 어떤 모양들이 있고 무엇이 다른가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>ReLU</dt><dd><b>rectified linear unit</b>. max(0, z).</dd>
+    <dt>ELU</dt><dd><b>exponential linear unit</b>. z &lt; 0에서 eᶻ − 1.</dd>
+    <dt>GELU</dt><dd><b>Gaussian error linear unit</b>. 매끄러운 ReLU.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\sigma(z) = \frac{1}{1+e^{-z}}, \qquad \tanh(z) = \frac{e^{z}-e^{-z}}{e^{z}+e^{-z}}, \qquad \text{ReLU}(z) = \max(0,\, z)"></div>
+  <ul class="legend"><li>파란 선 = f(z)</li><li>초록 선 = 기울기 f′(z): backprop 때 곱해지는 수 (3장 6절)</li></ul>
+  <div class="calc">
+    <p class="h">예제: z = −2, 0, 2에서 기울기</p>
+    <div class="eq" data-tex="\sigma':\ 0.105,\ \Cr{0.25},\ 0.105 \qquad \tanh':\ 0.071,\ 1,\ 0.071 \qquad \text{ReLU}':\ 0,\ 0,\ \Cg{1}"></div>
+    <div class="mean"><b>→ 뜻.</b> sigmoid의 기울기는 아무리 커도 0.25. ReLU는 켜져 있으면 늘 1이라 gradient를 줄이지 않는다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g1f"><button type="button" data-v="sigmoid" aria-pressed="true">sigmoid</button><button type="button" data-v="tanh" aria-pressed="false">tanh</button><button type="button" data-v="relu" aria-pressed="false">ReLU</button><button type="button" data-v="leaky" aria-pressed="false">LeakyReLU</button><button type="button" data-v="elu" aria-pressed="false">ELU</button><button type="button" data-v="gelu" aria-pressed="false">GELU</button></div>
+      <label>z <input type="range" id="i1z" min="-4" max="4" step="0.1" value="1"><output id="o1z"></output></label>
+    </div>
+    <canvas id="cv1" aria-label="activation 함수와 그 기울기"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 숨은 층에는 보통 ReLU 계열(요즘 Transformer는 GELU). sigmoid는 출력층의 확률(0~1)에 쓴다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="미분, vanishing"><span class="no">2</span>activation의 기울기와 사라지는 gradient</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>2장 9절의 "층마다 곱해지는 gradient"를 진짜 network에서 재면?</p></div>
+  <div class="eq" data-tex="\frac{\partial L}{\partial W_1} \;\propto\; \Cg{f'(z_1)}\, W_2^{\!\top}\, \Cg{f'(z_2)}\, W_3^{\!\top} \cdots \Cg{f'(z_{10})}\, \cdots"></div>
+  <p class="say">말로: 1층의 gradient에는 위 층들의 f′가 모두 곱해진다. f′ ≤ 0.25인 sigmoid를 10번 곱하면 사라진다.</p>
+  <div class="calc">
+    <p class="h">결과 (숨은 층 10개 × 32, 지금 browser에서 계산)</p>
+    <div class="eq" data-tex="\frac{\text{1층의 gradient}}{\text{10층의 gradient}}:\quad \text{sigmoid}\ \Cr{1.6\times10^{-6}}, \qquad \tanh\ 1.3, \qquad \text{ReLU}\ 3.0"></div>
+    <div class="mean"><b>→ 뜻.</b> sigmoid 숨은 층 10개면 1층은 10층보다 백만 배 느리게 배운다. tanh와 ReLU(알맞은 초기화와 함께, 9장)는 비슷하게 유지한다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g2a"><span>숨은 층</span><button type="button" data-v="sigmoid" aria-pressed="true">sigmoid</button><button type="button" data-v="tanh" aria-pressed="false">tanh</button><button type="button" data-v="relu" aria-pressed="false">ReLU</button></div>
+      <button type="button" id="b2seed">새 weight로</button>
+    </div>
+    <canvas id="cv2" aria-label="층마다 gradient 크기 막대"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 깊은 network의 숨은 층에 sigmoid를 쓰면 입력 쪽 층이 배우지 못한다. ReLU 계열이 기본이 된 이유.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="loss 함수들"><span class="no">3</span>loss function: MSE, BCE, cross-entropy</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>분류에 MSE를 쓰면 안 되나? 두 loss가 같은 예측을 얼마나 다르게 벌하나?</p></div>
+  <div class="eq" data-tex="\text{MSE}: (\Co{p} - y)^2 \;\Rightarrow\; \frac{\partial L}{\partial z} = 2(\Co{p} - y)\,\Cr{p(1-p)}, \qquad \text{BCE}: -\ln \Co{p} \;\Rightarrow\; \frac{\partial L}{\partial z} = \Co{p} - y"></div>
+  <ul class="legend"><li><b class="c-miss">p</b> = σ(z), 정답 1에 준 확률</li><li><b class="c-fa">p(1 − p)</b> sigmoid의 기울기: 크게 틀리면(p ≈ 0) 0에 가깝다</li><li>BCE는 이 항이 약분되어 사라진다</li></ul>
+  <div class="calc">
+    <p class="h">예제: 정답 1인데 p = 0.01 (자신 있게 틀림)</p>
+    <div class="eq" data-tex="\text{MSE}: L = 0.98,\ \left|\tfrac{\partial L}{\partial z}\right| = \Cr{0.020} \qquad \text{BCE}: L = 4.61,\ \left|\tfrac{\partial L}{\partial z}\right| = \Cg{0.99}"></div>
+    <div class="mean"><b>→ 뜻.</b> 가장 크게 틀렸을 때 MSE는 거의 고치지 않는다(힘 0.02). cross-entropy는 50배 세게 고친다. 그래서 분류에는 cross-entropy.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>p <input type="range" id="i3p" min="0.005" max="0.995" step="0.005" value="0.01"><output id="o3p"></output></label></div>
+    <canvas id="cv3" aria-label="MSE와 cross-entropy의 loss와 기울기"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 회귀는 MSE, 분류는 cross-entropy. sigmoid/softmax 출력에 MSE를 쓰면 크게 틀린 sample에서 gradient가 사라진다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="출력층과 loss 짝"><span class="no">4</span>출력층과 loss 짝 맞추기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>문제마다 마지막 층과 loss를 무엇으로? PyTorch에서는 이름이 무엇인가?</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>문제</th><th>출력 neuron</th><th>출력 activation</th><th>loss</th><th>PyTorch (출력층에 activation 없이)</th></tr></thead>
+    <tbody>
+      <tr><td>회귀 (숫자)</td><td>1개 (또는 숫자 수)</td><td>없음</td><td>MSE</td><td><code>nn.MSELoss()</code></td></tr>
+      <tr><td>2 class</td><td>1개</td><td>sigmoid</td><td>BCE</td><td><code>nn.BCEWithLogitsLoss()</code></td></tr>
+      <tr><td>K class (하나만 정답)</td><td>K개</td><td>softmax</td><td>cross-entropy</td><td><code>nn.CrossEntropyLoss()</code></td></tr>
+      <tr><td>K개 표시 (여러 개 정답 가능)</td><td>K개</td><td>sigmoid 각각</td><td>BCE 각각</td><td><code>nn.BCEWithLogitsLoss()</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch
+z = torch.tensor([[2.0, 1.0, 0.0]]); t = torch.tensor([0])  # 점수 3개, 정답 class 0
+print(torch.nn.CrossEntropyLoss()(z, t))                  # softmax를 안에서 한다
+print(torch.nn.NLLLoss()(torch.log_softmax(z, 1), t))     # 같은 값
+zb, yb = torch.tensor([0.5]), torch.tensor([1.0])
+print(torch.nn.BCEWithLogitsLoss()(zb, yb))               # sigmoid를 안에서 한다
+print(torch.nn.BCELoss()(torch.sigmoid(zb), yb))          # 같은 값</code></pre></div>
+    <div class="codebox"><pre><code>tensor(0.4076)
+tensor(0.4076)
+tensor(0.4741)
+tensor(0.4741)</code></pre></div>
+  </div>
+  <p class="say">"…WithLogits"와 CrossEntropyLoss는 sigmoid·softmax를 loss 안에서 더 안정적으로 계산한다. 그래서 model의 마지막 층에는 activation을 넣지 않는다 (점수 z = logit 그대로).</p>
+  <p class="key"><b>기억할 한 줄.</b> 회귀 → 출력 그대로 + MSE, 분류 → logit 그대로 + CrossEntropyLoss / BCEWithLogitsLoss.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="data normalization"><span class="no">5</span>data normalization: z-score, min-max</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>입력 숫자의 크기가 서로 다르면(키 170 cm, 시력 1.2) 왜 학습이 느려지나?</p></div>
+  <div class="eq" data-tex="\text{z-score}: \Cg{x'} = \frac{x - \Cb{\mu}}{\Co{\sigma}}, \qquad \text{min-max}: \Cg{x'} = \frac{x - \min}{\max - \min}"></div>
+  <ul class="legend"><li><b class="c-sig">μ</b> 평균</li><li><b class="c-miss">σ</b> 표준편차</li><li>z-score 뒤: 평균 0, 표준편차 1. min-max 뒤: 0~1</li><li>μ, σ는 학습 data로만 계산하고 시험 data에도 같은 값을 쓴다</li></ul>
+  <div class="calc">
+    <p class="h">예제: x₂가 x₁보다 5배 큰 두 특성으로 직선 회귀</p>
+    <div class="eq" data-tex="\text{원래}: \text{등고선 길이 비 } \Cr{5.6{:}1} \Rightarrow 139\text{걸음} \qquad \text{z-score}: \text{길이 비 } \Cg{1.2{:}1} \Rightarrow 2\text{걸음}"></div>
+    <div class="mean"><b>→ 뜻.</b> (w*까지 1% 안으로 가는 걸음 수, η = 가능한 최대의 50%) 크기가 다르면 loss 골짜기가 길쭉해진다. 가파른 방향에 맞춰 η를 작게 해야 해서, 완만한 방향으로는 기어간다 (2장 8절의 지그재그).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>η (가능한 최대의 몇 %) <input type="range" id="i5f" min="0.1" max="0.95" step="0.05" value="0.5"><output id="o5f"></output></label></div>
+    <canvas id="cv5" aria-label="정규화 전후의 loss 등고선과 gradient descent 경로"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 입력 특성의 크기를 맞추면(z-score) loss 골짜기가 둥글어져 GD가 곧게 빨리 간다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="batch normalization"><span class="no">6</span>batch normalization</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>입력만이 아니라 숨은 층의 값도 크기를 맞출 수 있나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>BN</dt><dd><b>batch normalization</b>. 층 안에서 batch마다 평균 0, 분산 1로 맞추는 층.</dd>
+    <dt>γ, β</dt><dd>gamma, beta. 맞춘 뒤 다시 늘이고(γ) 옮기는(β) 학습되는 parameter.</dd>
+    <dt>ε</dt><dd>epsilon. 0으로 나누지 않으려고 더하는 아주 작은 수.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\hat x = \frac{x - \Cb{\mu_B}}{\sqrt{\Co{\sigma_B^2} + \varepsilon}}, \qquad y = \Cg{\gamma}\,\hat x + \Cg{\beta}"></div>
+  <ul class="legend"><li><b class="c-sig">μ_B</b>, <b class="c-miss">σ²_B</b> 이번 batch의 평균과 분산</li><li><b class="c-ok">γ, β</b> network가 배우는 수: 필요하면 원래 크기로 되돌릴 수도 있다</li></ul>
+  <div class="calc">
+    <p class="h">예제: batch = [2, 4, 6, 8]</p>
+    <div class="eq" data-tex="\mu_B = 5,\ \sigma_B^2 = 5 \;\Rightarrow\; \hat x = \frac{[2, 4, 6, 8] - 5}{\sqrt 5} = [-1.342,\ -0.447,\ 0.447,\ 1.342]"></div>
+    <div class="mean"><b>→ 뜻.</b> 학습 때는 batch마다 그 batch의 통계, 평가 때는 학습 내내 모아 둔 running 평균·분산을 쓴다 (5장 6절의 train/eval).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b6next">다음 batch</button>
+      <label>γ <input type="range" id="i6g" min="0.2" max="3" step="0.1" value="1"><output id="o6g"></output></label>
+      <label>β <input type="range" id="i6b" min="-3" max="3" step="0.1" value="0"><output id="o6b"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="batch 하나의 값이 정규화되고 γ, β로 옮겨지는 모습"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> batch norm = 층 안에서 batch마다 평균 0·분산 1로 맞춘 뒤 γ, β로 조절. 학습이 빨라지고 learning rate를 크게 쓸 수 있다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="wine quality"><span class="no">7</span>예제 data: wine quality</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>진짜 data에서 정규화는 얼마나 차이를 내나?</p></div>
+  <p class="say">빨간 포도주 1599병의 화학 측정값 11개(산도, 당, 알코올 …)와 맛 점수. 점수 &gt; 5면 "좋음"(1)으로 2 class 분류. 출처: Cortez et al., Decision Support Systems, 2009 (UCI Machine Learning Repository, CC BY 4.0).</p>
+  <div class="calc">
+    <p class="h">결과 (PyTorch, 11-16-1, SGD η 0.01, 60 epoch, seed 5개)</p>
+    <div class="eq" data-tex="\text{원래 단위}: \Cr{62\%} \qquad \text{z-score}: \Cg{75\%}"></div>
+    <div class="mean"><b>→ 뜻.</b> 같은 network, 같은 학습인데 정규화 하나로 13%p. total sulfur dioxide(표준편차 33)와 density(0.002)는 크기가 만 배 넘게 다르다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b7run">둘 다 학습</button>
+      <button type="button" id="b7reset">처음으로</button>
+    </div>
+    <canvas id="cv7" aria-label="특성 11개의 크기와 정규화 전후의 시험 정확도"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 표 형태의 data는 학습 전에 특성마다 z-score부터. 가장 싸고 효과가 큰 처리다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="정리, 약자 사전"><span class="no">8</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 activation</td><td>숨은 층은 ReLU 계열, 출력 확률은 sigmoid/softmax</td><td>σ′ ≤ 0.25, ReLU′ = 1</td></tr>
+      <tr><td>2 vanishing</td><td>f′가 층마다 곱해진다</td><td>sigmoid 10층: 1.6×10⁻⁶</td></tr>
+      <tr><td>3 loss</td><td>분류는 cross-entropy</td><td>p = 0.01: 힘 0.02 vs 0.99</td></tr>
+      <tr><td>4 짝 맞추기</td><td>logit 그대로 + CrossEntropyLoss</td><td>0.4076 = 0.4076</td></tr>
+      <tr><td>5 normalization</td><td>z-score로 골짜기를 둥글게</td><td>139걸음 → 2걸음</td></tr>
+      <tr><td>6 batch norm</td><td>층 안에서 batch마다 맞춘다</td><td>[2, 4, 6, 8] → ±1.342, ±0.447</td></tr>
+      <tr><td>7 wine</td><td>정규화 하나로 큰 차이</td><td>62% → 75%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(7장 Optimizer)에서는 mini-batch, momentum, Adam, learning rate schedule로 gradient descent를 빠르고 안정되게 만든다. 숫자는 <code>tools/ch06_numbers.py</code> (PyTorch)와 browser 계산으로 확인했다.</p>
+  <h3 id="s8b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>BCE</b></td><td>binary cross-entropy</td><td>이진 교차 엔트로피</td><td>2 class 분류의 loss.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>BN</b></td><td>batch normalization</td><td>배치 정규화</td><td>층 안에서 batch마다 크기를 맞춘다.</td><td class="num">6</td></tr>
+      <tr><td><b>ELU</b></td><td>exponential linear unit</td><td>–</td><td>z &lt; 0에서 eᶻ − 1인 activation.</td><td class="num">1</td></tr>
+      <tr><td><b>GELU</b></td><td>Gaussian error linear unit</td><td>–</td><td>매끄러운 ReLU. Transformer의 기본.</td><td class="num">1</td></tr>
+      <tr><td><b>logit</b></td><td>–</td><td>로짓</td><td>sigmoid·softmax에 넣기 전 점수 z.</td><td class="num">4</td></tr>
+      <tr><td><b>min-max</b></td><td>min-max scaling</td><td>최소·최대 맞추기</td><td>0~1로 늘이기.</td><td class="num">5</td></tr>
+      <tr><td><b>MSE</b></td><td>mean squared error</td><td>평균 제곱 오차</td><td>회귀의 loss.</td><td class="num">3</td></tr>
+      <tr><td><b>NLL</b></td><td>negative log-likelihood</td><td>음의 로그 우도</td><td>−ln(정답 확률). log_softmax와 짝.</td><td class="num">4</td></tr>
+      <tr><td><b>ReLU</b></td><td>rectified linear unit</td><td>–</td><td>max(0, z).</td><td class="num">1, 2</td></tr>
+      <tr><td><b>running mean/var</b></td><td>–</td><td>누적 평균·분산</td><td>BN이 평가 때 쓰는 통계.</td><td class="num">6</td></tr>
+      <tr><td><b>z-score</b></td><td>standard score</td><td>표준 점수</td><td>(x − 평균) ÷ 표준편차.</td><td class="num">5, 7</td></tr>
+      <tr><td><b>γ, β, ε</b></td><td>gamma, beta, epsilon</td><td>–</td><td>BN의 늘이기, 옮기기, 아주 작은 수.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch06_data.js"></script>
+<script src="ch06.js"></script>
+</body>
+</html>

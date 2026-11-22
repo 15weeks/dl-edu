@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 6 · Activation &amp; Loss</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="6" data-base="ch06-activation-loss-normalization">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 6</p>
+  <h1>Activation &amp; Loss</h1>
+  <p class="topic">Activation functions, loss functions and normalization</p>
+  <p class="lead">Three choices you make when building a network: the nonlinearity between layers (activation), how to measure wrongness (loss), and how to put numbers on a common scale (normalization). We compare, in pictures, which choices make training work.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: activations, vanishing gradients, loss, data normalization, batch normalization, wine data" style="font-family: var(--sans);">
+      <defs><marker id="m6-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 86C56 86 60 52 110 52" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M26 80H66L110 46" fill="none" stroke="var(--ok)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Activations</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sigmoid, ReLU … · section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--fa)" opacity="0.8"><rect x="30" y="86" width="10" height="4"/><rect x="44" y="82" width="10" height="8"/><rect x="58" y="74" width="10" height="16"/><rect x="72" y="62" width="10" height="28"/><rect x="86" y="46" width="10" height="44"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Vanishing gradient</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 2</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M28 46C34 84 60 90 108 92" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M28 62C60 70 80 84 108 92" fill="none" stroke="var(--miss)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Choosing a loss</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">MSE vs CE · sections 3–4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><ellipse cx="44" cy="70" rx="20" ry="7" fill="none" stroke="var(--sig)" stroke-width="1.6"/><ellipse cx="44" cy="70" rx="10" ry="3.5" fill="none" stroke="var(--sig)" stroke-width="1.6"/><circle cx="94" cy="70" r="14" fill="none" stroke="var(--ok)" stroke-width="1.6"/><circle cx="94" cy="70" r="7" fill="none" stroke="var(--ok)" stroke-width="1.6"/><path d="M66 70H78" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m6-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Common scale</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">z-score · section 5</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g fill="var(--sig)"><circle cx="76" cy="54" r="3"/><circle cx="88" cy="54" r="3"/><circle cx="96" cy="54" r="3"/><circle cx="104" cy="54" r="3"/></g><g fill="var(--ok)"><circle cx="40" cy="84" r="3"/><circle cx="56" cy="84" r="3"/><circle cx="68" cy="84" r="3"/><circle cx="82" cy="84" r="3"/></g><path d="M90 60L66 78" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m6-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Batch norm</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">inside the layers · section 6</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m6-arrow)"/><path d="M304 85H318" marker-end="url(#m6-arrow)"/><path d="M456 85H470" marker-end="url(#m6-arrow)"/><path d="M608 85H622" marker-end="url(#m6-arrow)"/></g>
+      <a href="#s4"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Task → output layer → loss → PyTorch name</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 4</text></a>
+      <a href="#s7"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Real data: 1599 red wines</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">normalization alone: 62% → 75% · section 7</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Activation functions"><span class="no">1</span>Activation functions: sigmoid, tanh, the ReLU family</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Chapter 4 said a nonlinearity is a must. What shapes are there, and how do they differ?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>ReLU</dt><dd><b>rectified linear unit</b>. max(0, z).</dd>
+    <dt>ELU</dt><dd><b>exponential linear unit</b>. eᶻ − 1 for z &lt; 0.</dd>
+    <dt>GELU</dt><dd><b>Gaussian error linear unit</b>. A smooth ReLU.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\sigma(z) = \frac{1}{1+e^{-z}}, \qquad \tanh(z) = \frac{e^{z}-e^{-z}}{e^{z}+e^{-z}}, \qquad \text{ReLU}(z) = \max(0,\, z)"></div>
+  <ul class="legend"><li>blue line = f(z)</li><li>green line = slope f′(z): the number multiplied in during backprop (chapter 3, section 6)</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: slopes at z = −2, 0, 2</p>
+    <div class="eq" data-tex="\sigma':\ 0.105,\ \Cr{0.25},\ 0.105 \qquad \tanh':\ 0.071,\ 1,\ 0.071 \qquad \text{ReLU}':\ 0,\ 0,\ \Cg{1}"></div>
+    <div class="mean"><b>→ Meaning.</b> The sigmoid's slope is 0.25 at the very most. ReLU, when on, always has slope 1, so it does not shrink the gradient.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g1f"><button type="button" data-v="sigmoid" aria-pressed="true">sigmoid</button><button type="button" data-v="tanh" aria-pressed="false">tanh</button><button type="button" data-v="relu" aria-pressed="false">ReLU</button><button type="button" data-v="leaky" aria-pressed="false">LeakyReLU</button><button type="button" data-v="elu" aria-pressed="false">ELU</button><button type="button" data-v="gelu" aria-pressed="false">GELU</button></div>
+      <label>z <input type="range" id="i1z" min="-4" max="4" step="0.1" value="1"><output id="o1z"></output></label>
+    </div>
+    <canvas id="cv1" aria-label="An activation function and its slope"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Hidden layers usually use the ReLU family (GELU in today's Transformers). The sigmoid is for output probabilities (0–1).</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Slopes, vanishing"><span class="no">2</span>Activation slopes and vanishing gradients</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What does chapter 2, section 9's "gradient multiplied at every layer" look like in a real network?</p></div>
+  <div class="eq" data-tex="\frac{\partial L}{\partial W_1} \;\propto\; \Cg{f'(z_1)}\, W_2^{\!\top}\, \Cg{f'(z_2)}\, W_3^{\!\top} \cdots \Cg{f'(z_{10})}\, \cdots"></div>
+  <p class="say">In words: layer 1's gradient carries the f′ of every layer above it. Multiply a sigmoid's f′ ≤ 0.25 ten times and it vanishes.</p>
+  <div class="calc">
+    <p class="h">RESULTS (10 hidden layers × 32, computed live in the browser)</p>
+    <div class="eq" data-tex="\frac{\text{layer-1 gradient}}{\text{layer-10 gradient}}:\quad \text{sigmoid}\ \Cr{1.6\times10^{-6}}, \qquad \tanh\ 1.3, \qquad \text{ReLU}\ 3.0"></div>
+    <div class="mean"><b>→ Meaning.</b> With ten sigmoid hidden layers, layer 1 learns a million times more slowly than layer 10. tanh and ReLU (with a suitable initialization, chapter 9) keep them comparable.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g2a"><span>hidden layers</span><button type="button" data-v="sigmoid" aria-pressed="true">sigmoid</button><button type="button" data-v="tanh" aria-pressed="false">tanh</button><button type="button" data-v="relu" aria-pressed="false">ReLU</button></div>
+      <button type="button" id="b2seed">New weights</button>
+    </div>
+    <canvas id="cv2" aria-label="Bars of gradient size per layer"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Sigmoid hidden layers in a deep network leave the input-side layers unable to learn. That is why the ReLU family became the default.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Loss functions"><span class="no">3</span>Loss functions: MSE, BCE, cross-entropy</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Why not use MSE for classification? How differently do the two losses punish the same prediction?</p></div>
+  <div class="eq" data-tex="\text{MSE}: (\Co{p} - y)^2 \;\Rightarrow\; \frac{\partial L}{\partial z} = 2(\Co{p} - y)\,\Cr{p(1-p)}, \qquad \text{BCE}: -\ln \Co{p} \;\Rightarrow\; \frac{\partial L}{\partial z} = \Co{p} - y"></div>
+  <ul class="legend"><li><b class="c-miss">p</b> = σ(z), the probability given to the answer 1</li><li><b class="c-fa">p(1 − p)</b> the sigmoid's slope: near 0 when badly wrong (p ≈ 0)</li><li>in BCE this factor cancels out</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the answer is 1 but p = 0.01 (confidently wrong)</p>
+    <div class="eq" data-tex="\text{MSE}: L = 0.98,\ \left|\tfrac{\partial L}{\partial z}\right| = \Cr{0.020} \qquad \text{BCE}: L = 4.61,\ \left|\tfrac{\partial L}{\partial z}\right| = \Cg{0.99}"></div>
+    <div class="mean"><b>→ Meaning.</b> When it is most wrong, MSE barely corrects it (a push of 0.02). Cross-entropy pushes 50 times harder. So classification uses cross-entropy.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>p <input type="range" id="i3p" min="0.005" max="0.995" step="0.005" value="0.01"><output id="o3p"></output></label></div>
+    <canvas id="cv3" aria-label="Loss and slope for MSE and cross-entropy"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Regression: MSE. Classification: cross-entropy. MSE on a sigmoid or softmax output loses its gradient on the samples that are most wrong.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Output layer and loss"><span class="no">4</span>Matching the output layer and the loss</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Which last layer and which loss for each task, and what are they called in PyTorch?</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Task</th><th>Output neurons</th><th>Output activation</th><th>Loss</th><th>PyTorch (no activation on the output layer)</th></tr></thead>
+    <tbody>
+      <tr><td>regression (a number)</td><td>1 (or one per number)</td><td>none</td><td>MSE</td><td><code>nn.MSELoss()</code></td></tr>
+      <tr><td>2 classes</td><td>1</td><td>sigmoid</td><td>BCE</td><td><code>nn.BCEWithLogitsLoss()</code></td></tr>
+      <tr><td>K classes (one correct)</td><td>K</td><td>softmax</td><td>cross-entropy</td><td><code>nn.CrossEntropyLoss()</code></td></tr>
+      <tr><td>K labels (several can be correct)</td><td>K</td><td>a sigmoid each</td><td>a BCE each</td><td><code>nn.BCEWithLogitsLoss()</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch
+z = torch.tensor([[2.0, 1.0, 0.0]]); t = torch.tensor([0])  # 3 scores, correct class 0
+print(torch.nn.CrossEntropyLoss()(z, t))                  # does the softmax inside
+print(torch.nn.NLLLoss()(torch.log_softmax(z, 1), t))     # the same value
+zb, yb = torch.tensor([0.5]), torch.tensor([1.0])
+print(torch.nn.BCEWithLogitsLoss()(zb, yb))               # does the sigmoid inside
+print(torch.nn.BCELoss()(torch.sigmoid(zb), yb))          # the same value</code></pre></div>
+    <div class="codebox"><pre><code>tensor(0.4076)
+tensor(0.4076)
+tensor(0.4741)
+tensor(0.4741)</code></pre></div>
+  </div>
+  <p class="say">"…WithLogits" and CrossEntropyLoss compute the sigmoid or softmax inside the loss, more stably. So the model's last layer gets no activation (the score z, the logit, goes straight in).</p>
+  <p class="key"><b>One line to remember.</b> Regression → raw output + MSE; classification → raw logits + CrossEntropyLoss / BCEWithLogitsLoss.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Data normalization"><span class="no">5</span>Data normalization: z-score, min-max</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Why does training slow down when the inputs have very different sizes (height 170 cm, eyesight 1.2)?</p></div>
+  <div class="eq" data-tex="\text{z-score}: \Cg{x'} = \frac{x - \Cb{\mu}}{\Co{\sigma}}, \qquad \text{min-max}: \Cg{x'} = \frac{x - \min}{\max - \min}"></div>
+  <ul class="legend"><li><b class="c-sig">μ</b> mean</li><li><b class="c-miss">σ</b> standard deviation</li><li>after z-score: mean 0, SD 1. After min-max: 0–1</li><li>compute μ and σ on the training data only, and use the same values on the test data</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: linear regression on two features, x₂ five times larger than x₁</p>
+    <div class="eq" data-tex="\text{original}: \text{contour axis ratio } \Cr{5.6{:}1} \Rightarrow 139\text{ steps} \qquad \text{z-score}: \text{ratio } \Cg{1.2{:}1} \Rightarrow 2\text{ steps}"></div>
+    <div class="mean"><b>→ Meaning.</b> (Steps to get within 1% of w*, η = 50% of the largest stable value.) Different sizes stretch the loss valley. η must be small enough for the steep direction, so progress along the gentle direction is a crawl (the zigzag of chapter 2, section 8).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>η (% of the largest stable value) <input type="range" id="i5f" min="0.1" max="0.95" step="0.05" value="0.5"><output id="o5f"></output></label></div>
+    <canvas id="cv5" aria-label="Loss contours and gradient descent paths before and after normalization"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Putting the input features on a common scale (z-score) rounds the loss valley, so GD goes straight and fast.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Batch normalization"><span class="no">6</span>Batch normalization</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can we rescale not just the inputs but the hidden layers' values too?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>BN</dt><dd><b>batch normalization</b>. A layer that rescales each batch to mean 0, variance 1.</dd>
+    <dt>γ, β</dt><dd>gamma, beta. Learned parameters that stretch (γ) and shift (β) the result again.</dd>
+    <dt>ε</dt><dd>epsilon. A tiny number added so we never divide by 0.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\hat x = \frac{x - \Cb{\mu_B}}{\sqrt{\Co{\sigma_B^2} + \varepsilon}}, \qquad y = \Cg{\gamma}\,\hat x + \Cg{\beta}"></div>
+  <ul class="legend"><li><b class="c-sig">μ_B</b>, <b class="c-miss">σ²_B</b> this batch's mean and variance</li><li><b class="c-ok">γ, β</b> learned by the network: it can even undo the rescaling if that helps</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: batch = [2, 4, 6, 8]</p>
+    <div class="eq" data-tex="\mu_B = 5,\ \sigma_B^2 = 5 \;\Rightarrow\; \hat x = \frac{[2, 4, 6, 8] - 5}{\sqrt 5} = [-1.342,\ -0.447,\ 0.447,\ 1.342]"></div>
+    <div class="mean"><b>→ Meaning.</b> During training each batch uses its own statistics; during evaluation the running mean and variance collected over training are used (train/eval, chapter 5, section 6).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b6next">Next batch</button>
+      <label>γ <input type="range" id="i6g" min="0.2" max="3" step="0.1" value="1"><output id="o6g"></output></label>
+      <label>β <input type="range" id="i6b" min="-3" max="3" step="0.1" value="0"><output id="o6b"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="A batch of values being normalised and then moved by γ and β"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Batch norm = inside a layer, rescale each batch to mean 0, variance 1, then adjust with γ and β. Training gets faster and tolerates larger learning rates.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Wine quality"><span class="no">7</span>Example data: wine quality</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How much difference does normalization make on real data?</p></div>
+  <p class="say">Eleven chemical measurements (acidity, sugar, alcohol …) and a taste score for 1599 red wines. A score &gt; 5 counts as "good" (1): two-class classification. Source: Cortez et al., Decision Support Systems, 2009 (UCI Machine Learning Repository, CC BY 4.0).</p>
+  <div class="calc">
+    <p class="h">RESULTS (PyTorch, 11-16-1, SGD η 0.01, 60 epochs, 5 seeds)</p>
+    <div class="eq" data-tex="\text{original units}: \Cr{62\%} \qquad \text{z-score}: \Cg{75\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> Same network, same training; normalization alone adds 13 points. Total sulfur dioxide (SD 33) and density (0.002) differ in size by more than ten thousand times.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b7run">Train both</button>
+      <button type="button" id="b7reset">Reset</button>
+    </div>
+    <canvas id="cv7" aria-label="The sizes of the 11 features and test accuracy before and after normalization"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> For tabular data, z-score every feature before training. It is the cheapest step with the biggest effect.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Summary, dictionary"><span class="no">8</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Activation</td><td>ReLU family for hidden layers, sigmoid/softmax for output probabilities</td><td>σ′ ≤ 0.25, ReLU′ = 1</td></tr>
+      <tr><td>2 Vanishing</td><td>f′ is multiplied at every layer</td><td>sigmoid, 10 layers: 1.6×10⁻⁶</td></tr>
+      <tr><td>3 Loss</td><td>cross-entropy for classification</td><td>p = 0.01: push 0.02 vs 0.99</td></tr>
+      <tr><td>4 Matching</td><td>raw logits + CrossEntropyLoss</td><td>0.4076 = 0.4076</td></tr>
+      <tr><td>5 Normalization</td><td>z-score rounds the valley</td><td>139 steps → 2</td></tr>
+      <tr><td>6 Batch norm</td><td>rescale each batch inside the layers</td><td>[2, 4, 6, 8] → ±1.342, ±0.447</td></tr>
+      <tr><td>7 Wine</td><td>normalization alone makes a big difference</td><td>62% → 75%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 7, Optimizer) makes gradient descent fast and stable with mini-batches, momentum, Adam and learning-rate schedules. The numbers were checked with <code>tools/ch06_numbers.py</code> (PyTorch) and the browser's own calculation.</p>
+  <h3 id="s8b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>BCE</b></td><td>binary cross-entropy</td><td>The loss for two-class classification.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>BN</b></td><td>batch normalization</td><td>Rescales each batch inside a layer.</td><td class="num">6</td></tr>
+      <tr><td><b>ELU</b></td><td>exponential linear unit</td><td>An activation that is eᶻ − 1 for z &lt; 0.</td><td class="num">1</td></tr>
+      <tr><td><b>GELU</b></td><td>Gaussian error linear unit</td><td>A smooth ReLU; the Transformer default.</td><td class="num">1</td></tr>
+      <tr><td><b>logit</b></td><td>–</td><td>The score z before sigmoid or softmax.</td><td class="num">4</td></tr>
+      <tr><td><b>min-max</b></td><td>min-max scaling</td><td>Stretch onto 0–1.</td><td class="num">5</td></tr>
+      <tr><td><b>MSE</b></td><td>mean squared error</td><td>The loss for regression.</td><td class="num">3</td></tr>
+      <tr><td><b>NLL</b></td><td>negative log-likelihood</td><td>−ln(probability of the answer); pairs with log_softmax.</td><td class="num">4</td></tr>
+      <tr><td><b>ReLU</b></td><td>rectified linear unit</td><td>max(0, z).</td><td class="num">1, 2</td></tr>
+      <tr><td><b>running mean/var</b></td><td>–</td><td>The statistics BN uses during evaluation.</td><td class="num">6</td></tr>
+      <tr><td><b>z-score</b></td><td>standard score</td><td>(x − mean) ÷ standard deviation.</td><td class="num">5, 7</td></tr>
+      <tr><td><b>γ, β, ε</b></td><td>gamma, beta, epsilon</td><td>BN's stretch, shift and tiny number.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch06_data.js"></script>
+<script src="ch06.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu · 차례</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="0" data-base="index">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 차례</p>
+  <h1>딥러닝을 그림으로 따라가기</h1>
+  <p class="lead">대학교 1학년이 읽을 수 있게 쓴 딥러닝 공부 page 15장. 장마다 질문 → 약자 → 아이디어 → 손으로 하는 예제 → 직접 움직여 보는 그림 → 기억할 한 줄 순서로 간다. 1~13장과 15장의 GAN은 Udemy 딥러닝 강의의 목록을 뼈대로 삼았고, 14장 Transformer와 15장 diffusion은 새로 쓴다. 왼쪽 메뉴 맨 위의 English를 누르면 영어판으로 바뀐다.</p>
+  <div class="stage mapstage" id="homeMap"></div>
+</header>
+
+<section id="plan">
+  <h2 data-short="15장 계획"><span class="no">§</span>15장 계획</h2>
+  <p class="note">장 이름을 누르면 다루는 것, 목표, 절 목록, interactive 그림이 펼쳐진다.</p>
+  <div class="ctl"><button id="toggleAll" type="button">모두 펼치기</button></div>
+  <div class="plan" id="planList"></div>
+</section>
+
+<section id="howto">
+  <h2 data-short="이 page들 쓰는 법"><span class="no">§</span>이 page들 쓰는 법</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>하고 싶은 것</th><th>방법</th></tr></thead>
+    <tbody>
+      <tr><td>열기</td><td>한글판은 이름 끝이 <code>-KR.html</code>(<code>index-KR.html</code>, <code>ch01-intro-KR.html</code>), 영어판은 <code>-KR</code>이 없는 이름이다. 두 번 누르면 Chrome에서 열린다. 인터넷이 없어도 수식과 그림이 나온다(글꼴만 기본 글꼴로 바뀐다).</td></tr>
+      <tr><td>언어 바꾸기</td><td>왼쪽 메뉴 맨 위의 English / 한국어 단추. 같은 page의 다른 언어판으로 간다.</td></tr>
+      <tr><td>장과 절 이동</td><td>왼쪽 메뉴. 지금 장의 절 목록이 펼쳐지고, 읽는 절이 파랗게 표시된다. 왼쪽 위 ☰ 버튼으로 메뉴를 접고 편다(접은 상태를 기억한다).</td></tr>
+      <tr><td>다른 page로 이동</td><td>왼쪽 메뉴 맨 아래 "다른 페이지" 목록. <code>assets/dl.js</code>의 <code>DLEDU_LINKS</code>에 한 줄을 더하면 모든 장에 함께 나타난다.</td></tr>
+      <tr><td>계획 고치기, 새 장 추가</td><td>장 이름, 다루는 것, 절, 그림 계획은 모두 <code>assets/plan.js</code> 한 곳에 있다. 새 장은 <code>chNN-이름.html</code>(영어), <code>chNN-이름-KR.html</code>(한글), <code>chNN.js</code>(그림, 두 언어 같이)를 만들고 plan.js에서 <code>ready: true</code>로 바꾼다. <code>node tools/plan_to_md.js</code>를 돌리면 PLAN_KR.md, PLAN_EN.md가 다시 만들어진다.</td></tr>
+      <tr><td>예제 숫자 확인</td><td><code>tools/ch01_numbers.py</code>, <code>tools/ch01_sims.py</code>를 실행하면 page의 숫자를 NumPy, SciPy, PyTorch로 다시 계산한다.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 3 · ANN - I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="3" data-base="ch03-neural-networks">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 3</p>
+  <h1>ANN - I</h1>
+  <p class="topic">From the perceptron to backprop</p>
+  <p class="lead">One neuron → a layer → a network. We follow one small network (2-2-1) all the way through in numbers: predict with the forward pass, measure the loss, compute gradients backwards with backprop, then update.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: one neuron, the boundary line, forward pass, loss, backprop, then the training loop and PyTorch" style="font-family: var(--sans);">
+      <defs><marker id="m3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker><marker id="m3-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--fa)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s2"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g stroke="var(--sig)" stroke-width="1.6"><path d="M30 52L66 70M30 70L66 70M30 88L66 70"/></g><circle cx="78" cy="70" r="12" fill="var(--wash)" stroke="var(--ink)"/><path d="M90 70H108" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① One neuron</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 1–2</text></g></a>
+      <a href="#s3"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><circle cx="40" cy="58" r="4" fill="var(--sig)"/><circle cx="50" cy="80" r="4" fill="var(--sig)"/><circle cx="34" cy="84" r="4" fill="var(--sig)"/><rect x="86" y="51" width="7" height="7" fill="var(--miss)"/><rect x="96" y="72" width="7" height="7" fill="var(--miss)"/><rect x="80" y="66" width="7" height="7" fill="var(--miss)"/><path d="M58 46L72 91" stroke="var(--ink)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Boundary line</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 3</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g stroke="var(--line)" stroke-width="1.3"><path d="M34 58L68 58M34 58L68 82M34 82L68 58M34 82L68 82M68 58L100 70M68 82L100 70"/></g><g fill="var(--surface)" stroke="var(--ink)"><circle cx="34" cy="58" r="6"/><circle cx="34" cy="82" r="6"/><circle cx="68" cy="58" r="6"/><circle cx="68" cy="82" r="6"/><circle cx="100" cy="70" r="6"/></g><path d="M40 46H96" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Forward →</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">prediction ŷ · section 4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M32 46C40 84 60 90 106 92" fill="none" stroke="var(--fa)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Loss</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">how wrong · section 5</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g stroke="var(--line)" stroke-width="1.3"><path d="M34 62L68 62M34 62L68 86M34 86L68 62M34 86L68 86M68 62L100 74M68 86L100 74"/></g><g fill="var(--surface)" stroke="var(--ink)"><circle cx="34" cy="62" r="6"/><circle cx="34" cy="86" r="6"/><circle cx="68" cy="62" r="6"/><circle cx="68" cy="86" r="6"/><circle cx="100" cy="74" r="6"/></g><path d="M98 48H40" stroke="var(--fa)" stroke-width="1.8" marker-end="url(#m3-red)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ ← Backprop</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">gradients · section 6</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m3-arrow)"/><path d="M304 85H318" marker-end="url(#m3-arrow)"/><path d="M456 85H470" marker-end="url(#m3-arrow)"/><path d="M608 85H622" marker-end="url(#m3-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="236" y="174" font-size="14" font-weight="700" text-anchor="middle" fill="var(--ink)">③ → ④ → ⑤ → W ← W − <tspan fill="var(--miss)">η</tspan> ∂L/∂W, repeat</text><text x="236" y="192" font-size="10.5" text-anchor="middle" fill="var(--muted)">= training (section 7: train one yourself in the browser)</text></a>
+      <a href="#s8"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">The same in PyTorch</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">same numbers as by hand · section 8</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="What an ANN is"><span class="no">1</span>What an artificial neural network is: compared with real neurons</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Where does the name "neural network" come from, and how much does it really resemble a brain?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>ANN</dt><dd><b>artificial neural network</b>. A calculation made of neurons connected in layers.</dd>
+    <dt>neuron</dt><dd>A unit that takes inputs, adds them up and sends a signal on when the total is high enough.</dd>
+  </dl></div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 236" role="img" aria-label="Biological and artificial neurons matched: dendrites are the inputs, the cell body is the sum, the axon is the activation, the terminals are the output" style="font-family: var(--sans);">
+      <defs><marker id="m3n-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="700" fill="var(--ink)">Biological neuron</text>
+      <text x="420" y="22" font-size="13" font-weight="700" fill="var(--ink)">Artificial neuron</text>
+      <g stroke="var(--sig)" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M124 100L76 62L52 46M76 62L56 78"/><path d="M122 112L64 112L42 100M64 112L44 126"/><path d="M126 124L80 164L58 180M80 164L96 186"/></g>
+      <circle cx="150" cy="112" r="28" fill="var(--wash)" stroke="var(--ink)" stroke-width="1.6"/><circle cx="150" cy="112" r="8" fill="var(--line)"/>
+      <path d="M178 112H320" stroke="var(--ok)" stroke-width="3"/><g fill="var(--okwash)" stroke="var(--ok)"><rect x="196" y="104" width="30" height="16" rx="7"/><rect x="236" y="104" width="30" height="16" rx="7"/><rect x="276" y="104" width="30" height="16" rx="7"/></g>
+      <g stroke="var(--miss)" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M320 112L346 90M320 112L350 112M320 112L346 134"/></g><g fill="var(--miss)"><circle cx="348" cy="88" r="4"/><circle cx="353" cy="112" r="4"/><circle cx="348" cy="136" r="4"/></g>
+      <text x="40" y="208" font-size="11" fill="var(--sig)" font-weight="600">dendrites: receive signals</text>
+      <text x="150" y="160" font-size="11" fill="var(--ink)" font-weight="600" text-anchor="middle">cell body: collects</text>
+      <text x="252" y="92" font-size="11" fill="var(--ok)" font-weight="600" text-anchor="middle">axon: spikes past a threshold</text>
+      <text x="345" y="166" font-size="11" fill="var(--miss)" font-weight="600" text-anchor="middle">terminals: to the next neuron</text>
+      <g stroke="var(--sig)" stroke-width="2"><path d="M452 64L560 108M452 112L560 112M452 160L560 116"/></g>
+      <g fill="var(--surface)" stroke="var(--ink)"><circle cx="440" cy="64" r="13"/><circle cx="440" cy="112" r="13"/><circle cx="440" cy="160" r="13"/></g>
+      <text x="440" y="68" font-size="11" text-anchor="middle" fill="var(--ink)">x₁</text><text x="440" y="116" font-size="11" text-anchor="middle" fill="var(--ink)">x₂</text><text x="440" y="164" font-size="11" text-anchor="middle" fill="var(--ink)">x₃</text>
+      <text x="500" y="76" font-size="11" fill="var(--sig)" font-weight="600">× w₁</text><text x="500" y="106" font-size="11" fill="var(--sig)" font-weight="600">× w₂</text><text x="500" y="150" font-size="11" fill="var(--sig)" font-weight="600">× w₃</text>
+      <circle cx="584" cy="112" r="24" fill="var(--wash)" stroke="var(--ink)" stroke-width="1.6"/><text x="584" y="118" font-size="17" font-weight="700" text-anchor="middle" fill="var(--ink)">Σ</text>
+      <path d="M608 112H630" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#m3n-arrow)"/>
+      <rect x="634" y="88" width="64" height="48" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M642 128C660 128 662 96 690 96" fill="none" stroke="var(--ok)" stroke-width="2"/>
+      <path d="M698 112H726" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#m3n-arrow)"/>
+      <circle cx="746" cy="112" r="16" fill="var(--surface)" stroke="var(--miss)" stroke-width="1.8"/><text x="746" y="117" font-size="12" text-anchor="middle" fill="var(--ink)">ŷ</text>
+      <text x="440" y="208" font-size="11" fill="var(--sig)" font-weight="600">input × weight</text>
+      <text x="584" y="160" font-size="11" fill="var(--ink)" font-weight="600" text-anchor="middle">Σ: add up, + b</text>
+      <text x="666" y="80" font-size="11" fill="var(--ok)" font-weight="600" text-anchor="middle">activation</text>
+      <text x="746" y="150" font-size="11" fill="var(--miss)" font-weight="600" text-anchor="middle">output</text>
+      <path d="M380 112H412" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#m3n-arrow)"/>
+      <text x="396" y="228" font-size="11" text-anchor="middle" fill="var(--muted)">same colour = same role</text>
+    </svg>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Biological neuron</th><th>Artificial neuron</th></tr></thead>
+    <tbody>
+      <tr><td>Signal</td><td>electrical spikes (on or off, over time)</td><td>one real number</td></tr>
+      <tr><td>How many</td><td>about 86 billion in a human brain</td><td>a few dozen in a small model; billions of parameters in a large one</td></tr>
+      <tr><td>How it learns</td><td>synapse strengths change (not fully understood)</td><td>weights are updated by backprop (section 6)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> An artificial neuron borrows only the name and the shape: multiply, add, then pass through an activation.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Perceptron"><span class="no">2</span>One neuron (the perceptron)</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What exactly does a single neuron compute?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>w, b</dt><dd><b>weight</b> and <b>bias</b>. The numbers multiplied with the inputs and added to the sum.</dd>
+    <dt>z</dt><dd>The sum before the activation.</dd>
+    <dt>σ</dt><dd>sigma, the <b>sigmoid</b>. Squashes z into 0–1: σ(z) = 1 / (1 + e⁻ᶻ).</dd>
+    <dt>perceptron</dt><dd>A one-neuron classifier. The original uses a step function.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cr{z} = \Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b}, \qquad \Co{\hat y} = \Cg{\sigma}(\Cr{z})"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> how much each input matters</li><li><b class="c-vio">b</b> shifts the threshold</li><li><b class="c-fa">z</b> the sum</li><li><b class="c-ok">σ</b> activation</li><li><b class="c-miss">ŷ</b> output</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: x = (1, 2), w = (0.5, −0.25), b = 0.5</p>
+    <div class="eq" data-tex="\Cr{z} = 0.5 \cdot 1 + (-0.25) \cdot 2 + 0.5 = 0.5, \qquad \Co{\hat y} = \Cg{\sigma}(0.5) = \frac{1}{1 + e^{-0.5}} = 0.622"></div>
+    <div class="mean"><b>→ Meaning.</b> With a step function, z &gt; 0 gives 1 ("yes"). With a sigmoid it reads "62% likely yes".</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Make w₂ large: x₂ now decides the result. Line width = |w|, blue = positive, red = negative.</li>
+        <li>Switch step ↔ sigmoid: step jumps between 0 and 1; sigmoid joins them smoothly (so it has a derivative).</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>x₁ <input type="range" id="i2x1" min="-2" max="2" step="0.1" value="1"><output id="o2x1"></output></label>
+      <label>x₂ <input type="range" id="i2x2" min="-2" max="2" step="0.1" value="2"><output id="o2x2"></output></label>
+      <label>w₁ <input type="range" id="i2w1" min="-2" max="2" step="0.05" value="0.5"><output id="o2w1"></output></label>
+      <label>w₂ <input type="range" id="i2w2" min="-2" max="2" step="0.05" value="-0.25"><output id="o2w2"></output></label>
+      <label>b <input type="range" id="i2b" min="-2" max="2" step="0.1" value="0.5"><output id="o2b"></output></label>
+      <div class="seg" id="g2a"><button type="button" data-v="sig" aria-pressed="true">sigmoid</button><button type="button" data-v="step" aria-pressed="false">step</button></div>
+    </div>
+    <canvas id="cv2" aria-label="One neuron with two inputs, weights, a sum, an activation and an output"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> A neuron multiplies and adds (z = w·x + b), then applies an activation (ŷ = σ(z)).</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Drawing a boundary"><span class="no">3</span>The geometric view: drawing a boundary line</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When one neuron splits points into two groups, what is it doing in the picture?</p></div>
+  <div class="eq" data-tex="\Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b} = 0 \quad (\text{boundary}), \qquad \Cb{\mathbf{w}} \leftarrow \Cb{\mathbf{w}} + \Co{\eta}\,(y - \hat y)\,\mathbf{x}"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> an arrow perpendicular to the line</li><li><b class="c-vio">b</b> slides the line sideways</li><li>right-hand formula = the perceptron learning rule: turn the line towards a wrong point</li></ul>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Drag the violet dot (the tip of w): the line turns with it, always perpendicular to w.</li>
+        <li><b>Perceptron learning</b>: it picks wrong points (red rings) one at a time (black ring) and fixes the line. It finishes within a few updates.</li>
+        <li>Switch the data to XOR: no number of updates finishes. One straight line cannot split it.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g3d"><span>data</span><button type="button" data-v="blobs" aria-pressed="true">Two groups</button><button type="button" data-v="xor" aria-pressed="false">XOR</button></div>
+      <label>b <input type="range" id="i3b" min="-2" max="2" step="0.05" value="0.2"><output id="o3b"></output></label>
+      <button type="button" id="b3learn">Perceptron learning</button>
+      <button type="button" id="b3reset">Reset</button>
+    </div>
+    <canvas id="cv3" aria-label="Two groups of points, one neuron's boundary line and the w arrow"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> One neuron = one straight line (or plane). Data that no line can split needs neurons stacked in layers.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Forward propagation"><span class="no">4</span>Forward propagation: computing forwards</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Wire neurons up as 2-2-1: in what order does the prediction ŷ come out, and what shape is each step?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>2-2-1</dt><dd>2 inputs → 2 hidden neurons → 1 output.</dd>
+    <dt>h</dt><dd>The <b>hidden</b> layer's output: the layer that is neither input nor output.</dd>
+    <dt>W₁, b₁</dt><dd>Layer 1's weight matrix and bias. One row of W = one neuron.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\underbrace{\Cg{\mathbf h}}_{2\times1} = \sigma\big(\underbrace{\Cb{W_1}}_{2\times2}\,\underbrace{\mathbf x}_{2\times1} + \Cv{\mathbf b_1}\big), \qquad \underbrace{\Co{\hat y}}_{1\times1} = \sigma\big(\underbrace{\Cb{W_2}}_{1\times2}\,\Cg{\mathbf h} + \Cv{b_2}\big)"></div>
+  <p class="say">In words: each layer does "multiply, add, σ" once. One matrix product does the work of several neurons at once.</p>
+  <div class="calc">
+    <p class="h">THE NUMBERS IN THE EXAMPLE (same as the figure)</p>
+    <div class="eq" data-tex="\mathbf x = \begin{bmatrix}1\\0.5\end{bmatrix},\; \Cb{W_1} = \begin{bmatrix}0.4 & -0.6\\0.7 & 0.2\end{bmatrix},\; \Cv{\mathbf b_1} = \begin{bmatrix}0.1\\-0.3\end{bmatrix},\; \Cb{W_2} = \begin{bmatrix}0.9 & -0.5\end{bmatrix},\; \Cv{b_2} = 0.2,\; y = 1"></div>
+    <div class="mean"><b>→ Meaning.</b> The result is ŷ = 0.595: only 59% sure of the right answer, 1. Use the buttons below to go one step at a time.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b4next">Next step</button>
+      <button type="button" id="b4play">Play from the start</button>
+      <button type="button" id="b4reset">Reset</button>
+    </div>
+    <canvas id="cv4" aria-label="The forward pass of a 2-2-1 network, one step at a time"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Forward = at each layer z = Wa + b, a = σ(z). Shapes: (outputs × inputs) · (inputs × 1).</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Error, loss, cost"><span class="no">5</span>Error, loss and cost</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do the three names for "how wrong" differ?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>BCE</dt><dd><b>binary cross-entropy</b>. The loss for 0/1 classification; the same cross-entropy as chapter 1, section 7.</dd>
+    <dt>J</dt><dd>The cost: the mean loss over all samples.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\underbrace{\Cr{\hat y - y}}_{\text{error}}, \qquad \underbrace{L = -\big[\,y \ln \hat y + (1-y)\ln(1-\hat y)\,\big]}_{\text{loss: one sample}}, \qquad \underbrace{\Cg{J} = \frac1N\sum_{i=1}^{N} L_i}_{\text{cost: mean of all}}"></div>
+  <p class="say">In words: if the answer is 1 the loss is −ln ŷ, if it is 0 it is −ln(1 − ŷ). The smaller the probability given to the right answer, the faster the penalty grows.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: ŷ = 0.5947 from section 4, y = 1</p>
+    <div class="eq" data-tex="\text{error} = 0.5947 - 1 = -0.405, \qquad L = -\ln 0.5947 = 0.520"></div>
+    <div class="mean"><b>→ Meaning.</b> Training lowers the cost J. Gradient descent (chapter 2) walks down J's slope.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>ŷ <input type="range" id="i5p" min="0.01" max="0.99" step="0.005" value="0.5947"><output id="o5p"></output></label>
+      <div class="seg" id="g5y"><span>answer y</span><button type="button" data-v="1" aria-pressed="true">1</button><button type="button" data-v="0" aria-pressed="false">0</button></div>
+    </div>
+    <canvas id="cv5" aria-label="BCE loss curves and the cost of four samples"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Error = the difference (with a sign), loss = one sample's penalty, cost = the mean over all. Training lowers the cost.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Backpropagation"><span class="no">6</span>Backpropagation: gradients, working backwards</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Which way, and how much, should each of the six weights move to lower the loss? Apply the chain rule (chapter 2, section 4) layer by layer, from the output back towards the input.</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>δ</dt><dd>delta, ∂L/∂z: how much the loss changes when this neuron's sum z changes a little.</dd>
+    <dt>⊙</dt><dd>Multiply matching positions (element-wise).</dd>
+    <dt>σ′</dt><dd>The slope of the sigmoid = σ(1 − σ) = h(1 − h).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cr{\delta_2} = \hat y - y, \qquad \frac{\partial L}{\partial W_2} = \Cr{\delta_2}\,\mathbf h^{\!\top}, \qquad \Cr{\boldsymbol\delta_1} = \big(W_2^{\!\top}\Cr{\delta_2}\big) \odot \Cg{\sigma'(\mathbf z_1)}, \qquad \frac{\partial L}{\partial W_1} = \Cr{\boldsymbol\delta_1}\,\mathbf x^{\!\top}"></div>
+  <ul class="legend"><li><b class="c-fa">δ</b> the signal flowing backwards</li><li><b>W₂ᵀδ₂</b> back through the same weights</li><li><b class="c-ok">σ′</b> times the activation's slope (chain rule)</li><li><b>δ · inputᵀ</b> = that weight's gradient</li></ul>
+  <div class="calc">
+    <p class="h">RESULTS FOR THE EXAMPLE</p>
+    <div class="eq" data-tex="\Cr{\delta_2} = -0.405, \quad \frac{\partial L}{\partial W_2} = (-0.223,\ -0.252), \quad \Cr{\boldsymbol\delta_1} = (-0.090,\ 0.048), \quad \frac{\partial L}{\partial W_1} = \begin{bmatrix}-0.090 & -0.045\\0.048 & 0.024\end{bmatrix}"></div>
+    <div class="mean"><b>→ Meaning.</b> Raise the weights whose gradient is negative and lower those whose gradient is positive, and the loss drops. The layer nearer the input has smaller gradients (one more factor σ′ ≤ 0.25: chapter 2, section 9).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b6next">Next step</button>
+      <button type="button" id="b6play">Play from the start</button>
+      <button type="button" id="b6reset">Reset</button>
+    </div>
+    <canvas id="cv6" aria-label="Backprop through a 2-2-1 network, one step at a time"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Backprop sends the output's δ back through the weights, multiplying by σ′ on the way. A weight's gradient = δ × the input that came through that weight.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Training once, then many times"><span class="no">7</span>Training: update, then repeat</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Does one update with the gradient really help? What about thousands?</p></div>
+  <div class="eq" data-tex="W \leftarrow W - \Co{\eta}\,\Cr{\frac{\partial L}{\partial W}}"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: one step with η = 0.5</p>
+    <div class="eq" data-tex="\Cb{W_2}:\ (0.9,\ -0.5) - \Co{0.5}\,(\Cr{-0.223},\ \Cr{-0.252}) = (1.011,\ -0.374), \qquad \hat y:\ 0.595 \to 0.681, \qquad L:\ 0.520 \to 0.385"></div>
+    <div class="mean"><b>→ Meaning.</b> One update moves the probability of the right answer from 59% to 68%. Do this thousands of times over the whole dataset and the boundary grows (figure below).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li><b>Train</b>: XOR gets split by combining a few lines (dashed = each hidden neuron's own boundary).</li>
+        <li>Data = circles with 2 hidden neurons: it cannot get them all (88%). With 3 or more it can.</li>
+        <li>η = 0.1 is very slow; η = 3 is fast but shaky.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g7d"><span>data</span><button type="button" data-v="blobs" aria-pressed="false">Two groups</button><button type="button" data-v="xor" aria-pressed="true">XOR</button><button type="button" data-v="circles" aria-pressed="false">Circles</button></div>
+      <label>hidden neurons <input type="range" id="i7h" min="1" max="8" step="1" value="4"><output id="o7h"></output></label>
+      <label>η <input type="range" id="i7e" min="0.1" max="3" step="0.1" value="1.5"><output id="o7e"></output></label>
+      <div class="seg" id="g7l"><span>dashed</span><button type="button" data-v="on" aria-pressed="true">Show</button><button type="button" data-v="off" aria-pressed="false">Hide</button></div>
+      <button type="button" id="b7run">Train</button>
+      <button type="button" id="b7ep">100 epochs</button>
+      <button type="button" id="b7reset">Reset</button>
+    </div>
+    <canvas id="cv7" aria-label="The boundary and loss curve of a 2-h-1 network training in the browser"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Training = forward → loss → backprop → update, thousands of times over the data. Each hidden neuron is a straight line; the output mixes them into a curved boundary.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="PyTorch"><span class="no">8</span>The same calculation in PyTorch</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How many lines does PyTorch need for the hand calculation in sections 4–7?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>nn.Linear(2, 2)</dt><dd>One z = Wx + b layer (W is 2×2).</dd>
+    <dt>autograd</dt><dd><b>automatic differentiation</b>. The single line loss.backward() does all of section 6's backprop.</dd>
+    <dt>SGD</dt><dd><b>stochastic gradient descent</b>. The optimizer that does W ← W − η·gradient.</dd>
+  </dl></div>
+  <div class="codebox"><pre><code>import torch
+net = torch.nn.Sequential(
+    torch.nn.Linear(2, 2), torch.nn.Sigmoid(),   # W₁, b₁ → h
+    torch.nn.Linear(2, 1), torch.nn.Sigmoid())   # W₂, b₂ → ŷ
+with torch.no_grad():                            # put in the numbers from section 4
+    net[0].weight[:] = torch.tensor([[0.4, -0.6], [0.7, 0.2]])
+    net[0].bias[:]   = torch.tensor([0.1, -0.3])
+    net[2].weight[:] = torch.tensor([[0.9, -0.5]])
+    net[2].bias[:]   = torch.tensor([0.2])
+x, y = torch.tensor([[1.0, 0.5]]), torch.tensor([[1.0]])
+yhat = net(x)                                    # forward (section 4)
+loss = torch.nn.BCELoss()(yhat, y)               # loss (section 5)
+loss.backward()                                  # backprop (section 6)
+print(round(yhat.item(), 4), round(loss.item(), 4))
+print(net[2].weight.grad)
+print(net[0].weight.grad)
+opt = torch.optim.SGD(net.parameters(), lr=0.5)
+opt.step()                                       # update (section 7)
+print(round(net(x).item(), 4))</code></pre></div>
+  <div class="codebox"><pre><code>0.5947 0.5196
+tensor([[-0.2228, -0.2523]])
+tensor([[-0.0903, -0.0451],
+        [ 0.0476,  0.0238]])
+0.6805</code></pre></div>
+  <p class="say">The output matches the hand calculation: ŷ = 0.5947, L = 0.520, the gradients of section 6, and ŷ = 0.681 after one step.</p>
+  <p class="key"><b>One line to remember.</b> In PyTorch: net(x) = forward, loss.backward() = backprop, opt.step() = update.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Summary, dictionary"><span class="no">9</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Neuron</td><td>multiply, add, activation</td><td>–</td></tr>
+      <tr><td>2 Perceptron</td><td>z = w·x + b, ŷ = σ(z)</td><td>z = 0.5, σ = 0.622</td></tr>
+      <tr><td>3 Boundary</td><td>one neuron = one line; XOR cannot be split</td><td>two groups: done after 19 updates</td></tr>
+      <tr><td>4 Forward</td><td>σ(Wa + b) at each layer</td><td>ŷ = 0.5947</td></tr>
+      <tr><td>5 Loss</td><td>error, loss (BCE), cost (mean)</td><td>−ln 0.5947 = 0.520</td></tr>
+      <tr><td>6 Backprop</td><td>send δ back, times σ′</td><td>∂L/∂W₂ = (−0.223, −0.252)</td></tr>
+      <tr><td>7 Training</td><td>repeat W ← W − η∂L/∂W</td><td>ŷ 0.595 → 0.681</td></tr>
+      <tr><td>8 PyTorch</td><td>forward, backward(), step()</td><td>the same numbers</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 4, ANN - II) trains regression and multi-class classification and changes the number of layers and neurons. Every example number was checked in NumPy and PyTorch with <code>tools/ch03_numbers.py</code>.</p>
+  <h3 id="s9b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>ANN</b></td><td>artificial neural network</td><td>A calculation made of neurons in layers.</td><td class="num">1</td></tr>
+      <tr><td><b>autograd</b></td><td>automatic differentiation</td><td>Gradients from one call to backward().</td><td class="num">8</td></tr>
+      <tr><td><b>BCE</b></td><td>binary cross-entropy</td><td>The loss for 0/1 classification.</td><td class="num">5</td></tr>
+      <tr><td><b>cost, J</b></td><td>cost function</td><td>The mean loss over all samples.</td><td class="num">5</td></tr>
+      <tr><td><b>δ</b></td><td>delta (error signal)</td><td>∂L/∂z, the signal flowing backwards.</td><td class="num">6</td></tr>
+      <tr><td><b>epoch</b></td><td>–</td><td>One full pass over the data.</td><td class="num">7</td></tr>
+      <tr><td><b>h</b></td><td>hidden layer output</td><td>The values of the middle layer.</td><td class="num">4</td></tr>
+      <tr><td><b>perceptron</b></td><td>–</td><td>A one-neuron classifier.</td><td class="num">2, 3</td></tr>
+      <tr><td><b>SGD</b></td><td>stochastic gradient descent</td><td>The optimizer that takes one gradient step.</td><td class="num">8</td></tr>
+      <tr><td><b>σ</b></td><td>sigmoid</td><td>Squashes z into 0–1.</td><td class="num">2</td></tr>
+      <tr><td><b>w, b</b></td><td>weight, bias</td><td>The number multiplied in, the number added.</td><td class="num">2</td></tr>
+      <tr><td><b>XOR</b></td><td>exclusive or</td><td>The classic data one straight line cannot split.</td><td class="num">3, 7</td></tr>
+      <tr><td><b>⊙</b></td><td>element-wise product</td><td>Multiply two same-shaped arrays position by position.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch03.js"></script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 3장 · ANN - I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="3" data-base="ch03-neural-networks">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 3장</p>
+  <h1>ANN - I</h1>
+  <p class="topic">perceptron에서 backprop까지</p>
+  <p class="lead">neuron 하나 → 층 → 신경망. 작은 network(2-2-1) 하나를 숫자로 끝까지 따라간다: forward로 예측하고, loss를 재고, backprop으로 거꾸로 gradient를 구하고, 고친다.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: neuron 하나, 경계선, forward, loss, backprop, 그리고 학습 반복과 PyTorch" style="font-family: var(--sans);">
+      <defs><marker id="m3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker><marker id="m3-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--fa)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s2"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g stroke="var(--sig)" stroke-width="1.6"><path d="M30 52L66 70M30 70L66 70M30 88L66 70"/></g><circle cx="78" cy="70" r="12" fill="var(--wash)" stroke="var(--ink)"/><path d="M90 70H108" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① neuron 하나</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">1~2절</text></g></a>
+      <a href="#s3"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><circle cx="40" cy="58" r="4" fill="var(--sig)"/><circle cx="50" cy="80" r="4" fill="var(--sig)"/><circle cx="34" cy="84" r="4" fill="var(--sig)"/><rect x="86" y="51" width="7" height="7" fill="var(--miss)"/><rect x="96" y="72" width="7" height="7" fill="var(--miss)"/><rect x="80" y="66" width="7" height="7" fill="var(--miss)"/><path d="M58 46L72 91" stroke="var(--ink)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② 경계선</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">3절</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g stroke="var(--line)" stroke-width="1.3"><path d="M34 58L68 58M34 58L68 82M34 82L68 58M34 82L68 82M68 58L100 70M68 82L100 70"/></g><g fill="var(--surface)" stroke="var(--ink)"><circle cx="34" cy="58" r="6"/><circle cx="34" cy="82" r="6"/><circle cx="68" cy="58" r="6"/><circle cx="68" cy="82" r="6"/><circle cx="100" cy="70" r="6"/></g><path d="M40 46H96" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m3-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ forward →</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">예측 ŷ · 4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M32 46C40 84 60 90 106 92" fill="none" stroke="var(--fa)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ loss</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">얼마나 틀렸나 · 5절</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g stroke="var(--line)" stroke-width="1.3"><path d="M34 62L68 62M34 62L68 86M34 86L68 62M34 86L68 86M68 62L100 74M68 86L100 74"/></g><g fill="var(--surface)" stroke="var(--ink)"><circle cx="34" cy="62" r="6"/><circle cx="34" cy="86" r="6"/><circle cx="68" cy="62" r="6"/><circle cx="68" cy="86" r="6"/><circle cx="100" cy="74" r="6"/></g><path d="M98 48H40" stroke="var(--fa)" stroke-width="1.8" marker-end="url(#m3-red)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ ← backprop</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">gradient · 6절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m3-arrow)"/><path d="M304 85H318" marker-end="url(#m3-arrow)"/><path d="M456 85H470" marker-end="url(#m3-arrow)"/><path d="M608 85H622" marker-end="url(#m3-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="236" y="174" font-size="14" font-weight="700" text-anchor="middle" fill="var(--ink)">③ → ④ → ⑤ → W ← W − <tspan fill="var(--miss)">η</tspan> ∂L/∂W, 반복</text><text x="236" y="192" font-size="10.5" text-anchor="middle" fill="var(--muted)">= 학습 (7절: browser 안에서 직접 학습시켜 본다)</text></a>
+      <a href="#s8"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">PyTorch로 같은 계산</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">손 계산과 숫자가 같다 · 8절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="인공 신경망이란"><span class="no">1</span>인공 신경망이란: 생물 neuron과 비교</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"신경망"이라는 이름은 어디서 왔고, 실제 뇌와 얼마나 닮았나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>ANN</dt><dd><b>artificial neural network</b> (인공 신경망). neuron을 층으로 이은 계산.</dd>
+    <dt>neuron</dt><dd>(뉴런). 입력을 받아 더하고, 넘으면 신호를 내보내는 단위.</dd>
+  </dl></div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 236" role="img" aria-label="생물 neuron과 인공 neuron의 대응: dendrite는 입력, cell body는 더하기, axon은 activation, terminal은 출력" style="font-family: var(--sans);">
+      <defs><marker id="m3n-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="700" fill="var(--ink)">생물 neuron</text>
+      <text x="420" y="22" font-size="13" font-weight="700" fill="var(--ink)">인공 neuron</text>
+      <g stroke="var(--sig)" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M124 100L76 62L52 46M76 62L56 78"/><path d="M122 112L64 112L42 100M64 112L44 126"/><path d="M126 124L80 164L58 180M80 164L96 186"/></g>
+      <circle cx="150" cy="112" r="28" fill="var(--wash)" stroke="var(--ink)" stroke-width="1.6"/><circle cx="150" cy="112" r="8" fill="var(--line)"/>
+      <path d="M178 112H320" stroke="var(--ok)" stroke-width="3"/><g fill="var(--okwash)" stroke="var(--ok)"><rect x="196" y="104" width="30" height="16" rx="7"/><rect x="236" y="104" width="30" height="16" rx="7"/><rect x="276" y="104" width="30" height="16" rx="7"/></g>
+      <g stroke="var(--miss)" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M320 112L346 90M320 112L350 112M320 112L346 134"/></g><g fill="var(--miss)"><circle cx="348" cy="88" r="4"/><circle cx="353" cy="112" r="4"/><circle cx="348" cy="136" r="4"/></g>
+      <text x="40" y="208" font-size="11" fill="var(--sig)" font-weight="600">dendrite: 신호를 받는다</text>
+      <text x="150" y="160" font-size="11" fill="var(--ink)" font-weight="600" text-anchor="middle">cell body: 모은다</text>
+      <text x="252" y="92" font-size="11" fill="var(--ok)" font-weight="600" text-anchor="middle">axon: 넘으면 spike</text>
+      <text x="345" y="166" font-size="11" fill="var(--miss)" font-weight="600" text-anchor="middle">terminal: 다음 neuron으로</text>
+      <g stroke="var(--sig)" stroke-width="2"><path d="M452 64L560 108M452 112L560 112M452 160L560 116"/></g>
+      <g fill="var(--surface)" stroke="var(--ink)"><circle cx="440" cy="64" r="13"/><circle cx="440" cy="112" r="13"/><circle cx="440" cy="160" r="13"/></g>
+      <text x="440" y="68" font-size="11" text-anchor="middle" fill="var(--ink)">x₁</text><text x="440" y="116" font-size="11" text-anchor="middle" fill="var(--ink)">x₂</text><text x="440" y="164" font-size="11" text-anchor="middle" fill="var(--ink)">x₃</text>
+      <text x="500" y="76" font-size="11" fill="var(--sig)" font-weight="600">× w₁</text><text x="500" y="106" font-size="11" fill="var(--sig)" font-weight="600">× w₂</text><text x="500" y="150" font-size="11" fill="var(--sig)" font-weight="600">× w₃</text>
+      <circle cx="584" cy="112" r="24" fill="var(--wash)" stroke="var(--ink)" stroke-width="1.6"/><text x="584" y="118" font-size="17" font-weight="700" text-anchor="middle" fill="var(--ink)">Σ</text>
+      <path d="M608 112H630" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#m3n-arrow)"/>
+      <rect x="634" y="88" width="64" height="48" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M642 128C660 128 662 96 690 96" fill="none" stroke="var(--ok)" stroke-width="2"/>
+      <path d="M698 112H726" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#m3n-arrow)"/>
+      <circle cx="746" cy="112" r="16" fill="var(--surface)" stroke="var(--miss)" stroke-width="1.8"/><text x="746" y="117" font-size="12" text-anchor="middle" fill="var(--ink)">ŷ</text>
+      <text x="440" y="208" font-size="11" fill="var(--sig)" font-weight="600">입력 × weight</text>
+      <text x="584" y="160" font-size="11" fill="var(--ink)" font-weight="600" text-anchor="middle">Σ: 더하고 + b</text>
+      <text x="666" y="80" font-size="11" fill="var(--ok)" font-weight="600" text-anchor="middle">activation</text>
+      <text x="746" y="150" font-size="11" fill="var(--miss)" font-weight="600" text-anchor="middle">출력</text>
+      <path d="M380 112H412" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#m3n-arrow)"/>
+      <text x="396" y="228" font-size="11" text-anchor="middle" fill="var(--muted)">같은 색 = 같은 역할</text>
+    </svg>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>생물 neuron</th><th>인공 neuron</th></tr></thead>
+    <tbody>
+      <tr><td>신호</td><td>전기 spike (켜짐·꺼짐, 시간에 따라)</td><td>실수 하나</td></tr>
+      <tr><td>수</td><td>사람 뇌 약 860억 개</td><td>작은 model 수십 개, 큰 model은 parameter 수십억 개</td></tr>
+      <tr><td>배우는 법</td><td>synapse 세기가 바뀜 (아직 다 모른다)</td><td>backprop으로 weight를 고침 (6절)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> 인공 neuron은 생물 neuron에서 이름과 모양만 빌렸다: 곱하고 더하고, activation을 지난다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="perceptron"><span class="no">2</span>neuron 하나 (perceptron)</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>neuron 하나는 정확히 무슨 계산을 하나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>w, b</dt><dd><b>weight</b> (가중치), <b>bias</b> (편향). 입력에 곱하는 수와 더하는 수.</dd>
+    <dt>z</dt><dd>activation에 넣기 전의 합.</dd>
+    <dt>σ</dt><dd>sigma, <b>sigmoid</b>. z를 0~1로 누르는 함수 σ(z) = 1 / (1 + e⁻ᶻ).</dd>
+    <dt>perceptron</dt><dd>(퍼셉트론). neuron 하나짜리 분류기. 원래는 step 함수를 쓴다.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cr{z} = \Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b}, \qquad \Co{\hat y} = \Cg{\sigma}(\Cr{z})"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> 입력마다의 중요도</li><li><b class="c-vio">b</b> 기준을 옮기는 수</li><li><b class="c-fa">z</b> 합</li><li><b class="c-ok">σ</b> activation</li><li><b class="c-miss">ŷ</b> 출력</li></ul>
+  <div class="calc">
+    <p class="h">예제: x = (1, 2), w = (0.5, −0.25), b = 0.5</p>
+    <div class="eq" data-tex="\Cr{z} = 0.5 \cdot 1 + (-0.25) \cdot 2 + 0.5 = 0.5, \qquad \Co{\hat y} = \Cg{\sigma}(0.5) = \frac{1}{1 + e^{-0.5}} = 0.622"></div>
+    <div class="mean"><b>→ 뜻.</b> step이면 z &gt; 0이라 1 ("예"). sigmoid면 "예일 확률 62%".</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>w₂를 크게: x₂가 결과를 좌우한다. 선 굵기 = |w|, 파랑 = 양수, 빨강 = 음수.</li>
+        <li>step ↔ sigmoid: step은 0 아니면 1, sigmoid는 그 사이를 부드럽게 잇는다 (미분이 된다).</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>x₁ <input type="range" id="i2x1" min="-2" max="2" step="0.1" value="1"><output id="o2x1"></output></label>
+      <label>x₂ <input type="range" id="i2x2" min="-2" max="2" step="0.1" value="2"><output id="o2x2"></output></label>
+      <label>w₁ <input type="range" id="i2w1" min="-2" max="2" step="0.05" value="0.5"><output id="o2w1"></output></label>
+      <label>w₂ <input type="range" id="i2w2" min="-2" max="2" step="0.05" value="-0.25"><output id="o2w2"></output></label>
+      <label>b <input type="range" id="i2b" min="-2" max="2" step="0.1" value="0.5"><output id="o2b"></output></label>
+      <div class="seg" id="g2a"><button type="button" data-v="sig" aria-pressed="true">sigmoid</button><button type="button" data-v="step" aria-pressed="false">step</button></div>
+    </div>
+    <canvas id="cv2" aria-label="입력 두 개, weight, 합, activation, 출력이 있는 neuron 하나"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> neuron = 곱해서 더하고(z = w·x + b) activation을 지난다(ŷ = σ(z)).</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="경계선 긋기"><span class="no">3</span>기하로 보면: 경계선 긋기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>neuron 하나가 점들을 두 무리로 나눌 때, 그림으로는 무엇을 하나?</p></div>
+  <div class="eq" data-tex="\Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b} = 0 \quad (\text{경계선}), \qquad \Cb{\mathbf{w}} \leftarrow \Cb{\mathbf{w}} + \Co{\eta}\,(y - \hat y)\,\mathbf{x}"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> 선에 수직인 화살표</li><li><b class="c-vio">b</b> 선을 평행하게 민다</li><li>오른쪽 식 = perceptron 학습 규칙: 틀린 점 쪽으로 선을 돌린다</li></ul>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>보라 점(w 끝)을 끌기: 선이 w에 수직으로 따라 돈다.</li>
+        <li><b>perceptron 학습</b>: 틀린 점(빨간 고리)을 하나씩 골라(검은 고리) 선을 고친다. 몇 번 만에 끝난다.</li>
+        <li>data를 XOR로: 아무리 고쳐도 끝나지 않는다. 직선 하나로는 못 나눈다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g3d"><span>data</span><button type="button" data-v="blobs" aria-pressed="true">두 무리</button><button type="button" data-v="xor" aria-pressed="false">XOR</button></div>
+      <label>b <input type="range" id="i3b" min="-2" max="2" step="0.05" value="0.2"><output id="o3b"></output></label>
+      <button type="button" id="b3learn">perceptron 학습</button>
+      <button type="button" id="b3reset">처음으로</button>
+    </div>
+    <canvas id="cv3" aria-label="점 두 무리와 neuron 하나의 경계선, w 화살표"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> neuron 하나 = 직선(평면) 하나. 직선으로 못 나누는 data에는 neuron을 층으로 쌓아야 한다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="forward propagation"><span class="no">4</span>forward propagation: 앞으로 계산하기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>neuron을 2-2-1로 이으면 예측 ŷ는 어떤 순서로 나오나? 각 단계의 shape는?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>2-2-1</dt><dd>입력 2개 → 숨은 neuron 2개 → 출력 1개.</dd>
+    <dt>h</dt><dd><b>hidden</b> (숨은 층) 출력. 입력도 출력도 아닌 가운데 층.</dd>
+    <dt>W₁, b₁</dt><dd>1층의 weight 행렬과 bias. W의 행 하나 = neuron 하나.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\underbrace{\Cg{\mathbf h}}_{2\times1} = \sigma\big(\underbrace{\Cb{W_1}}_{2\times2}\,\underbrace{\mathbf x}_{2\times1} + \Cv{\mathbf b_1}\big), \qquad \underbrace{\Co{\hat y}}_{1\times1} = \sigma\big(\underbrace{\Cb{W_2}}_{1\times2}\,\Cg{\mathbf h} + \Cv{b_2}\big)"></div>
+  <p class="say">말로: 층마다 "곱해서 더하고 σ"를 한 번씩. 행렬 곱 한 번이 neuron 여러 개의 계산을 한꺼번에 한다.</p>
+  <div class="calc">
+    <p class="h">예제의 숫자 (그림과 같다)</p>
+    <div class="eq" data-tex="\mathbf x = \begin{bmatrix}1\\0.5\end{bmatrix},\; \Cb{W_1} = \begin{bmatrix}0.4 & -0.6\\0.7 & 0.2\end{bmatrix},\; \Cv{\mathbf b_1} = \begin{bmatrix}0.1\\-0.3\end{bmatrix},\; \Cb{W_2} = \begin{bmatrix}0.9 & -0.5\end{bmatrix},\; \Cv{b_2} = 0.2,\; y = 1"></div>
+    <div class="mean"><b>→ 뜻.</b> 결과 ŷ = 0.595: 정답 1에 59%만 확신한다. 아래 버튼으로 한 단계씩 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b4next">다음 단계</button>
+      <button type="button" id="b4play">처음부터 재생</button>
+      <button type="button" id="b4reset">처음으로</button>
+    </div>
+    <canvas id="cv4" aria-label="2-2-1 network의 forward 계산을 한 단계씩"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> forward = 층마다 z = Wa + b, a = σ(z). shape는 (출력 수 × 입력 수) · (입력 수 × 1).</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="error, loss, cost"><span class="no">5</span>error, loss, cost</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"틀린 정도"를 부르는 세 이름은 어떻게 다른가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>BCE</dt><dd><b>binary cross-entropy</b> (이진 교차 엔트로피). 0/1 분류의 loss. 1장 7절의 cross-entropy와 같다.</dd>
+    <dt>J</dt><dd>cost. 모든 sample의 loss 평균.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\underbrace{\Cr{\hat y - y}}_{\text{error}}, \qquad \underbrace{L = -\big[\,y \ln \hat y + (1-y)\ln(1-\hat y)\,\big]}_{\text{loss: sample 하나}}, \qquad \underbrace{\Cg{J} = \frac1N\sum_{i=1}^{N} L_i}_{\text{cost: 전체 평균}}"></div>
+  <p class="say">말로: 정답이 1이면 −ln ŷ, 0이면 −ln(1 − ŷ). 정답에 준 확률이 작을수록 벌이 급하게 커진다.</p>
+  <div class="calc">
+    <p class="h">예제: 4절의 ŷ = 0.5947, y = 1</p>
+    <div class="eq" data-tex="\text{error} = 0.5947 - 1 = -0.405, \qquad L = -\ln 0.5947 = 0.520"></div>
+    <div class="mean"><b>→ 뜻.</b> 학습은 cost J를 줄인다. gradient descent(2장)는 J의 기울기를 따라 내려간다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>ŷ <input type="range" id="i5p" min="0.01" max="0.99" step="0.005" value="0.5947"><output id="o5p"></output></label>
+      <div class="seg" id="g5y"><span>정답 y</span><button type="button" data-v="1" aria-pressed="true">1</button><button type="button" data-v="0" aria-pressed="false">0</button></div>
+    </div>
+    <canvas id="cv5" aria-label="BCE loss 곡선과 sample 4개의 cost"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> error = 차이(부호 있음), loss = sample 하나의 벌, cost = 전체 평균. 학습은 cost를 줄인다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="backpropagation"><span class="no">6</span>backpropagation: 거꾸로 gradient 구하기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>weight 6개 각각을 어느 쪽으로 얼마나 고쳐야 loss가 줄까? chain rule(2장 4절)을 출력에서 입력 쪽으로 층마다 쓴다.</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>δ</dt><dd>delta. ∂L/∂z: 그 neuron의 합 z를 조금 바꾸면 loss가 얼마나 바뀌나.</dd>
+    <dt>⊙</dt><dd>같은 자리끼리 곱하기 (element-wise).</dd>
+    <dt>σ′</dt><dd>sigmoid의 기울기 = σ(1 − σ) = h(1 − h).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cr{\delta_2} = \hat y - y, \qquad \frac{\partial L}{\partial W_2} = \Cr{\delta_2}\,\mathbf h^{\!\top}, \qquad \Cr{\boldsymbol\delta_1} = \big(W_2^{\!\top}\Cr{\delta_2}\big) \odot \Cg{\sigma'(\mathbf z_1)}, \qquad \frac{\partial L}{\partial W_1} = \Cr{\boldsymbol\delta_1}\,\mathbf x^{\!\top}"></div>
+  <ul class="legend"><li><b class="c-fa">δ</b> 거꾸로 흐르는 신호</li><li><b>W₂ᵀδ₂</b> 같은 weight를 거꾸로 지난다</li><li><b class="c-ok">σ′</b> activation의 기울기를 곱한다 (chain rule)</li><li><b>δ · 입력ᵀ</b> = 그 weight의 gradient</li></ul>
+  <div class="calc">
+    <p class="h">예제의 결과</p>
+    <div class="eq" data-tex="\Cr{\delta_2} = -0.405, \quad \frac{\partial L}{\partial W_2} = (-0.223,\ -0.252), \quad \Cr{\boldsymbol\delta_1} = (-0.090,\ 0.048), \quad \frac{\partial L}{\partial W_1} = \begin{bmatrix}-0.090 & -0.045\\0.048 & 0.024\end{bmatrix}"></div>
+    <div class="mean"><b>→ 뜻.</b> gradient가 음수인 weight는 키우고, 양수인 weight는 줄이면 loss가 준다. 입력에 가까운 층의 gradient가 더 작다 (σ′ ≤ 0.25를 한 번 더 곱했다: 2장 9절).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b6next">다음 단계</button>
+      <button type="button" id="b6play">처음부터 재생</button>
+      <button type="button" id="b6reset">처음으로</button>
+    </div>
+    <canvas id="cv6" aria-label="2-2-1 network의 backprop 계산을 한 단계씩"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> backprop = 출력의 δ를 weight를 거꾸로 지나 보내며 σ′를 곱한다. weight의 gradient = δ × 그 weight에 들어온 입력.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="한 번 학습하기"><span class="no">7</span>학습: 고치고, 반복하기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>gradient로 한 번 고치면 정말 나아지나? 수천 번 반복하면?</p></div>
+  <div class="eq" data-tex="W \leftarrow W - \Co{\eta}\,\Cr{\frac{\partial L}{\partial W}}"></div>
+  <div class="calc">
+    <p class="h">예제: η = 0.5로 한 걸음</p>
+    <div class="eq" data-tex="\Cb{W_2}:\ (0.9,\ -0.5) - \Co{0.5}\,(\Cr{-0.223},\ \Cr{-0.252}) = (1.011,\ -0.374), \qquad \hat y:\ 0.595 \to 0.681, \qquad L:\ 0.520 \to 0.385"></div>
+    <div class="mean"><b>→ 뜻.</b> 한 번 고쳤더니 정답 쪽 확률이 59% → 68%. 이것을 data 전체에 수천 번 하면 경계가 자란다 (아래 그림).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li><b>학습</b>: XOR을 직선 몇 개(점선 = 숨은 neuron 하나하나의 경계)를 합쳐 나눈다.</li>
+        <li>data = 원, 숨은 neuron 2개: 다 못 나눈다 (88%). 3개 이상이면 된다.</li>
+        <li>η = 0.1: 아주 느리다. η = 3: 빠르지만 흔들린다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g7d"><span>data</span><button type="button" data-v="blobs" aria-pressed="false">두 무리</button><button type="button" data-v="xor" aria-pressed="true">XOR</button><button type="button" data-v="circles" aria-pressed="false">원</button></div>
+      <label>숨은 neuron <input type="range" id="i7h" min="1" max="8" step="1" value="4"><output id="o7h"></output></label>
+      <label>η <input type="range" id="i7e" min="0.1" max="3" step="0.1" value="1.5"><output id="o7e"></output></label>
+      <div class="seg" id="g7l"><span>점선</span><button type="button" data-v="on" aria-pressed="true">보기</button><button type="button" data-v="off" aria-pressed="false">숨기기</button></div>
+      <button type="button" id="b7run">학습</button>
+      <button type="button" id="b7ep">100 epoch</button>
+      <button type="button" id="b7reset">처음으로</button>
+    </div>
+    <canvas id="cv7" aria-label="browser 안에서 학습하는 2-h-1 network의 경계와 loss 곡선"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 학습 = forward → loss → backprop → 고치기를 data 전체에 수천 번. 숨은 neuron 하나하나는 직선이고, 출력이 그것들을 섞어 굽은 경계를 만든다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="PyTorch"><span class="no">8</span>PyTorch로 같은 계산</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>4~7절의 손 계산을 PyTorch는 몇 줄로 하나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>nn.Linear(2, 2)</dt><dd>z = Wx + b 층 하나 (W는 2×2).</dd>
+    <dt>autograd</dt><dd><b>automatic differentiation</b>. loss.backward() 한 줄이 6절의 backprop을 전부 한다.</dd>
+    <dt>SGD</dt><dd><b>stochastic gradient descent</b>. W ← W − η·gradient를 해 주는 optimizer.</dd>
+  </dl></div>
+  <div class="codebox"><pre><code>import torch
+net = torch.nn.Sequential(
+    torch.nn.Linear(2, 2), torch.nn.Sigmoid(),   # W₁, b₁ → h
+    torch.nn.Linear(2, 1), torch.nn.Sigmoid())   # W₂, b₂ → ŷ
+with torch.no_grad():                            # 4절의 숫자를 넣는다
+    net[0].weight[:] = torch.tensor([[0.4, -0.6], [0.7, 0.2]])
+    net[0].bias[:]   = torch.tensor([0.1, -0.3])
+    net[2].weight[:] = torch.tensor([[0.9, -0.5]])
+    net[2].bias[:]   = torch.tensor([0.2])
+x, y = torch.tensor([[1.0, 0.5]]), torch.tensor([[1.0]])
+yhat = net(x)                                    # forward (4절)
+loss = torch.nn.BCELoss()(yhat, y)               # loss (5절)
+loss.backward()                                  # backprop (6절)
+print(round(yhat.item(), 4), round(loss.item(), 4))
+print(net[2].weight.grad)
+print(net[0].weight.grad)
+opt = torch.optim.SGD(net.parameters(), lr=0.5)
+opt.step()                                       # 고치기 (7절)
+print(round(net(x).item(), 4))</code></pre></div>
+  <div class="codebox"><pre><code>0.5947 0.5196
+tensor([[-0.2228, -0.2523]])
+tensor([[-0.0903, -0.0451],
+        [ 0.0476,  0.0238]])
+0.6805</code></pre></div>
+  <p class="say">출력이 손 계산과 같다: ŷ = 0.5947, L = 0.520, 6절의 gradient, 한 걸음 뒤 ŷ = 0.681.</p>
+  <p class="key"><b>기억할 한 줄.</b> PyTorch: net(x) = forward, loss.backward() = backprop, opt.step() = 고치기.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="정리, 약자 사전"><span class="no">9</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 neuron</td><td>곱하고 더하고 activation</td><td>–</td></tr>
+      <tr><td>2 perceptron</td><td>z = w·x + b, ŷ = σ(z)</td><td>z = 0.5, σ = 0.622</td></tr>
+      <tr><td>3 경계선</td><td>neuron 하나 = 직선 하나, XOR은 못 나눈다</td><td>두 무리: 19번 고쳐 끝</td></tr>
+      <tr><td>4 forward</td><td>층마다 σ(Wa + b)</td><td>ŷ = 0.5947</td></tr>
+      <tr><td>5 loss</td><td>error, loss(BCE), cost(평균)</td><td>−ln 0.5947 = 0.520</td></tr>
+      <tr><td>6 backprop</td><td>δ를 거꾸로, σ′를 곱해</td><td>∂L/∂W₂ = (−0.223, −0.252)</td></tr>
+      <tr><td>7 학습</td><td>W ← W − η∂L/∂W 반복</td><td>ŷ 0.595 → 0.681</td></tr>
+      <tr><td>8 PyTorch</td><td>forward, backward(), step()</td><td>같은 숫자</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(4장 ANN - II)에서는 회귀와 여러 class 분류를 학습시키고, 층 수와 neuron 수를 바꿔 본다. 예제 숫자는 <code>tools/ch03_numbers.py</code>로 NumPy와 PyTorch에서 확인했다.</p>
+  <h3 id="s9b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>ANN</b></td><td>artificial neural network</td><td>인공 신경망</td><td>neuron을 층으로 이은 계산.</td><td class="num">1</td></tr>
+      <tr><td><b>autograd</b></td><td>automatic differentiation</td><td>자동 미분</td><td>backward() 한 줄로 gradient를 구한다.</td><td class="num">8</td></tr>
+      <tr><td><b>BCE</b></td><td>binary cross-entropy</td><td>이진 교차 엔트로피</td><td>0/1 분류의 loss.</td><td class="num">5</td></tr>
+      <tr><td><b>cost, J</b></td><td>cost function</td><td>비용 함수</td><td>loss의 전체 평균.</td><td class="num">5</td></tr>
+      <tr><td><b>δ</b></td><td>delta (error signal)</td><td>델타</td><td>∂L/∂z, 거꾸로 흐르는 신호.</td><td class="num">6</td></tr>
+      <tr><td><b>epoch</b></td><td>–</td><td>에폭</td><td>data 전체를 한 번 다 쓰는 것.</td><td class="num">7</td></tr>
+      <tr><td><b>h</b></td><td>hidden layer output</td><td>숨은 층 출력</td><td>가운데 층의 값.</td><td class="num">4</td></tr>
+      <tr><td><b>perceptron</b></td><td>–</td><td>퍼셉트론</td><td>neuron 하나짜리 분류기.</td><td class="num">2, 3</td></tr>
+      <tr><td><b>SGD</b></td><td>stochastic gradient descent</td><td>확률적 경사 하강법</td><td>gradient로 한 걸음 고치는 optimizer.</td><td class="num">8</td></tr>
+      <tr><td><b>σ</b></td><td>sigmoid</td><td>시그모이드</td><td>z를 0~1로 누르는 함수.</td><td class="num">2</td></tr>
+      <tr><td><b>w, b</b></td><td>weight, bias</td><td>가중치, 편향</td><td>곱하는 수, 더하는 수.</td><td class="num">2</td></tr>
+      <tr><td><b>XOR</b></td><td>exclusive or</td><td>배타적 논리합</td><td>직선 하나로 못 나누는 대표 data.</td><td class="num">3, 7</td></tr>
+      <tr><td><b>⊙</b></td><td>element-wise product</td><td>같은 자리끼리 곱</td><td>shape가 같은 두 묶음을 칸마다 곱한다.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch03.js"></script>
+</body>
+</html>

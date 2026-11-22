@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 9장 · Metrics·Init</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="9" data-base="ch09-metrics-weights">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 9장</p>
+  <h1>Metrics·Init</h1>
+  <p class="topic">성능 측정과 weight 초기화</p>
+  <p class="lead">앞부분: 정확도 하나로는 안 보이는 것을 재는 법 (confusion matrix, precision, recall, F1). 뒷부분: 학습을 시작하는 weight를 어떻게 놓아야 깊은 network에서도 신호가 살아 있는지 (Xavier, Kaiming). 마지막에 FFN 프로젝트 셋.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: confusion matrix, 네 가지 metric, 드문 양성, 초기화, Xavier와 Kaiming" style="font-family: var(--sans);">
+      <defs><marker id="m9-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="40" y="46" width="26" height="22" fill="var(--okwash)" stroke="var(--ok)"/><rect x="68" y="46" width="26" height="22" fill="var(--wash)" stroke="var(--fa)"/><rect x="40" y="70" width="26" height="22" fill="var(--wash)" stroke="var(--miss)"/><rect x="68" y="70" width="26" height="22" fill="var(--sigwash)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① confusion matrix</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M26 54C60 54 80 70 110 92" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M26 92C50 70 80 54 110 50" fill="none" stroke="var(--miss)" stroke-width="2"/><path d="M26 86Q68 50 110 86" fill="none" stroke="var(--ok)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② precision, recall</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">F1 · 2절</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)" opacity="0.7"><circle cx="34" cy="56" r="3"/><circle cx="46" cy="60" r="3"/><circle cx="58" cy="54" r="3"/><circle cx="40" cy="72" r="3"/><circle cx="54" cy="76" r="3"/><circle cx="66" cy="68" r="3"/><circle cx="34" cy="86" r="3"/><circle cx="50" cy="88" r="3"/><circle cx="80" cy="60" r="3"/><circle cx="92" cy="78" r="3"/><circle cx="76" cy="88" r="3"/></g><rect x="96" y="52" width="7" height="7" fill="var(--miss)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ 드문 양성</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">3~4절</text></g></a>
+      <a href="#s6"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)" opacity="0.75"><rect x="28" y="86" width="6" height="4"/><rect x="36" y="78" width="6" height="12"/><rect x="44" y="60" width="6" height="30"/><rect x="52" y="78" width="6" height="12"/><rect x="60" y="86" width="6" height="4"/></g><g fill="var(--fa)" opacity="0.75"><rect x="76" y="56" width="6" height="34"/><rect x="84" y="86" width="6" height="4"/><rect x="92" y="86" width="6" height="4"/><rect x="100" y="56" width="6" height="34"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ 초기화가 중요한 이유</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">5~6절</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M26 60H110" stroke="var(--ok)" stroke-width="2.2"/><path d="M26 60C60 64 80 80 110 92" fill="none" stroke="var(--fa)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Xavier, Kaiming</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">7절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m9-arrow)"/><path d="M304 85H318" marker-end="url(#m9-arrow)"/><path d="M456 85H470" marker-end="url(#m9-arrow)"/><path d="M608 85H622" marker-end="url(#m9-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">weight 얼리기와 학습에 따른 weight 변화</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">8절</text></a>
+      <a href="#s9"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">FFN 프로젝트 셋</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">덧셈기, 심장병, 빠진 값 · 9절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="confusion matrix"><span class="no">1</span>두 관점: confusion matrix</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"양성/음성"을 맞히는 model이 틀리는 방법은 두 가지다. 따로 세면?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>TP, TN</dt><dd><b>true positive / negative</b>. 양성을 양성으로, 음성을 음성으로 맞힘.</dd>
+    <dt>FP</dt><dd><b>false positive</b>. 음성인데 양성이라고 함 (헛경보).</dd>
+    <dt>FN</dt><dd><b>false negative</b>. 양성인데 음성이라고 함 (놓침).</dd>
+  </dl></div>
+  <div class="calc">
+    <p class="h">예제: 음성 500, 양성 500, 문턱 0</p>
+    <div class="eq" data-tex="\Cg{\text{TP}} = 422,\quad \Cr{\text{FN}} = 78,\quad \Co{\text{FP}} = 80,\quad \Cb{\text{TN}} = 420"></div>
+    <div class="mean"><b>→ 뜻.</b> 문턱을 내리면 놓침(FN)은 줄고 헛경보(FP)는 는다. 둘 중 무엇이 더 나쁜지는 문제가 정한다 (암 검사: 놓침이 더 나쁘다).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>문턱 <input type="range" id="i1t" min="-3" max="3" step="0.05" value="0"><output id="o1t"></output></label></div>
+    <canvas id="cv1" aria-label="두 점수 분포, 문턱, confusion matrix"></canvas>
+    <canvas id="cv2" aria-label="문턱에 따른 accuracy, precision, recall, F1"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> confusion matrix = 맞힘 둘(TP, TN)과 틀림 둘(FP 헛경보, FN 놓침). 문턱이 둘 사이의 저울이다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="precision, recall, F1"><span class="no">2</span>accuracy, precision, recall, F1</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>네 칸을 숫자 하나로 요약하는 방법은?</p></div>
+  <div class="eq" data-tex="\text{accuracy} = \frac{\Cg{TP} + \Cb{TN}}{\text{전체}}, \quad \text{precision} = \frac{\Cg{TP}}{\Cg{TP} + \Co{FP}}, \quad \text{recall} = \frac{\Cg{TP}}{\Cg{TP} + \Cr{FN}}, \quad F_1 = \frac{2 \cdot P \cdot R}{P + R}"></div>
+  <ul class="legend"><li><b>precision</b> "양성"이라고 한 것 중 진짜 비율 (헛경보가 적을수록 높다)</li><li><b>recall</b> 진짜 양성 중 찾아낸 비율 (놓침이 적을수록 높다)</li><li><b>F1</b> 둘의 조화 평균: 둘 다 높아야 높다</li></ul>
+  <div class="calc">
+    <p class="h">예제: 문턱 −1, 0, 1 (위 그림의 data)</p>
+    <div class="eq" data-tex="\text{문턱 } {-1}: P = 0.65,\ R = 0.98 \qquad \text{문턱 } 0: P = 0.84,\ R = 0.84,\ F_1 = 0.84 \qquad \text{문턱 } 1: P = 0.94,\ R = 0.50"></div>
+    <div class="mean"><b>→ 뜻.</b> precision과 recall은 줄다리기를 한다. 문턱을 정할 때 무엇을 지킬지 먼저 정한다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> precision = 헛경보를 싫어하는 숫자, recall = 놓침을 싫어하는 숫자, F1 = 둘 다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="드문 양성"><span class="no">3</span>group 크기가 다를 때의 metric</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>같은 model인데 양성이 1%뿐인 곳에 쓰면? (8장 7절의 불균형)</p></div>
+  <div class="calc">
+    <p class="h">예제: 같은 점수 분포, 문턱 0, 1000개 중 양성 비율만 바꾸기</p>
+    <div class="eq" data-tex="\text{양성 } 50\%: P = 0.84,\ R = 0.85 \qquad \text{양성 } 5\%: P = \Cr{0.24},\ R = 0.90 \qquad \text{양성 } 1\%: P = \Cr{0.05},\ R = 0.80"></div>
+    <div class="mean"><b>→ 뜻.</b> accuracy는 계속 85% 근처지만, 양성이 1%면 경보 20개 중 19개가 헛경보다. "모두 음성"이라고만 해도 accuracy 99%. 드문 class에는 precision·recall·F1을 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>양성 비율 <input type="range" id="i3p" min="1" max="50" step="1" value="5"><output id="o3p"></output></label></div>
+    <canvas id="cv3" aria-label="양성 비율에 따른 네 가지 metric"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 양성이 드물면 accuracy는 거의 아무것도 말해 주지 않는다. precision이 먼저 무너진다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="계산 시간, test > train"><span class="no">4</span>계산 시간 재기, test가 train보다 좋을 때</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습이 얼마나 걸리나? 시험 성적이 학습 성적보다 높으면 버그인가?</p></div>
+  <div class="codebox"><pre><code>import time
+t0 = time.perf_counter()
+train_one_epoch(net, opt)
+print(f"epoch 하나: {time.perf_counter() - t0:.2f} s")   # GPU면 torch.cuda.synchronize() 뒤에 잰다</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>test &gt; train인 흔한 이유</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td>dropout·augmentation</td><td>학습 성적은 train mode(끄고, 비틀고)로 재고, 시험은 eval mode로 잰다 (5장 6절).</td></tr>
+      <tr><td>epoch 평균</td><td>학습 성적이 epoch 동안의 평균이면 앞쪽의 나쁜 batch가 섞인다.</td></tr>
+      <tr><td>test가 작다</td><td>시험 data가 적으면 우연히 쉬운 것이 몰릴 수 있다 (1장 10절의 흔들림).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> 시간은 perf_counter로 epoch마다. test &gt; train은 대개 mode나 data 크기 때문이지 버그가 아니다.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="weight 크기 읽기"><span class="no">5</span>weight matrix 크기 읽기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>nn.Linear(196, 64)의 weight는 (196, 64)인가, (64, 196)인가?</p></div>
+  <div class="stage"><canvas id="cv5" aria-label="nn.Linear(4, 3)의 weight 행렬과 그 뜻"></canvas></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch.nn as nn
+net = nn.Sequential(nn.Linear(196, 64), nn.ReLU(), nn.Linear(64, 10))
+for name, p in net.named_parameters():
+    print(name, tuple(p.shape))</code></pre></div>
+    <div class="codebox"><pre><code>0.weight (64, 196)
+0.bias (64,)
+2.weight (10, 64)
+2.bias (10,)</code></pre></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> nn.Linear(in, out).weight의 shape = (out, in). 행 하나 = neuron 하나.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="초기화가 중요한 이유"><span class="no">6</span>weight 초기화가 중요한 이유</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>weight를 모두 0이나 같은 값으로 시작하면? 너무 크거나 작게 시작하면?</p></div>
+  <div class="calc">
+    <p class="h">예제 1: XOR, 숨은 neuron 4개, 1000 epoch</p>
+    <div class="eq" data-tex="\text{모두 } 0.5: 77.5\% \qquad \text{무작위}: 100\%"></div>
+    <div class="mean"><b>→ 뜻.</b> 같은 값으로 시작하면 숨은 neuron들이 같은 gradient를 받아 끝까지 똑같다 (대칭). 4개가 1개 몫밖에 못 한다. 그래서 weight는 무작위로 시작한다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b6run">둘 다 학습</button>
+      <button type="button" id="b6reset">처음으로</button>
+    </div>
+    <canvas id="cv6a" aria-label="같은 값으로 초기화한 network와 무작위로 초기화한 network의 경계"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">예제 2: tanh 10층(너비 64), weight 표준편차에 따른 10층 activation 표준편차</p>
+    <div class="eq" data-tex="0.05 \to \Cr{0.000} \qquad 0.125\ (\text{Xavier}) \to \Cg{0.22} \qquad 0.5 \to \Cr{0.89}\ (\text{포화})"></div>
+    <div class="mean"><b>→ 뜻.</b> 너무 작으면 층을 지날수록 신호가 0으로 사라지고, 너무 크면 tanh가 −1, 1에 붙어 기울기가 사라진다. 둘 다 학습이 멈춘다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>weight 표준편차 <input type="range" id="i6s" min="0.02" max="1" step="0.005" value="0.125"><output id="o6s"></output></label></div>
+    <canvas id="cv6b" aria-label="층마다 activation 분포 histogram"></canvas>
+    <div class="read" id="r6b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 초기화는 무작위로, 크기는 알맞게: 너무 작으면 사라지고 너무 크면 포화한다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Xavier, Kaiming"><span class="no">7</span>Xavier와 Kaiming 초기화</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"알맞은 크기"를 식으로 정할 수 있나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>Xavier (Glorot)</dt><dd>X. Glorot, Y. Bengio (2010). tanh·sigmoid에 맞춘 초기화.</dd>
+    <dt>Kaiming (He)</dt><dd>K. He 외 (2015). ReLU에 맞춘 초기화. ReLU는 절반을 0으로 만들어 분산이 반으로 주니 2배.</dd>
+    <dt>n_in, n_out</dt><dd>층의 입력 수, 출력 수 (fan-in, fan-out).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{Xavier}: \operatorname{Var}(w) = \frac{2}{\Cb{n_{\text{in}}} + \Co{n_{\text{out}}}}, \qquad \text{Kaiming}: \operatorname{Var}(w) = \frac{2}{\Cb{n_{\text{in}}}}"></div>
+  <p class="say">말로: 입력이 많을수록 더하는 항이 많아 합이 커지니, weight를 그만큼 작게 시작한다. 목표는 층을 지나도 분산이 그대로인 것.</p>
+  <div class="calc">
+    <p class="h">결과: 20층 뒤 activation 표준편차 (너비 64, browser 계산)</p>
+    <div class="eq" data-tex="\text{ReLU + Kaiming}: \Cg{0.84} \qquad \tanh + \text{Xavier}: 0.16 \qquad \text{ReLU + Xavier}: \Cr{0.0008} \qquad \tanh + \text{SD } 1: 0.95\ (\text{포화})"></div>
+    <div class="mean"><b>→ 뜻.</b> activation에 맞는 초기화를 써야 한다. ReLU에 Xavier를 쓰면 층마다 분산이 반씩 줄어 20층이면 사라진다. PyTorch의 nn.Linear 기본값은 Kaiming 계열(uniform)이다.</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv7" aria-label="층을 지나는 동안 activation 표준편차, 초기화 네 가지"></canvas>
+  </div>
+  <div class="codebox"><pre><code>torch.nn.init.xavier_normal_(layer.weight)                         # tanh, sigmoid
+torch.nn.init.kaiming_normal_(layer.weight, nonlinearity="relu")   # ReLU</code></pre></div>
+  <p class="key"><b>기억할 한 줄.</b> tanh·sigmoid에는 Xavier(2/(n_in + n_out)), ReLU에는 Kaiming(2/n_in).</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="freeze, weight 변화"><span class="no">8</span>weight 얼리기와 학습에 따른 weight 변화</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>층마다 weight는 얼마나 바뀌나? 일부 층은 고정할 수 있나? (12장 transfer learning의 바탕)</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>for p in net[0].parameters():
+    p.requires_grad = False        # 1층 얼리기: gradient를 구하지 않는다
+opt = torch.optim.Adam(
+    [p for p in net.parameters() if p.requires_grad], lr=1e-3)
+print(sum(p.numel() for p in net.parameters() if p.requires_grad))</code></pre></div>
+    <div class="codebox"><pre><code>650        # 5절 network: 196-64-10에서 2층(64×10 + 10)만 학습</code></pre></div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g8f"><span>1층</span><button type="button" data-v="off" aria-pressed="true">학습</button><button type="button" data-v="on" aria-pressed="false">얼리기</button></div>
+      <button type="button" id="b8run">학습</button>
+      <button type="button" id="b8reset">처음으로</button>
+    </div>
+    <canvas id="cv8" aria-label="층마다 weight 변화량과 학습 loss"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> requires_grad = False로 층을 얼린다. 얼린 층은 그대로, 나머지 층이 그 위에서 배운다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="FFN 프로젝트"><span class="no">9</span>FFN 프로젝트 셋</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>지금까지의 도구로 실제 문제를 풀면?</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>프로젝트</th><th>입력 → 출력</th><th>loss</th><th>결과</th></tr></thead>
+    <tbody>
+      <tr><td>1 덧셈기</td><td>두 수 a, b → a + b</td><td>MSE</td><td>아래 그림 (browser에서 학습)</td></tr>
+      <tr><td>2 심장병 예측</td><td>검사값 13개 (나이, 혈압, 콜레스테롤 …) → 병 있음/없음. 297명</td><td>BCE</td><td>시험 60명 정확도 82% (10번 나눈 평균, 표준편차 5%)</td></tr>
+      <tr><td>3 빠진 값 채우기</td><td>포도주 특성 10개 → 빠진 residual sugar</td><td>MSE</td><td>r = 0.66, 오차 0.94 g/L (평균으로 채우면 1.22 g/L)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="say">data: Cleveland heart disease (Janosi, Steinbrunn, Pfisterer, Detrano; UCI, CC BY 4.0), wine quality (6장). 2·3번은 <code>tools/ch09_numbers.py</code> (PyTorch)로 계산했다.</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>a <input type="range" id="i9a" min="-30" max="30" step="1" value="3"><output id="o9a"></output></label>
+      <label>b <input type="range" id="i9b" min="-30" max="30" step="1" value="4"><output id="o9b"></output></label>
+    </div>
+    <canvas id="cv9" aria-label="덧셈을 배운 network의 답과 정답"></canvas>
+    <div class="read" id="r9" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 문제를 입력·출력·loss로 바꿔 쓰면 같은 FFN이 덧셈도, 진단도, 빈칸 채우기도 한다.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="정리, 약자 사전"><span class="no">10</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 confusion matrix</td><td>TP, TN, FP(헛경보), FN(놓침)</td><td>422 / 420 / 80 / 78</td></tr>
+      <tr><td>2 metric</td><td>precision vs recall, F1</td><td>문턱 0: 0.84, 0.84</td></tr>
+      <tr><td>3 드문 양성</td><td>precision이 무너진다</td><td>양성 1%: P = 0.05</td></tr>
+      <tr><td>4 시간, test &gt; train</td><td>perf_counter, mode 차이</td><td>–</td></tr>
+      <tr><td>5 weight 크기</td><td>Linear(in, out).weight = (out, in)</td><td>(64, 196)</td></tr>
+      <tr><td>6 초기화</td><td>무작위로, 알맞은 크기로</td><td>모두 0.5: 77.5% vs 100%</td></tr>
+      <tr><td>7 Xavier, Kaiming</td><td>activation에 맞춰</td><td>ReLU 20층: 0.84 vs 0.0008</td></tr>
+      <tr><td>8 freeze</td><td>requires_grad = False</td><td>학습 parameter 650개</td></tr>
+      <tr><td>9 프로젝트</td><td>입력·출력·loss로 바꿔 쓰기</td><td>심장병 82%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(10장 Autoencoder)에서는 압축했다가 다시 푸는 network와 latent 공간을 본다. 숫자는 <code>tools/ch09_numbers.py</code> (PyTorch)와 browser의 같은 계산(ch09.js)으로 확인했다.</p>
+  <h3 id="s10b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>F1</b></td><td>F1 score</td><td>F1 점수</td><td>precision과 recall의 조화 평균.</td><td class="num">2</td></tr>
+      <tr><td><b>FN</b></td><td>false negative</td><td>거짓 음성</td><td>양성을 놓침.</td><td class="num">1</td></tr>
+      <tr><td><b>FP</b></td><td>false positive</td><td>거짓 양성</td><td>헛경보.</td><td class="num">1</td></tr>
+      <tr><td><b>Kaiming, He</b></td><td>Kaiming He initialization</td><td>–</td><td>ReLU용 초기화, Var = 2/n_in.</td><td class="num">7</td></tr>
+      <tr><td><b>n_in, n_out</b></td><td>fan-in, fan-out</td><td>입력 수, 출력 수</td><td>한 층에 들어오고 나가는 연결 수.</td><td class="num">7</td></tr>
+      <tr><td><b>precision</b></td><td>positive predictive value</td><td>정밀도</td><td>"양성"이라 한 것 중 진짜 비율.</td><td class="num">2</td></tr>
+      <tr><td><b>recall</b></td><td>sensitivity, true positive rate</td><td>재현율</td><td>진짜 양성 중 찾아낸 비율.</td><td class="num">2</td></tr>
+      <tr><td><b>requires_grad</b></td><td>–</td><td>–</td><td>False면 그 weight는 학습하지 않는다.</td><td class="num">8</td></tr>
+      <tr><td><b>TN, TP</b></td><td>true negative / positive</td><td>참 음성 / 양성</td><td>맞힌 것.</td><td class="num">1</td></tr>
+      <tr><td><b>threshold</b></td><td>decision threshold</td><td>문턱</td><td>이 점수보다 크면 양성.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>Xavier, Glorot</b></td><td>Xavier Glorot initialization</td><td>–</td><td>tanh용 초기화, Var = 2/(n_in + n_out).</td><td class="num">7</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch09.js"></script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 15장 · GAN·Diffusion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="15" data-base="ch15-gan-diffusion">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 15장</p>
+  <h1>GAN·Diffusion</h1>
+  <p class="topic">생성 model</p>
+  <p class="lead">data의 분포를 배워 새 sample을 뽑는 두 방법. 위조범(generator)과 감별사(discriminator)가 겨루는 GAN, 그리고 그림에 noise를 조금씩 더했다가 그것을 거꾸로 지우는 법을 배우는 diffusion. 마지막으로 AI 윤리와 이 뒤에 공부하는 법.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: 분포에서 뽑기, GAN 게임, 그림 GAN, diffusion, sampling과 guidance" style="font-family: var(--sans);">
+      <defs><marker id="m15-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M22 90Q50 40 68 40T114 90" fill="var(--sigwash)" stroke="var(--sig)" stroke-width="2"/><g fill="var(--miss)"><circle cx="52" cy="86" r="3.5"/><circle cx="66" cy="80" r="3.5"/><circle cx="78" cy="86" r="3.5"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① 분포에서 뽑기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="22" y="56" width="36" height="26" rx="4" fill="var(--surface)" stroke="var(--miss)"/><text x="40" y="73" font-size="11" text-anchor="middle" fill="var(--miss)" font-weight="700">G</text><rect x="78" y="56" width="36" height="26" rx="4" fill="var(--surface)" stroke="var(--sig)"/><text x="96" y="73" font-size="11" text-anchor="middle" fill="var(--sig)" font-weight="700">D</text><path d="M58 64H78M78 76H58" stroke="var(--muted)" marker-end="url(#m15-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② GAN 게임</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">2~3절</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="24" y="50" width="26" height="26" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="var(--muted)" opacity="0.5"><rect x="58" y="50" width="26" height="26"/></g><g fill="var(--muted)"><rect x="92" y="50" width="4" height="4"/><rect x="100" y="58" width="4" height="4"/><rect x="108" y="52" width="4" height="4"/><rect x="96" y="68" width="4" height="4"/><rect x="110" y="70" width="4" height="4"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ noise 더하기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">4~5절</text></g></a>
+      <a href="#s6"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M30 50L48 64V76L30 90ZM106 50L88 64V76L106 90Z" fill="var(--surface)" stroke="var(--ok)"/><rect x="50" y="64" width="36" height="12" fill="var(--surface)" stroke="var(--ok)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ ε 맞히기, 되돌리기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">6~7절</text></g></a>
+      <a href="#s8"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="68" y="62" font-size="12" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)">"7" →</text><path d="M58 72Q68 66 74 72L64 88" fill="none" stroke="var(--ink)" stroke-width="2.4"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ 조건과 guidance</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">8절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m15-arrow)"/><path d="M304 85H318" marker-end="url(#m15-arrow)"/><path d="M456 85H470" marker-end="url(#m15-arrow)"/><path d="M608 85H622" marker-end="url(#m15-arrow)"/></g>
+      <a href="#s9"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">AI 윤리와 이 뒤에 공부하는 법 (논문 읽기)</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">9절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="분포에서 뽑기"><span class="no">1</span>생성 model이란: 분포에서 뽑기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>분류 model은 "이것은 무엇인가"에 답한다. "그럴듯한 새것을 하나 만들어 줘"에 답하려면?</p></div>
+  <div class="eq" data-tex="\text{학습}: \; \Cb{p_\theta(x)} \approx p_{\text{data}}(x) \qquad \text{생성}: \; \Co{x_{\text{new}}} \sim \Cb{p_\theta}"></div>
+  <ul class="legend"><li class="c-sig"><b>p_θ</b> model이 배운 분포</li><li class="c-miss"><b>x_new</b> 거기서 뽑은 새 sample</li></ul>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b1draw">20명 다시 뽑기</button></div>
+    <canvas id="cv1" aria-label="키의 분포와 거기서 뽑은 20명"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>생성 model</th><th>새것을 뽑는 법</th><th>장</th></tr></thead>
+    <tbody>
+      <tr><td>autoencoder</td><td>latent의 점을 decoder에 (어디서 뽑을지 규칙 없음)</td><td>10장</td></tr>
+      <tr><td>LLM (autoregressive)</td><td>다음 token을 하나씩 뽑아 이어 붙이기</td><td>14장</td></tr>
+      <tr><td>GAN</td><td>noise z 하나를 generator에 한 번 통과</td><td>2~3절</td></tr>
+      <tr><td>diffusion</td><td>noise에서 시작해 여러 번 조금씩 noise를 빼기</td><td>4~8절</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> 생성 model = data의 분포를 배우고 거기서 새 sample을 뽑는 model.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="GAN 게임"><span class="no">2</span>GAN: generator와 discriminator의 게임</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>분포를 식으로 쓰지 않고도 그 분포를 흉내 내는 법을 배울 수 있나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>GAN</dt><dd><b>generative adversarial network</b>. 서로 겨루며 배우는 두 network (Goodfellow 외 2014).</dd>
+    <dt>G (generator)</dt><dd>noise z를 받아 가짜 sample을 만드는 위조범.</dd>
+    <dt>D (discriminator)</dt><dd>진짜인지 가짜인지 확률을 내는 감별사.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\min_{\Co{G}} \max_{\Cb{D}} \; \mathbb{E}_{x \sim p_{\text{data}}}\big[\log \Cb{D}(x)\big] + \mathbb{E}_{z}\big[\log\big(1 - \Cb{D}(\Co{G}(z))\big)\big]"></div>
+  <p class="say">말로: D는 진짜에는 1, 가짜에는 0을 내도록 배우고, G는 D가 가짜에도 1을 내도록 배운다. 둘을 번갈아 한 걸음씩. 끝까지 가면 G의 분포 = data 분포, D(x) = 0.5 (구별 못 함).</p>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g2d"><span>진짜 data</span><button type="button" data-v="one" aria-pressed="true">봉우리 하나</button><button type="button" data-v="two" aria-pressed="false">봉우리 둘</button></div>
+      <label>학습 횟수 <input type="range" id="i2s" min="0" max="30" step="1" value="0"><output id="o2s"></output></label>
+      <button type="button" id="b2play">재생</button>
+    </div>
+    <canvas id="cv2" aria-label="1D GAN: 진짜 분포, G가 만든 histogram, D(x)"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: 1D GAN, G (1-16-16-1), D (1-32-32-1), 3000번 (PyTorch)</p>
+    <div class="eq" data-tex="\begin{aligned} \text{봉우리 하나 } \mathcal{N}(2, 0.5^2)&: \; G \text{의 평균 } \Cg{1.89}, \ \text{표준편차 } \Cg{0.43}, \ D \approx 0.50 \sim 0.56 \\ \text{봉우리 둘 } (\pm 2)&: \; \text{두 봉우리를 모두 덮음 (평균 } 0.07, \text{ 표준편차 } 1.92 \text{; 진짜 } 0, 2.04) \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 봉우리 하나에서는 3000번 뒤 D가 data 자리에서 0.50~0.56으로 거의 평평해졌다: 더 이상 가려내지 못한다. 봉우리 둘은 더 어렵다: 500번에는 평균이 −0.39로 한쪽에 기울었다가, 3000번에는 두 봉우리를 다 덮었다. 다만 모양은 울퉁불퉁하다. 이번에는 없었지만, G가 한 봉우리만 만들고 멈추는 실패(mode collapse)도 GAN에서 흔하다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> GAN = G는 속이고 D는 가려낸다. 겨루다 보면 G의 분포가 data 분포를 닮는다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="그림 GAN"><span class="no">3</span>linear GAN과 CNN GAN (MNIST, FMNIST, CIFAR)</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>그림에도 되나? G와 D를 FFN으로 만들 때와 CNN으로 만들 때 무엇이 다른가?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g3m"><span>model</span><button type="button" data-v="mnist_lin" aria-pressed="false">MNIST linear</button><button type="button" data-v="mnist_cnn" aria-pressed="true">MNIST CNN</button><button type="button" data-v="fmnist_cnn" aria-pressed="false">FMNIST CNN</button><button type="button" data-v="cifar_cnn" aria-pressed="false">CIFAR10 CNN</button></div>
+      <div class="seg" id="g3e"><span>시점</span><button type="button" data-v="0" aria-pressed="false">epoch 1</button><button type="button" data-v="1" aria-pressed="false">epoch 3</button><button type="button" data-v="2" aria-pressed="true">epoch 10</button></div>
+    </div>
+    <canvas id="cv3" aria-label="GAN이 만든 그림 64장"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>model</th><th>G</th><th>D</th><th>학습</th></tr></thead>
+    <tbody>
+      <tr><td>linear (MNIST)</td><td>z 64 → 256 → 512 → 784 (FFN)</td><td>784 → 512 → 256 → 1</td><td>20 epoch</td></tr>
+      <tr><td>CNN (MNIST, FMNIST)</td><td>z 64 → 128×7×7 → transpose conv → 64×14×14 → 1×28×28</td><td>conv 2번 (28 → 14 → 7) → 1</td><td>10 epoch</td></tr>
+      <tr><td>CNN (CIFAR10)</td><td>z 100 → 256×4×4 → 128×8×8 → 64×16×16 → 3×32×32</td><td>conv 3번 → 1</td><td>15 epoch</td></tr>
+    </tbody>
+  </table></div>
+  <div class="calc">
+    <p class="h">관찰</p>
+    <div class="mean"><b>→ 뜻.</b> linear GAN은 20 epoch에도 바탕에 점 잡음이 남는다: FFN인 G는 이웃 pixel끼리 비슷해야 한다는 것을 모른다. 5 epoch에는 9·3 같은 비슷한 숫자가 많이 나온다 (mode collapse의 기미). CNN GAN은 10 epoch에 획이 매끈하고 여러 숫자가 고르게 나온다. FMNIST는 셔츠·신발·바지·가방을 알아볼 만하다. CIFAR10은 15 epoch에도 색과 덩어리는 사진 같지만 물체는 알아보기 어렵다: 작은 GAN과 짧은 학습의 한계다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 그림 GAN은 G에 transpose conv(11장 4절), D에 conv를 쓴다. 학습이 불안정해 Adam β₁ 0.5, LeakyReLU, BatchNorm 같은 요령이 필요하다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="diffusion 아이디어"><span class="no">4</span>diffusion의 아이디어: noise를 더하고 되돌리기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>그림을 noise로 바꾸기는 쉽다. 거꾸로 noise를 그림으로 바꾸는 법을 배울 수 있다면?</p></div>
+  <div class="eq" data-tex="\Co{x_t} = \Cb{\sqrt{\bar\alpha_t}} \, x_0 + \Cr{\sqrt{1 - \bar\alpha_t}} \, \varepsilon, \qquad \varepsilon \sim \mathcal{N}(0, I)"></div>
+  <ul class="legend"><li class="c-sig"><b>√ᾱ_t</b> 원래 그림의 몫 (1 → 0)</li><li class="c-fa"><b>√(1−ᾱ_t)</b> noise의 몫 (0 → 1)</li></ul>
+  <div class="stage">
+    <div class="ctl">
+      <label>t <input type="range" id="i4t" min="0" max="1000" step="10" value="250"><output id="o4t"></output></label>
+      <button type="button" id="b4next">다른 숫자</button>
+    </div>
+    <canvas id="cv4" aria-label="진짜 숫자에 noise를 더한 단계들"></canvas>
+    <canvas id="cv4s" aria-label="원래 그림과 t에서의 그림"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b4bplay">재생 (퍼지기 → 되돌리기)</button>
+      <button type="button" id="b4bstep">한 단계</button>
+    </div>
+    <canvas id="cv4b" aria-label="2D 점 구름이 noise로 퍼졌다가 network로 되돌아오는 모습"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> diffusion = 그림 → noise는 정해진 식으로, noise → 그림은 network로 한 걸음씩 되돌리기.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="forward process"><span class="no">5</span>forward process와 noise schedule</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>한 걸음에 noise를 얼마나 더하나? 1000걸음 뒤에는 얼마나 남나?</p></div>
+  <div class="eq" data-tex="q(x_t \mid x_{t-1}) = \mathcal{N}\!\big(\sqrt{1 - \Cr{\beta_t}}\, x_{t-1},\; \Cr{\beta_t} I\big), \qquad \Cb{\bar\alpha_t} = \prod_{s=1}^{t} (1 - \Cr{\beta_s})"></div>
+  <div class="calc">
+    <p class="h">예제: T = 1000, β가 0.0001에서 0.02까지 곧게 (DDPM, Ho 외 2020)</p>
+    <div class="eq" data-tex="\bar\alpha_{100} = 0.897, \quad \bar\alpha_{250} = 0.524, \quad \bar\alpha_{500} = \Co{0.0786}, \quad \bar\alpha_{750} = 0.0034, \quad \bar\alpha_{1000} = \Cr{0.00004}"></div>
+    <div class="mean"><b>→ 뜻.</b> t = 500이면 원래 그림의 몫이 √0.0786 = 0.28뿐, 1000이면 0.0064로 사실상 순수한 noise. 곱셈이 쌓이니 한 번에 x_t로 건너뛸 수 있다 (4절 식): 학습할 때 1000걸음을 다 밟지 않아도 된다.</div>
+  </div>
+  <div class="stage"><canvas id="cv5" aria-label="noise schedule 그래프: β_t, ᾱ_t, √ᾱ_t, √(1−ᾱ_t)"></canvas></div>
+  <p class="key"><b>기억할 한 줄.</b> 한 걸음 noise β_t는 작고, 쌓인 결과 ᾱ_t는 1에서 0으로. x_t는 x₀에서 한 번에 만들 수 있다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="DDPM loss"><span class="no">6</span>denoising network와 학습 (DDPM loss)</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>network는 무엇을 맞히도록 배우나?</p></div>
+  <div class="eq" data-tex="L = \mathbb{E}_{x_0,\, t,\, \varepsilon} \Big\| \, \Cr{\varepsilon} - \Cb{\varepsilon_\theta}\big( \sqrt{\bar\alpha_t}\, x_0 + \sqrt{1 - \bar\alpha_t}\, \Cr{\varepsilon},\; t \big) \Big\|^2"></div>
+  <p class="say">말로: 그림 x₀와 시간 t를 아무거나 고르고 noise ε를 섞어 x_t를 만든다. network ε_θ는 x_t와 t를 보고 "섞인 noise가 무엇이었나"를 맞힌다. 10장의 denoising autoencoder와 같은 생각을 모든 noise 크기에 대해 한 것.</p>
+  <div class="stage">
+    <svg viewBox="0 0 700 200" role="img" aria-label="이 장의 U-Net: 28에서 14, 7로 줄었다가 다시 28로, 같은 크기끼리 이어 붙인다" style="font-family: var(--sans); width: 100%; height: auto;">
+      <defs><marker id="m15-a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <g font-size="11" text-anchor="middle">
+        <rect x="20" y="30" width="60" height="60" fill="var(--sigwash)" stroke="var(--sig)"/><text x="50" y="64" fill="var(--sig)">x_t 1×28²</text>
+        <rect x="110" y="30" width="60" height="60" fill="var(--surface)" stroke="var(--sig)"/><text x="140" y="64" fill="var(--ink)">32×28²</text>
+        <rect x="200" y="70" width="44" height="44" fill="var(--surface)" stroke="var(--sig)"/><text x="222" y="96" fill="var(--ink)">64×14²</text>
+        <rect x="276" y="110" width="30" height="30" fill="var(--wash)" stroke="var(--miss)"/><text x="291" y="160" fill="var(--miss)">128×7²</text>
+        <rect x="338" y="70" width="44" height="44" fill="var(--surface)" stroke="var(--sig)"/><text x="360" y="96" fill="var(--ink)">64×14²</text>
+        <rect x="412" y="30" width="60" height="60" fill="var(--surface)" stroke="var(--sig)"/><text x="442" y="64" fill="var(--ink)">32×28²</text>
+        <rect x="502" y="30" width="60" height="60" fill="var(--okwash)" stroke="var(--ok)"/><text x="532" y="64" fill="var(--ok)">ε̂ 1×28²</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="1.4" fill="none"><path d="M80 60H108" marker-end="url(#m15-a6)"/><path d="M170 70L198 86" marker-end="url(#m15-a6)"/><path d="M244 104L274 120" marker-end="url(#m15-a6)"/><path d="M306 120L336 104" marker-end="url(#m15-a6)"/><path d="M382 86L410 70" marker-end="url(#m15-a6)"/><path d="M472 60H500" marker-end="url(#m15-a6)"/></g>
+      <g stroke="var(--ok)" stroke-width="1.4" fill="none" stroke-dasharray="5 4"><path d="M140 30V16H442V28" marker-end="url(#m15-a6)"/><path d="M222 70V56H360V68" marker-end="url(#m15-a6)"/></g>
+      <text x="291" y="12" font-size="10.5" text-anchor="middle" fill="var(--ok)">같은 크기끼리 이어 붙이기 (skip)</text>
+      <rect x="590" y="40" width="100" height="40" rx="6" fill="var(--surface)" stroke="var(--vio)"/><text x="640" y="57" font-size="11" text-anchor="middle" fill="var(--vio)">t (사인 벡터)</text><text x="640" y="72" font-size="11" text-anchor="middle" fill="var(--vio)">+ class c</text>
+      <text x="640" y="100" font-size="10.5" text-anchor="middle" fill="var(--muted)">모든 block에 더한다</text>
+    </svg>
+  </div>
+  <div class="codebox"><pre><code>t = torch.randint(0, T, (B,))                 # 시간 아무거나
+eps = torch.randn_like(x0)                    # 섞을 noise
+xt = abar[t].sqrt() * x0 + (1 - abar[t]).sqrt() * eps
+loss = F.mse_loss(unet(xt, t, c), eps)        # noise를 맞힌다
+loss.backward(); opt.step()</code></pre></div>
+  <p class="say">이 장의 U-Net: parameter 575,169개, MNIST 60,000장 12 epoch (Apple GPU). t는 14장의 위치 encoding과 같은 사인 벡터로 넣는다.</p>
+  <p class="key"><b>기억할 한 줄.</b> DDPM 학습 = 섞은 noise ε를 맞히는 회귀 (MSE). 구조는 크기를 줄였다 키우는 U-Net.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="sampling"><span class="no">7</span>sampling: noise에서 그림으로</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습한 ε_θ로 새 그림은 어떻게 만드나?</p></div>
+  <div class="eq" data-tex="x_T \sim \mathcal{N}(0, I), \qquad \Co{x_{t-1}} = \frac{1}{\sqrt{\alpha_t}} \left( x_t - \frac{\beta_t}{\sqrt{1 - \bar\alpha_t}} \, \Cb{\varepsilon_\theta(x_t, t)} \right) + \sqrt{\beta_t}\, z, \quad t = T, \dots, 1"></div>
+  <p class="say">말로: 순수한 noise에서 시작해, network가 짐작한 noise를 조금 빼고 약간의 새 noise(z)를 더하기를 1000번. 마지막 걸음에는 z를 더하지 않는다.</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>단계 <input type="range" id="i7k" min="0" max="8" step="1" value="8"><output id="o7k"></output></label>
+      <button type="button" id="b7play">처음부터 재생</button>
+    </div>
+    <canvas id="cv7" aria-label="noise에서 숫자로 바뀌는 중간 모습"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> sampling = noise에서 시작해 ε_θ로 1000번 조금씩 되돌리기. GAN의 한 번보다 느리지만 안정적이고 다양하다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="조건, guidance"><span class="no">8</span>condition, guidance, latent diffusion (Stable Diffusion)</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"7을 그려 줘", "고양이 사진"처럼 원하는 것을 그리게 하려면?</p></div>
+  <div class="eq" data-tex="\tilde\varepsilon = (1 + \Co{w})\, \varepsilon_\theta(x_t, t, \Cb{c}) - \Co{w}\, \varepsilon_\theta(x_t, t, \varnothing)"></div>
+  <ul class="legend"><li class="c-sig"><b>c</b> 조건 (숫자, 글)</li><li class="c-miss"><b>w</b> guidance 세기: 조건이 있을 때와 없을 때의 차이를 w배 더 민다</li><li><b>∅</b> 조건 없음 (학습 때 10%는 class를 지웠다)</li></ul>
+  <div class="stage">
+    <div class="ctl"><div class="seg" id="g8w"><span>guidance w</span><button type="button" data-v="0" aria-pressed="true">0</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">3</button></div></div>
+    <canvas id="cv8" aria-label="guidance 세기별로 만든 숫자 0~9"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: 숫자마다 50장, 요청한 숫자로 읽힌 비율 (작은 CNN이 판정)</p>
+    <div class="eq" data-tex="w = 0: 90.2\% \qquad w = 1: 99.4\% \qquad w = 3: \Cg{100\%}"></div>
+    <div class="mean"><b>→ 뜻.</b> guidance 없이 조건만 넣어도(w = 0) 90%가 맞지만, 5를 6이나 9처럼 그린 것 같은 실수가 섞인다. w를 키우면 거의 다 맞고, 대신 획이 굵어지고 서로 비슷해진다: 다양함을 내주고 정확함을 얻는다. 판정한 CNN도 시험 정확도 98.0%라 이 비율에 1~2%의 오차가 있다.</div>
+  </div>
+  <div class="tbl"><table>
+    <caption>latent diffusion (Stable Diffusion v1): 그림 대신 autoencoder(10장)의 latent에서 diffusion</caption>
+    <thead><tr><th></th><th>크기</th><th class="num">숫자 개수</th></tr></thead>
+    <tbody>
+      <tr><td>그림</td><td>512 × 512 × 3</td><td class="num">786,432</td></tr>
+      <tr><td>latent</td><td>64 × 64 × 4</td><td class="num">16,384 (48배 적다)</td></tr>
+      <tr><td>조건 c</td><td>글 → CLIP text encoder → token 벡터들, U-Net이 cross-attention(14장 6절)으로 본다</td><td class="num">–</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> 조건 c를 함께 넣고, guidance w로 조건을 더 세게 따르게 한다. 큰 그림은 latent에서 diffusion해 계산을 줄인다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="AI 윤리, 공부법"><span class="no">9</span>AI 윤리와 앞으로 공부하는 법 (논문 읽기)</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>만들 수 있게 된 것으로 무엇을 조심해야 하나? 이 15장 뒤에는 무엇을 어떻게 공부하나?</p></div>
+  <div class="tbl"><table>
+    <caption>조심할 것</caption>
+    <thead><tr><th>문제</th><th>예</th><th>할 수 있는 일</th></tr></thead>
+    <tbody>
+      <tr><td>편향 (bias)</td><td>data에 적게 나온 집단에서 정확도가 낮다 (9장 3절의 드문 class)</td><td>group별 metric을 따로 잰다</td></tr>
+      <tr><td>가짜 (deepfake)</td><td>실제 사람의 얼굴·목소리로 만든 가짜</td><td>출처 표시, 동의 없이 실존 인물을 만들지 않는다</td></tr>
+      <tr><td>개인정보</td><td>학습 data의 문장·얼굴을 model이 외워 내뱉는다 (13장의 외우기)</td><td>민감한 data를 빼거나 가린다</td></tr>
+      <tr><td>저작권</td><td>남의 그림·글로 학습하고 비슷한 것을 만든다</td><td>data의 license를 확인한다 (이 page는 CC BY·공유 저작물·직접 만든 그림만 썼다)</td></tr>
+      <tr><td>과신</td><td>확률이 높아 보여도 틀린다 (14장: Paris 3.2%)</td><td>사람이 확인할 자리를 남긴다</td></tr>
+      <tr><td>에너지</td><td>큰 model 학습에 드는 전기</td><td>작은 model, transfer(12장)를 먼저</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <caption>논문을 세 번에 나눠 읽기 (S. Keshav, "How to Read a Paper", 2007)</caption>
+    <thead><tr><th>번</th><th>시간</th><th>읽는 곳</th><th>얻는 것</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>5~10분</td><td>제목, 초록, 서론, 절 제목, 결론, 그림</td><td>무엇을 했고 내게 필요한가</td></tr>
+      <tr><td>2</td><td>1시간</td><td>그림·표를 자세히, 증명은 건너뛴다</td><td>방법과 결과의 요지</td></tr>
+      <tr><td>3</td><td>몇 시간</td><td>처음부터 다시 만든다고 생각하며 전부</td><td>숨은 가정, 약점, 내 연구에 쓸 곳</td></tr>
+    </tbody>
+  </table></div>
+  <p class="say">공부를 이어 가는 법: 이 page들처럼 <b>작게 직접 만들어 숫자를 확인</b>한다 (tools 폴더의 script들). 논문은 arXiv에서, 구현은 저자의 code와 PyTorch 문서에서 찾는다. 그림 하나를 그대로 다시 만들어 보는 것이 가장 빠른 이해다.</p>
+  <p class="key"><b>기억할 한 줄.</b> 만들 수 있는 것이 늘수록 data의 출처, group별 성능, 사람의 확인을 챙긴다. 공부는 작게 다시 만들어 보며.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="정리, 약자 사전"><span class="no">10</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 생성 model</td><td>분포를 배워 새로 뽑기</td><td>키 N(170, 7²)</td></tr>
+      <tr><td>2 GAN</td><td>G는 속이고 D는 가린다</td><td>D(x) → 0.5</td></tr>
+      <tr><td>3 그림 GAN</td><td>transpose conv G, conv D</td><td>MNIST, FMNIST, CIFAR10</td></tr>
+      <tr><td>4 diffusion</td><td>noise 더하기를 거꾸로</td><td>x_t = √ᾱ x₀ + √(1−ᾱ) ε</td></tr>
+      <tr><td>5 schedule</td><td>ᾱ_t: 1 → 0</td><td>ᾱ₅₀₀ = 0.0786</td></tr>
+      <tr><td>6 DDPM loss</td><td>섞은 noise 맞히기</td><td>U-Net</td></tr>
+      <tr><td>7 sampling</td><td>1000걸음 되돌리기</td><td>t = 1000 → 0</td></tr>
+      <tr><td>8 guidance</td><td>조건을 w배 더 세게</td><td>w 0 → 3: 90% → 100%</td></tr>
+      <tr><td>9 윤리, 공부</td><td>출처, group별 성능, 다시 만들기</td><td>세 번 읽기</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">15장으로 DL-Edu가 끝난다. 숫자는 <code>tools/ch15_gan.py</code>, <code>tools/ch15_diffusion.py</code> (PyTorch, Apple GPU)로 계산했다. 그림은 모두 이 script들이 학습한 model이 만든 것이다.</p>
+  <h3 id="s10b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>ᾱ_t</b></td><td>alpha bar (cumulative product)</td><td>–</td><td>t까지 남은 원래 그림의 몫(의 제곱).</td><td class="num">4, 5</td></tr>
+      <tr><td><b>β_t</b></td><td>noise schedule</td><td>–</td><td>한 걸음에 더하는 noise의 양.</td><td class="num">5</td></tr>
+      <tr><td><b>CFG</b></td><td>classifier-free guidance</td><td>–</td><td>조건 있음·없음의 차이를 w배 더 미는 법.</td><td class="num">8</td></tr>
+      <tr><td><b>CLIP</b></td><td>Contrastive Language–Image Pre-training</td><td>–</td><td>글과 그림을 같은 공간에 놓는 model.</td><td class="num">8</td></tr>
+      <tr><td><b>D</b></td><td>discriminator</td><td>판별자</td><td>진짜·가짜를 가리는 network.</td><td class="num">2</td></tr>
+      <tr><td><b>DDPM</b></td><td>denoising diffusion probabilistic model</td><td>–</td><td>noise를 맞히며 되돌리는 diffusion (Ho 외 2020).</td><td class="num">6</td></tr>
+      <tr><td><b>G</b></td><td>generator</td><td>생성자</td><td>noise에서 가짜를 만드는 network.</td><td class="num">2</td></tr>
+      <tr><td><b>GAN</b></td><td>generative adversarial network</td><td>적대적 생성 신경망</td><td>G와 D가 겨루며 배운다.</td><td class="num">2</td></tr>
+      <tr><td><b>U-Net</b></td><td>U-shaped network</td><td>–</td><td>줄였다 키우며 같은 크기끼리 잇는 CNN.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch15_data.js"></script>
+<script src="ch15.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 7 · Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="7" data-base="ch07-optimizers">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 7</p>
+  <h1>Optimizer</h1>
+  <p class="topic">Mini-batches, optimizers and learning rate</p>
+  <p class="lead">What makes chapter 2's gradient descent fast and stable in practice: using the data a little at a time (mini-batches), building up speed (momentum), sizing steps per direction (RMSprop, Adam), shrinking steps over time (schedules), and how to choose all these settings.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: mini-batches, momentum, RMSprop and Adam, an optimizer race, learning-rate schedules" style="font-family: var(--sans);">
+      <defs><marker id="m7-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sigwash)" stroke="var(--sig)"><rect x="40" y="58" width="44" height="28" rx="3"/><rect x="46" y="52" width="44" height="28" rx="3"/><rect x="52" y="46" width="44" height="28" rx="3"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Mini-batches</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">a little at a time · section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 52Q70 96 112 84" fill="none" stroke="var(--line)" stroke-width="2"/><circle cx="76" cy="86" r="7" fill="var(--sig)"/><path d="M40 70L60 82" stroke="var(--sig)" stroke-width="1.4" stroke-dasharray="3 2"/><path d="M84 88H104" stroke="var(--sig)" stroke-width="2" marker-end="url(#m7-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Momentum</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">build up speed · section 2</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M40 86H80" stroke="var(--miss)" stroke-width="2.4" marker-end="url(#m7-arrow)"/><path d="M40 86V50" stroke="var(--miss)" stroke-width="2.4" marker-end="url(#m7-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ RMSprop, Adam</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">steps per direction · 3</text></g></a>
+      <a href="#s4"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="none" stroke-width="1.8"><path d="M26 50C50 60 70 80 106 86" stroke="var(--muted)"/><path d="M26 50C40 80 80 90 106 86" stroke="var(--sig)"/><path d="M26 50C60 52 90 70 106 86" stroke="var(--ok)"/><path d="M26 50L106 86" stroke="var(--miss)"/></g><circle cx="106" cy="86" r="4" fill="var(--ink)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ A race</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 4</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M26 50C60 52 80 92 112 92" fill="none" stroke="var(--miss)" stroke-width="2.2"/><path d="M26 56H52V72H80V84H112" fill="none" stroke="var(--muted)" stroke-width="1.4"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ η schedules</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">big first, small later · 6</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m7-arrow)"/><path d="M304 85H318" marker-end="url(#m7-arrow)"/><path d="M456 85H470" marker-end="url(#m7-arrow)"/><path d="M608 85H622" marker-end="url(#m7-arrow)"/></g>
+      <a href="#s5"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Adam + L2 vs AdamW: where weight decay goes</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 5</text></a>
+      <a href="#s7"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Choosing settings: grid vs random</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 7</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Mini-batches"><span class="no">1</span>Training in mini-batches, and batch size</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With a million samples, must every step add up a million gradients?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>batch</dt><dd>The group of samples used for one step. B = its size.</dd>
+    <dt>SGD</dt><dd><b>stochastic gradient descent</b>. GD that steps with randomly chosen batches.</dd>
+    <dt>epoch</dt><dd>One pass over all the data = N / B steps.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Cb{\mathbf g_B} = \frac{1}{\Co{B}} \sum_{i \in \text{batch}} \nabla L_i, \qquad \text{variance of the wobble} \propto \frac{1}{\Co{B}}, \qquad \text{steps per epoch} = \frac{N}{\Co{B}}"></div>
+  <ul class="legend"><li><b class="c-sig">g_B</b> the gradient measured on a batch (an estimate of the full gradient)</li><li><b class="c-miss">B</b> small: many wobbly steps; large: few straight steps</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: N = 256</p>
+    <div class="eq" data-tex="B = 1: 256\text{ steps/epoch} \qquad B = 32: 8\text{ steps} \qquad B = 256: 1\text{ step}, \qquad B \times 4 \Rightarrow \text{wobble} \times \tfrac12"></div>
+    <div class="mean"><b>→ Meaning.</b> Small batches are cheap and step often, but their direction wobbles (the wobble even helps a little against overfitting). On a GPU, 32–256 is common.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g1b"><span>batch size</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="8" aria-pressed="true">8</button><button type="button" data-v="32" aria-pressed="false">32</button><button type="button" data-v="256" aria-pressed="false">256 (all)</button></div>
+      <button type="button" id="b1seed">Different random draw</button>
+    </div>
+    <canvas id="cv1" aria-label="Gradients from different batches, and the path over 3 epochs"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Mini-batch = estimate the full gradient from a batch and step often. Smaller batches wobble more; larger ones go straighter but cost more.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Momentum"><span class="no">2</span>SGD and momentum</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do we stop crawling along the gentle direction of chapter 2, section 8's long valley? Remember the speed, like a rolling ball.</p></div>
+  <div class="eq" data-tex="\Cb{\mathbf v} \leftarrow \Co{\beta}\,\Cb{\mathbf v} + \Cg{\mathbf g}, \qquad \mathbf w \leftarrow \mathbf w - \eta\,\Cb{\mathbf v}"></div>
+  <ul class="legend"><li><b class="c-sig">v</b> velocity: the accumulated past gradients</li><li><b class="c-miss">β</b> how much it remembers (usually 0.9)</li><li><b class="c-ok">g</b> this step's gradient</li><li>if the direction keeps repeating, speed builds up (like a rolling ball)</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: f = (x² + 50y²)/2, 40 steps from (−4.5, 1) with η = 0.035</p>
+    <div class="eq" data-tex="\text{SGD}: f = 0.59\ (x = -1.08) \qquad \text{momentum } (\Co{\beta} = 0.8): f = 0.0066"></div>
+    <div class="mean"><b>→ Meaning.</b> Same η, but momentum ends 90 times lower. Speed builds up along the gentle x direction. In exchange it sways along the steep y direction: with β = 0.9 it sways so much in this valley that it ends up slower.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>β <input type="range" id="i2b" min="0" max="0.95" step="0.05" value="0.8"><output id="o2b"></output></label></div>
+    <canvas id="cv2" aria-label="SGD and momentum paths in a long valley"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Momentum = accumulate gradients into a velocity and step with it. Consistent directions speed up; too large a β sways.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="RMSprop, Adam"><span class="no">3</span>RMSprop and Adam</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If each direction has its own steepness, can each direction get its own step size?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>RMSprop</dt><dd><b>root mean square propagation</b>. Divides by a running average of gradient size.</dd>
+    <dt>Adam</dt><dd><b>adaptive moment estimation</b>. Momentum + RMSprop.</dd>
+    <dt>m̂, v̂</dt><dd>m and v corrected for their bias in the first few steps (they start at 0).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{RMSprop}: \Cv{s} \leftarrow \rho\,\Cv{s} + (1-\rho)\,g^2, \quad w \leftarrow w - \eta\,\frac{g}{\sqrt{\Cv{s}} + \varepsilon}"></div>
+  <div class="eq" data-tex="\text{Adam}: \Cb{m} \leftarrow \beta_1 \Cb{m} + (1-\beta_1)\,g, \quad \Cv{v} \leftarrow \beta_2 \Cv{v} + (1-\beta_2)\,g^2, \quad w \leftarrow w - \eta\,\frac{\Cb{\hat m}}{\sqrt{\Cv{\hat v}} + \varepsilon}"></div>
+  <ul class="legend"><li><b class="c-sig">m</b> average direction (momentum)</li><li><b class="c-vio">s, v</b> average size: larger in steep directions → dividing makes those steps smaller</li><li>Adam defaults: η = 0.001, β₁ = 0.9, β₂ = 0.999</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the valley from section 2, 40 steps</p>
+    <div class="eq" data-tex="\text{SGD } (\eta\ 0.035): 0.59 \qquad \text{RMSprop } (\eta\ 0.2): 2.8\times10^{-6} \qquad \text{Adam } (\eta\ 0.2): 0.24"></div>
+    <div class="mean"><b>→ Meaning.</b> g/√s is roughly a step that keeps only the sign, so x and y shrink at the same rate. In this valley RMSprop is fastest and Adam overshoots a little because of its momentum. No optimizer wins every time.</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv3" aria-label="SGD, RMSprop and Adam paths in the same valley"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> RMSprop and Adam divide each direction's step by its gradient size; Adam adds momentum on top. The default for most deep learning.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Comparing optimizers"><span class="no">4</span>Comparing optimizers</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>On a curved valley and on a real network, which one is fastest?</p></div>
+  <div class="calc">
+    <p class="h">RESULTS: f = (1 − x)² + 5(y − x²)², 300 steps from (−1.5, 2.2)</p>
+    <div class="eq" data-tex="\text{SGD}\ 3.2\times10^{-3} \qquad \text{momentum}\ 3.2\times10^{-6} \qquad \text{RMSprop}\ 4.7\times10^{-3} \qquad \text{Adam}\ 2.4\times10^{-8}"></div>
+    <div class="mean"><b>→ Meaning.</b> In the curved valley momentum and Adam reach the bottom. η has to be tuned for each optimizer separately (comparing at the same η is unfair).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try"><li><b>Race</b>: four balls start together. Click the map to move the start.</li></ol>
+    </div>
+    <div class="ctl"><button type="button" id="b4play">Race</button></div>
+    <canvas id="cv4" aria-label="Paths and loss of four optimizers on a curved valley"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try"><li><b>Train all four</b>: same network, same starting weights. The loss sits on a flat stretch (plateau) near 0.37 for a while, and RMSprop and Adam get off it first.</li></ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b4brun">Train all four</button>
+      <button type="button" id="b4breset">Reset</button>
+    </div>
+    <canvas id="cv4b" aria-label="Training loss of four optimizers on the moons classification"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> Start with Adam (η ≈ 0.001). When squeezing out the last bit of performance, also try SGD + momentum + a schedule.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Adam + L2, AdamW"><span class="no">5</span>Adam + L2 and AdamW</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Does chapter 5's L2 (weight decay) still work as intended when combined with Adam?</p></div>
+  <div class="eq" data-tex="\text{Adam + L2}: g \leftarrow g + \Cr{\lambda w} \;\;(\text{then divided by } \sqrt{\hat v}), \qquad \text{AdamW}: w \leftarrow w - \eta\Big(\frac{\hat m}{\sqrt{\hat v} + \varepsilon} + \Cg{\lambda w}\Big)"></div>
+  <p class="say">In words: with Adam + L2 the penalty is mixed into the gradient and divided by √v, so weights with large gradients get a small penalty. AdamW takes the penalty out and gives every weight the same one.</p>
+  <div class="stage">
+    <div class="ctl"><label>gradient size of the second weight <input type="range" id="i5g" min="0.01" max="10" step="0.01" value="1"><output id="o5g"></output></label></div>
+    <canvas id="cv5" aria-label="How much weights shrink under Adam + L2 and AdamW"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <div class="codebox"><pre><code>torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.01)    # Adam + L2 (the penalty is divided by √v)
+torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)   # AdamW (penalty applied separately; today's default)</code></pre></div>
+  <p class="key"><b>One line to remember.</b> For weight decay with Adam, use AdamW. Transformers (chapter 14) are trained with AdamW too.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Learning-rate schedules"><span class="no">6</span>Learning-rate decay and schedules</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What shape should chapter 2, section 6's "big steps first, small steps later" take?</p></div>
+  <div class="eq" data-tex="\text{step}: \eta_0\,\gamma^{\lfloor t/s \rfloor}, \qquad \text{exp}: \eta_0\,\gamma^{t}, \qquad \text{cosine}: \eta_{\min} + \tfrac12(\eta_0 - \eta_{\min})\Big(1 + \cos\frac{\pi t}{T}\Big)"></div>
+  <ul class="legend"><li><b>η₀</b> starting η</li><li><b>γ</b> shrink factor</li><li><b>T</b> total epochs</li><li><b>warmup</b> ramp up from 0 over the first few epochs (common with Adam and Transformers)</li></ul>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g6k"><button type="button" data-v="const" aria-pressed="false">Constant</button><button type="button" data-v="step" aria-pressed="false">Step</button><button type="button" data-v="exp" aria-pressed="false">Exponential</button><button type="button" data-v="cos" aria-pressed="true">Cosine</button></div>
+      <label>warmup <input type="range" id="i6w" min="0" max="20" step="1" value="0"><output id="o6w"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="Several learning-rate schedules per epoch"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="codebox"><pre><code>opt = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=100)   # StepLR, ExponentialLR also exist
+for epoch in range(100):
+    train_one_epoch(model, opt)       # calls opt.step() inside
+    sched.step()                      # change η once per epoch</code></pre></div>
+  <p class="key"><b>One line to remember.</b> A schedule takes big steps early to move fast and small steps at the end to settle at the bottom. Cosine (+ warmup) is common today.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Choosing metaparameters"><span class="no">7</span>How to choose metaparameters</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>η, batch size, β, λ, number of layers … there is a lot to choose. How do we search?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>metaparameter</dt><dd>Also called a hyperparameter. A setting chosen by a person, not learned.</dd>
+    <dt>grid search</dt><dd>Try every point of a grid of values.</dd>
+    <dt>random search</dt><dd>Try random points within the ranges.</dd>
+  </dl></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>Left: the 9 settings tried. Only the horizontal setting changes performance much (darker = better). Right: the performance curve for the horizontal setting, with the values tried.</li></ul>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g7m"><button type="button" data-v="grid" aria-pressed="true">Grid</button><button type="button" data-v="random" aria-pressed="false">Random</button></div>
+      <button type="button" id="b7seed">Different random draw</button>
+    </div>
+    <canvas id="cv7" aria-label="Grid search compared with random search"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>Common starting value</th><th>How to sweep</th></tr></thead>
+    <tbody>
+      <tr><td>learning rate η</td><td>Adam 0.001, SGD 0.01–0.1</td><td>log scale (10⁻⁵ to 10⁻¹)</td></tr>
+      <tr><td>batch size</td><td>32 to 256</td><td>powers of 2</td></tr>
+      <tr><td>momentum β, Adam β₁</td><td>0.9</td><td>mostly fixed</td></tr>
+      <tr><td>weight decay λ</td><td>10⁻⁴ to 10⁻²</td><td>log scale</td></tr>
+      <tr><td>dropout p</td><td>0.1 to 0.5</td><td>a few values</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> Search wide and at random (η on a log scale) → narrow down around the good region and search again. Judge on the dev data (chapter 5).</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Summary, dictionary"><span class="no">8</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Mini-batches</td><td>estimate from a batch, step often</td><td>N 256, B 32 → 8 steps/epoch</td></tr>
+      <tr><td>2 Momentum</td><td>build up speed along gentle directions</td><td>0.59 → 0.0066</td></tr>
+      <tr><td>3 RMSprop, Adam</td><td>divide each direction by its size</td><td>RMSprop 2.8×10⁻⁶</td></tr>
+      <tr><td>4 Comparison</td><td>tune η per optimizer; default to Adam</td><td>curved valley: Adam 2.4×10⁻⁸</td></tr>
+      <tr><td>5 AdamW</td><td>apply weight decay separately</td><td>100× gradient → 100× less penalty (Adam + L2)</td></tr>
+      <tr><td>6 Schedules</td><td>big first, small later</td><td>cosine: 0.1 → 0.001</td></tr>
+      <tr><td>7 Choosing</td><td>random, log scale, then narrow down</td><td>9 tries: 9 distinct values vs 3</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 8, FFN) builds one FFN end to end on handwritten digits (MNIST) and tackles real data problems. This chapter's numbers were checked with the same calculation in the browser (ch07.js).</p>
+  <h3 id="s8b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>Adam</b></td><td>adaptive moment estimation</td><td>Momentum + per-direction step sizes.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>AdamW</b></td><td>Adam with decoupled weight decay</td><td>Adam with weight decay applied separately.</td><td class="num">5</td></tr>
+      <tr><td><b>batch</b></td><td>mini-batch</td><td>The group of samples for one step.</td><td class="num">1</td></tr>
+      <tr><td><b>β, β₁, β₂, ρ</b></td><td>beta, rho</td><td>How much a running average remembers.</td><td class="num">2, 3</td></tr>
+      <tr><td><b>cosine schedule</b></td><td>cosine annealing</td><td>Shrink η along a cosine curve.</td><td class="num">6</td></tr>
+      <tr><td><b>metaparameter</b></td><td>hyperparameter</td><td>A training setting chosen by a person.</td><td class="num">7</td></tr>
+      <tr><td><b>momentum</b></td><td>–</td><td>Step with accumulated gradients.</td><td class="num">2</td></tr>
+      <tr><td><b>plateau</b></td><td>–</td><td>A stretch where the loss stops falling for a while.</td><td class="num">4</td></tr>
+      <tr><td><b>RMSprop</b></td><td>root mean square propagation</td><td>Divide by the average gradient size.</td><td class="num">3</td></tr>
+      <tr><td><b>SGD</b></td><td>stochastic gradient descent</td><td>GD that steps with batches.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>warmup</b></td><td>learning-rate warmup</td><td>Ramp η up from 0 at the start.</td><td class="num">6</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch07.js"></script>
+</body>
+</html>

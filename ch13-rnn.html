@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 13 · RNN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="13" data-base="ch13-rnn">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 13</p>
+  <h1>RNN</h1>
+  <p class="topic">Sequences, GRU, LSTM</p>
+  <p class="lead">A network that reads ordered data (time series, text, sound) one step at a time and carries a hidden state, a "summary so far", from step to step. GRUs and LSTMs control that memory with gates, and the chapter ends with the limit of forgetting the distant past (the starting point for attention in chapter 14).</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: order, hidden state, shapes, prediction, embeddings, gates, limits" style="font-family: var(--sans);">
+      <defs><marker id="m13-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M24 76Q38 48 52 70T80 66T108 56" fill="none" stroke="var(--sig)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Order is information</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="var(--surface)" stroke="var(--sig)"><rect x="22" y="56" width="22" height="22"/><rect x="58" y="56" width="22" height="22"/><rect x="94" y="56" width="22" height="22"/></g><path d="M44 67H58M80 67H94" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#m13-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Hidden state</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 2–3</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M22 68Q34 46 46 68T70 68" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 3"/><path d="M70 68Q82 46 94 68T116 68" fill="none" stroke="var(--miss)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Predict the next</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="40" y="62" font-size="14" font-weight="700" fill="var(--sig)" font-family="var(--mono)">a e</text><text x="72" y="84" font-size="14" font-weight="700" fill="var(--muted)" font-family="var(--mono)">t s</text><text x="100" y="60" font-size="14" font-weight="700" fill="var(--miss)" font-family="var(--mono)">␣</text><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Char embeddings</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 5</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M24 54H112" stroke="var(--ok)" stroke-width="2.4"/><g fill="var(--surface)" stroke="var(--ok)"><circle cx="46" cy="54" r="7"/><circle cx="68" cy="54" r="7"/><circle cx="90" cy="54" r="7"/></g><text x="46" y="58" font-size="9" text-anchor="middle" fill="var(--ok)">f</text><text x="68" y="58" font-size="9" text-anchor="middle" fill="var(--ok)">i</text><text x="90" y="58" font-size="9" text-anchor="middle" fill="var(--ok)">o</text><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ GRU, LSTM gates</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 6</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m13-arrow)"/><path d="M304 85H318" marker-end="url(#m13-arrow)"/><path d="M456 85H470" marker-end="url(#m13-arrow)"/><path d="M608 85H622" marker-end="url(#m13-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Limits: gradients fade with distance, and step-by-step is slow → chapter 14's attention looks at any step directly</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 7</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Order is information"><span class="no">1</span>Why sequences need their own models</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Did the networks so far care about the order of their inputs? What if the order changes?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b1shuf">Shuffle the order</button>
+      <button type="button" id="b1back">Restore</button>
+    </div>
+    <canvas id="cv1" aria-label="A time series, its shuffled version and the distribution of values"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Sequence data</th><th>One step</th><th>What the order does</th></tr></thead>
+    <tbody>
+      <tr><td>Time series (prices, sensors)</td><td>a value at one moment</td><td>trend, cycles</td></tr>
+      <tr><td>Text</td><td>a character or word</td><td>"dog bites man" ≠ "man bites dog"</td></tr>
+      <tr><td>Sound, video</td><td>a short slice, a frame</td><td>motion, speech</td></tr>
+    </tbody>
+  </table></div>
+  <p class="say">An FFN has a fixed number of inputs and learns each input position separately. For data whose length varies and where "what came before" matters, a structure that reads one step at a time and passes memory along fits better.</p>
+  <p class="key"><b>One line to remember.</b> In a sequence the information is in the order more than in the values, and lengths vary.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Hidden state"><span class="no">2</span>How RNNs work: the hidden state carries over</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How can "everything read so far" be carried around in a few numbers?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>RNN</dt><dd><b>recurrent neural network</b>. A network that feeds part of its output (h) back in as input at the next step.</dd>
+    <dt>hidden state h_t</dt><dd>A summary of everything read up to step t.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Co{h_t} = \tanh\!\big( W_x \Cb{x_t} + W_h \Cg{h_{t-1}} + b \big), \qquad y_t = W_y \Co{h_t}"></div>
+  <ul class="legend"><li class="c-sig"><b>x_t</b> input at this step</li><li class="c-ok"><b>h_{t−1}</b> the previous summary</li><li class="c-miss"><b>h_t</b> the new summary</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: a one-number RNN, w_x = 0.5, w_h = 0.8, b = 0, inputs 1, 0, 0, 1, h₀ = 0</p>
+    <div class="eq" data-tex="\begin{aligned} h_1 &= \tanh(0.5 \cdot 1 + 0.8 \cdot 0) = \tanh(0.5) = 0.4621 \\ h_2 &= \tanh(0.5 \cdot 0 + 0.8 \cdot 0.4621) = \tanh(0.3697) = 0.3537 \\ h_3 &= \tanh(0.8 \cdot 0.3537) = 0.2757 \\ h_4 &= \tanh(0.5 \cdot 1 + 0.8 \cdot 0.2757) = \tanh(0.7205) = \Co{0.6172} \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> While the input is 0, h carries the first 1 along, fading 0.46 → 0.35 → 0.28. When the last 1 arrives it adds on top of the remaining 0.28.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>w_x <input type="range" id="i2x" min="-2" max="2" step="0.05" value="0.5"><output id="o2x"></output></label>
+      <label>w_h <input type="range" id="i2h" min="-1.5" max="1.5" step="0.05" value="0.8"><output id="o2h"></output></label>
+      <button type="button" id="b2step">One step</button>
+      <button type="button" id="b2play">Play from start</button>
+    </div>
+    <canvas id="cv2" aria-label="The RNN unrolled over time with the hidden state at each step"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> RNN = the same weights, one step at a time: h_t = tanh(W_x x_t + W_h h_{t−1}). h is the memory.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="PyTorch RNN shapes"><span class="no">3</span>The RNN class in PyTorch and its shapes</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What shapes go into nn.RNN and what shapes come out?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>rnn = nn.RNN(input_size=8, hidden_size=16,
+             num_layers=2, batch_first=True)
+x = torch.zeros(3, 5, 8)      # (batch, length, input)
+y, h_n = rnn(x)
+print(y.shape, h_n.shape)
+for name, p in rnn.named_parameters():
+    print(name, tuple(p.shape))</code></pre></div>
+    <div class="codebox"><pre><code>torch.Size([3, 5, 16]) torch.Size([2, 3, 16])
+weight_ih_l0 (16, 8)
+weight_hh_l0 (16, 16)
+bias_ih_l0 (16,)
+bias_hh_l0 (16,)
+weight_ih_l1 (16, 16)
+weight_hh_l1 (16, 16)
+bias_ih_l1 (16,)
+bias_hh_l1 (16,)</code></pre></div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>batch N <input type="range" id="i3N" min="1" max="8" step="1" value="3"><output id="o3N"></output></label>
+      <label>length L <input type="range" id="i3L" min="1" max="10" step="1" value="5"><output id="o3L"></output></label>
+      <label>input H_in <input type="range" id="i3i" min="1" max="16" step="1" value="8"><output id="o3i"></output></label>
+      <label>hidden H <input type="range" id="i3H" min="1" max="32" step="1" value="16"><output id="o3H"></output></label>
+      <label>layers <input type="range" id="i3n" min="1" max="3" step="1" value="2"><output id="o3n"></output></label>
+    </div>
+    <canvas id="cv3" aria-label="Shapes of the input, output and h_n tensors"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> With batch_first=True: input (N, L, H_in) → output (N, L, H), h_n (layers, N, H).</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Predict the next"><span class="no">4</span>Predicting alternating sequences; extrapolating a sine wave</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can an RNN remember a pattern to predict the next value, and keep drawing into a future it never saw?</p></div>
+  <div class="calc">
+    <p class="h">RESULT 1: the next value of the period-3 pattern 1, 0, 0, 1, 0, 0, … (PyTorch)</p>
+    <div class="eq" data-tex="\text{RNN (hidden 4)}: \Cg{100\%} \qquad \text{FFN seeing only the previous value}: \Cr{67.2\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> After a 0 the next value can be 0 or 1: looking only at the previous value gets just 2/3 right. The RNN keeps "how many 0s so far" in h and gets every one.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><div class="seg" id="g4h"><span>hidden</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">2</button><button type="button" data-v="4" aria-pressed="true">4</button><button type="button" data-v="16" aria-pressed="false">16</button></div></div>
+    <canvas id="cv4" aria-label="A sine wave and the curve the RNN continues from its own predictions"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULT 2: trained on 200 steps of sin(0.3t) → the next 150 steps from its own predictions only, RMSE</p>
+    <div class="eq" data-tex="\text{hidden } 1: \Cr{0.90} \qquad 2: 0.22 \qquad 4: \Cg{0.19} \qquad 16: 0.21"></div>
+    <div class="mean"><b>→ Meaning.</b> With 2 or more units it keeps the wave going, but small errors pile up and the phase slips a little as time goes on. Generating by feeding predictions back accumulates error.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> An RNN continues a pattern through its memory h. Generating from its own predictions piles up error.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Embeddings, generating text"><span class="no">5</span>Hidden states and embeddings</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Characters and words are not numbers, so how do they go in? What does an LSTM learn by predicting the next character?</p></div>
+  <div class="eq" data-tex="\text{character } k \;\to\; \Cv{e_k} = E[k] \in \mathbb{R}^{8} \;\to\; \text{LSTM} \;\to\; h_t \;\to\; \operatorname{softmax}(W h_t / \Cr{T}) = \text{next-character probabilities}"></div>
+  <ul class="legend"><li class="c-vio"><b>E</b> a learned table of 8-number vectors, one per character (nn.Embedding)</li><li class="c-fa"><b>T</b> temperature: high = more even, low = only the most likely</li></ul>
+  <div class="stage">
+    <canvas id="cv5" aria-label="A 2-D map of the character embeddings"></canvas>
+    <div class="ctl">
+      <label>temperature T <input type="range" id="i5t" min="0.2" max="1.5" step="0.05" value="0.8"><output id="o5t"></output></label>
+      <button type="button" id="b5gen">Generate again</button>
+    </div>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <caption>Text generated during training (trained on 1,848 characters of Cicero's text, the source of Lorem ipsum; temperature 0.8)</caption>
+    <thead><tr><th class="num">Steps</th><th class="num">Loss</th><th>Text generated from "l"</th></tr></thead>
+    <tbody id="t5"></tbody>
+  </table></div>
+  <p class="say">At first any characters; after 100 steps new Latin-looking words; after 300 the words are nearly right; after 1,500 it recites the original word for word (the text is only 1,848 characters, so it overfits, chapter 5). On the embedding map the vowels (a, e, i, o, u) gather on one side: nobody told it about vowels, but they play similar roles when predicting the next character.</p>
+  <p class="key"><b>One line to remember.</b> Embedding = a table that turns characters or words into learned vectors. Predicting the next character alone teaches spelling and words.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="GRU, LSTM"><span class="no">6</span>GRU and LSTM: gates that control memory</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How can the network decide for itself what to forget and what to keep?</p></div>
+  <div class="eq" data-tex="\begin{aligned} \Cr{f_t}, \Cb{i_t}, \Co{o_t} &= \sigma(W [h_{t-1}, x_t] + b) \;\;(\text{three gates, 0 to 1}), \qquad g_t = \tanh(W_g [h_{t-1}, x_t] + b_g) \\ \Cg{c_t} &= \Cr{f_t} \odot \Cg{c_{t-1}} + \Cb{i_t} \odot g_t, \qquad h_t = \Co{o_t} \odot \tanh(\Cg{c_t}) \end{aligned}"></div>
+  <ul class="legend"><li class="c-fa"><b>f</b> forget: how much old memory to keep</li><li class="c-sig"><b>i</b> input: how much new to write</li><li class="c-miss"><b>o</b> output: how much memory to show</li><li class="c-ok"><b>c</b> cell state (long memory)</li></ul>
+  <div class="stage">
+    <div class="ctl">
+      <label>forget f <input type="range" id="i6f" min="0" max="1" step="0.01" value="0.9"><output id="o6f"></output></label>
+      <label>input i <input type="range" id="i6i" min="0" max="1" step="0.01" value="1"><output id="o6i"></output></label>
+      <label>output o <input type="range" id="i6o" min="0" max="1" step="0.01" value="1"><output id="o6o"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="Cell state and output for the chosen gate values"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="eq" data-tex="\text{GRU}: \; \Cr{z_t} = \sigma(\cdot), \; r_t = \sigma(\cdot), \; \tilde{h}_t = \tanh(W x_t + U (r_t \odot h_{t-1})), \; h_t = (1 - \Cr{z_t}) \odot h_{t-1} + \Cr{z_t} \odot \tilde{h}_t"></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Input 8, hidden 64</th><th>Gate sets</th><th class="num">Parameters</th><th>Character</th></tr></thead>
+    <tbody>
+      <tr><td>RNN</td><td>1</td><td class="num">4,736</td><td>Simplest; hard to remember long</td></tr>
+      <tr><td>GRU</td><td>3 (z, r, h̃)</td><td class="num">14,208</td><td>One h, no c; z decides "keep or replace"</td></tr>
+      <tr><td>LSTM</td><td>4 (i, f, g, o)</td><td class="num">18,944</td><td>A separate c is the long-memory channel</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> The LSTM's c_t = f·c_{t−1} + i·g: with forget near 1, memory and gradients last long. The GRU is a lighter relative.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Limits → attention"><span class="no">7</span>Limits of RNNs → on to attention</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How much does an input 100 steps back affect the last output? Can the network actually remember something far away?</p></div>
+  <div class="stage"><canvas id="cv7" aria-label="Gradient size against distance: RNN, LSTM and an LSTM with forget bias 3"></canvas></div>
+  <div class="calc">
+    <p class="h">RESULT 1: hidden 32, 100 steps, before training (PyTorch autograd), gradient of an input 50 steps back</p>
+    <div class="eq" data-tex="\text{RNN}: \Cr{10^{-13}} \qquad \text{LSTM (default)}: \Cr{10^{-12}} \qquad \text{LSTM, forget bias 3}: \Cg{10^{-2}}"></div>
+    <div class="mean"><b>→ Meaning.</b> About ×0.5 is multiplied in at every step, so the gradient shrinks exponentially with distance (the same reason as chapter 12, section 3). Starting the forget gate near 1 (bias 3 → σ(3) = 0.95) lets the gradient come back through c almost intact.</div>
+  </div>
+  <div class="stage"><canvas id="cv7b" aria-label="The recall-the-first-bit experiment: accuracy by distance"></canvas></div>
+  <div class="calc">
+    <p class="h">RESULT 2: recall the first bit of a random 0/1 sequence T steps later, hidden 16, 2,000 training steps, successes out of 3 seeds</p>
+    <div class="eq" data-tex="T = 40: \text{RNN } 2/3, \quad \text{LSTM (bias 1) } \Cr{0/3}, \quad \text{LSTM (bias 3) } \Cg{3/3} \qquad T = 80: \text{all } \Cr{0/3}"></div>
+    <div class="mean"><b>→ Meaning.</b> An LSTM does not remember long by itself: it depends on the initial values and the training time. At 80 steps all three are at guessing level with this much training. On top of that an RNN computes one step after another, so long texts are slow. Chapter 14's attention looks at every step at once, directly, regardless of distance.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> An RNN's memory fades as it is multiplied step by step. Gates slow the fading but cannot remove it → attention.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Summary, dictionary"><span class="no">8</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Sequences</td><td>the order carries information</td><td>–</td></tr>
+      <tr><td>2 RNN</td><td>h_t = tanh(W_x x_t + W_h h_{t−1})</td><td>h₄ = 0.6172</td></tr>
+      <tr><td>3 Shapes</td><td>(N, L, H_in) → (N, L, H), h_n (layers, N, H)</td><td>(3, 5, 16), (2, 3, 16)</td></tr>
+      <tr><td>4 Prediction</td><td>memory continues the pattern</td><td>period 3: 100% vs 67%</td></tr>
+      <tr><td>5 Embeddings</td><td>characters → learned vectors</td><td>loss 3.17 → 0.12</td></tr>
+      <tr><td>6 LSTM, GRU</td><td>gates control memory</td><td>parameters 4×, 3×</td></tr>
+      <tr><td>7 Limits</td><td>gradients vanish with distance</td><td>50 steps: 10⁻¹³</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 14, Transformer) looks at every step at once with attention. The numbers were computed with <code>tools/ch13_numbers.py</code> (PyTorch); text generation runs the same LSTM weights (int8) in the browser.</p>
+  <h3 id="s8b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>BPTT</b></td><td>backpropagation through time</td><td>Backprop that walks back along the unrolled RNN.</td><td class="num">7</td></tr>
+      <tr><td><b>embedding</b></td><td>embedding</td><td>A table that turns character or word numbers into learned vectors.</td><td class="num">5</td></tr>
+      <tr><td><b>gate</b></td><td>gate</td><td>A 0-to-1 multiplier deciding how much passes.</td><td class="num">6</td></tr>
+      <tr><td><b>GRU</b></td><td>gated recurrent unit</td><td>A lighter RNN with two gates.</td><td class="num">6</td></tr>
+      <tr><td><b>h_t</b></td><td>hidden state</td><td>A summary of everything read so far.</td><td class="num">2</td></tr>
+      <tr><td><b>LSTM</b></td><td>long short-term memory</td><td>An RNN with a cell state and three gates.</td><td class="num">6</td></tr>
+      <tr><td><b>RMSE</b></td><td>root mean squared error</td><td>The square root of the mean squared error.</td><td class="num">4</td></tr>
+      <tr><td><b>RNN</b></td><td>recurrent neural network</td><td>A network that passes h on to the next step.</td><td class="num">2</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch13_data.js"></script>
+<script src="ch13.js"></script>
+</body>
+</html>

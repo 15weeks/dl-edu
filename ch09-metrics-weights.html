@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 9 · Metrics &amp; Init</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="9" data-base="ch09-metrics-weights">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 9</p>
+  <h1>Metrics &amp; Init</h1>
+  <p class="topic">Measuring performance and weight initialization</p>
+  <p class="lead">First half: measuring what accuracy alone hides (confusion matrix, precision, recall, F1). Second half: how to set the starting weights so the signal survives even in deep networks (Xavier, Kaiming). Then three FFN projects.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: confusion matrix, four metrics, rare positives, initialization, Xavier and Kaiming" style="font-family: var(--sans);">
+      <defs><marker id="m9-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="40" y="46" width="26" height="22" fill="var(--okwash)" stroke="var(--ok)"/><rect x="68" y="46" width="26" height="22" fill="var(--wash)" stroke="var(--fa)"/><rect x="40" y="70" width="26" height="22" fill="var(--wash)" stroke="var(--miss)"/><rect x="68" y="70" width="26" height="22" fill="var(--sigwash)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Confusion matrix</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M26 54C60 54 80 70 110 92" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M26 92C50 70 80 54 110 50" fill="none" stroke="var(--miss)" stroke-width="2"/><path d="M26 86Q68 50 110 86" fill="none" stroke="var(--ok)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Precision, recall</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">F1 · section 2</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)" opacity="0.7"><circle cx="34" cy="56" r="3"/><circle cx="46" cy="60" r="3"/><circle cx="58" cy="54" r="3"/><circle cx="40" cy="72" r="3"/><circle cx="54" cy="76" r="3"/><circle cx="66" cy="68" r="3"/><circle cx="34" cy="86" r="3"/><circle cx="50" cy="88" r="3"/><circle cx="80" cy="60" r="3"/><circle cx="92" cy="78" r="3"/><circle cx="76" cy="88" r="3"/></g><rect x="96" y="52" width="7" height="7" fill="var(--miss)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Rare positives</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 3–4</text></g></a>
+      <a href="#s6"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)" opacity="0.75"><rect x="28" y="86" width="6" height="4"/><rect x="36" y="78" width="6" height="12"/><rect x="44" y="60" width="6" height="30"/><rect x="52" y="78" width="6" height="12"/><rect x="60" y="86" width="6" height="4"/></g><g fill="var(--fa)" opacity="0.75"><rect x="76" y="56" width="6" height="34"/><rect x="84" y="86" width="6" height="4"/><rect x="92" y="86" width="6" height="4"/><rect x="100" y="56" width="6" height="34"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Why init matters</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 5–6</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M26 60H110" stroke="var(--ok)" stroke-width="2.2"/><path d="M26 60C60 64 80 80 110 92" fill="none" stroke="var(--fa)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Xavier, Kaiming</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 7</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m9-arrow)"/><path d="M304 85H318" marker-end="url(#m9-arrow)"/><path d="M456 85H470" marker-end="url(#m9-arrow)"/><path d="M608 85H622" marker-end="url(#m9-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Freezing weights; how weights change in training</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 8</text></a>
+      <a href="#s9"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Three FFN projects</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">adder, heart disease, missing values · 9</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Confusion matrix"><span class="no">1</span>Two kinds of error: the confusion matrix</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>A model that says "positive/negative" can be wrong in two ways. What if we count them separately?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>TP, TN</dt><dd><b>true positive / negative</b>. A positive called positive; a negative called negative.</dd>
+    <dt>FP</dt><dd><b>false positive</b>. A negative called positive (a false alarm).</dd>
+    <dt>FN</dt><dd><b>false negative</b>. A positive called negative (a miss).</dd>
+  </dl></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 500 negatives, 500 positives, threshold 0</p>
+    <div class="eq" data-tex="\Cg{\text{TP}} = 422,\quad \Cr{\text{FN}} = 78,\quad \Co{\text{FP}} = 80,\quad \Cb{\text{TN}} = 420"></div>
+    <div class="mean"><b>→ Meaning.</b> Lower the threshold and misses (FN) fall while false alarms (FP) rise. Which is worse depends on the problem (cancer screening: a miss is worse).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>threshold <input type="range" id="i1t" min="-3" max="3" step="0.05" value="0"><output id="o1t"></output></label></div>
+    <canvas id="cv1" aria-label="Two score distributions, a threshold and the confusion matrix"></canvas>
+    <canvas id="cv2" aria-label="Accuracy, precision, recall and F1 as the threshold moves"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Confusion matrix = two kinds of right (TP, TN) and two kinds of wrong (FP false alarm, FN miss). The threshold trades one against the other.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Precision, recall, F1"><span class="no">2</span>Accuracy, precision, recall, F1</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How can the four cells be summed up in a single number?</p></div>
+  <div class="eq" data-tex="\text{accuracy} = \frac{\Cg{TP} + \Cb{TN}}{\text{all}}, \quad \text{precision} = \frac{\Cg{TP}}{\Cg{TP} + \Co{FP}}, \quad \text{recall} = \frac{\Cg{TP}}{\Cg{TP} + \Cr{FN}}, \quad F_1 = \frac{2 \cdot P \cdot R}{P + R}"></div>
+  <ul class="legend"><li><b>precision</b> share of "positive" calls that are right (higher with fewer false alarms)</li><li><b>recall</b> share of real positives that are found (higher with fewer misses)</li><li><b>F1</b> the harmonic mean: high only if both are high</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: thresholds −1, 0, 1 (the data above)</p>
+    <div class="eq" data-tex="\text{threshold } {-1}: P = 0.65,\ R = 0.98 \qquad \text{threshold } 0: P = 0.84,\ R = 0.84,\ F_1 = 0.84 \qquad \text{threshold } 1: P = 0.94,\ R = 0.50"></div>
+    <div class="mean"><b>→ Meaning.</b> Precision and recall pull against each other. Decide which one to protect before setting the threshold.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Precision hates false alarms, recall hates misses, F1 wants both.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Rare positives"><span class="no">3</span>Metrics when the groups differ in size</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if the same model is used where only 1% are positive? (the imbalance of chapter 8, section 7)</p></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: same score distributions, threshold 0, only the share of positives in 1000 changes</p>
+    <div class="eq" data-tex="\text{50\% positive}: P = 0.84,\ R = 0.85 \qquad \text{5\%}: P = \Cr{0.24},\ R = 0.90 \qquad \text{1\%}: P = \Cr{0.05},\ R = 0.80"></div>
+    <div class="mean"><b>→ Meaning.</b> Accuracy stays near 85%, but at 1% positives 19 of every 20 alarms are false. Answering "all negative" would score 99% accuracy. For rare classes, look at precision, recall and F1.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>share of positives <input type="range" id="i3p" min="1" max="50" step="1" value="5"><output id="o3p"></output></label></div>
+    <canvas id="cv3" aria-label="Four metrics as the share of positives changes"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> When positives are rare, accuracy says almost nothing. Precision is the first to collapse.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Timing, test > train"><span class="no">4</span>Timing, and test beating train</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How long does training take? If the test score beats the training score, is it a bug?</p></div>
+  <div class="codebox"><pre><code>import time
+t0 = time.perf_counter()
+train_one_epoch(net, opt)
+print(f"one epoch: {time.perf_counter() - t0:.2f} s")   # on a GPU, measure after torch.cuda.synchronize()</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Common reasons for test &gt; train</th><th>Explanation</th></tr></thead>
+    <tbody>
+      <tr><td>dropout, augmentation</td><td>The training score is measured in train mode (units switched off, inputs altered); the test score in eval mode (chapter 5, section 6).</td></tr>
+      <tr><td>epoch average</td><td>If the training score averages over the epoch, the poor early batches are mixed in.</td></tr>
+      <tr><td>small test set</td><td>With little test data, easy examples can cluster by chance (the wobble of chapter 1, section 10).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> Time each epoch with perf_counter. Test &gt; train usually comes from the mode or the data size, not a bug.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Reading weight shapes"><span class="no">5</span>Reading the size of a weight matrix</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Is the weight of nn.Linear(196, 64) shaped (196, 64) or (64, 196)?</p></div>
+  <div class="stage"><canvas id="cv5" aria-label="The weight matrix of nn.Linear(4, 3) and what it means"></canvas></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch.nn as nn
+net = nn.Sequential(nn.Linear(196, 64), nn.ReLU(), nn.Linear(64, 10))
+for name, p in net.named_parameters():
+    print(name, tuple(p.shape))</code></pre></div>
+    <div class="codebox"><pre><code>0.weight (64, 196)
+0.bias (64,)
+2.weight (10, 64)
+2.bias (10,)</code></pre></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> nn.Linear(in, out).weight has shape (out, in). One row = one neuron.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Why init matters"><span class="no">6</span>Why weight initialization matters</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if every weight starts at 0, or at the same value? What if they start too big or too small?</p></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE 1: XOR, 4 hidden neurons, 1000 epochs</p>
+    <div class="eq" data-tex="\text{all } 0.5: 77.5\% \qquad \text{random}: 100\%"></div>
+    <div class="mean"><b>→ Meaning.</b> Start them all equal and the hidden neurons receive equal gradients and stay identical forever (symmetry). Four neurons do the work of one. That is why weights start random.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b6run">Train both</button>
+      <button type="button" id="b6reset">Reset</button>
+    </div>
+    <canvas id="cv6a" aria-label="Boundaries of a network initialised with equal values and one initialised at random"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE 2: 10 tanh layers (width 64); activation SD at layer 10 for each weight SD</p>
+    <div class="eq" data-tex="0.05 \to \Cr{0.000} \qquad 0.125\ (\text{Xavier}) \to \Cg{0.22} \qquad 0.5 \to \Cr{0.89}\ (\text{saturated})"></div>
+    <div class="mean"><b>→ Meaning.</b> Too small and the signal fades to 0 layer after layer; too large and tanh sticks to −1 and 1, so its slope vanishes. Either way, training stalls.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>weight SD <input type="range" id="i6s" min="0.02" max="1" step="0.005" value="0.125"><output id="o6s"></output></label></div>
+    <canvas id="cv6b" aria-label="Histograms of activations at several layers"></canvas>
+    <div class="read" id="r6b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Initialise at random and at the right size: too small fades away, too large saturates.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Xavier, Kaiming"><span class="no">7</span>Xavier and Kaiming initialization</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can "the right size" be set by a formula?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>Xavier (Glorot)</dt><dd>X. Glorot and Y. Bengio (2010). An initialization suited to tanh and sigmoid.</dd>
+    <dt>Kaiming (He)</dt><dd>K. He et al. (2015). An initialization suited to ReLU. ReLU zeroes half its inputs, halving the variance, so it doubles.</dd>
+    <dt>n_in, n_out</dt><dd>The number of inputs and outputs of a layer (fan-in, fan-out).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{Xavier}: \operatorname{Var}(w) = \frac{2}{\Cb{n_{\text{in}}} + \Co{n_{\text{out}}}}, \qquad \text{Kaiming}: \operatorname{Var}(w) = \frac{2}{\Cb{n_{\text{in}}}}"></div>
+  <p class="say">In words: more inputs means more terms in the sum and a bigger total, so start the weights that much smaller. The aim is for the variance to stay the same from layer to layer.</p>
+  <div class="calc">
+    <p class="h">RESULTS: activation SD after 20 layers (width 64, computed in the browser)</p>
+    <div class="eq" data-tex="\text{ReLU + Kaiming}: \Cg{0.84} \qquad \tanh + \text{Xavier}: 0.16 \qquad \text{ReLU + Xavier}: \Cr{0.0008} \qquad \tanh + \text{SD } 1: 0.95\ (\text{saturated})"></div>
+    <div class="mean"><b>→ Meaning.</b> Match the initialization to the activation. Xavier with ReLU halves the variance at every layer, so after 20 layers it is gone. PyTorch's default for nn.Linear is a Kaiming variant (uniform).</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv7" aria-label="Activation SD layer by layer for four initializations"></canvas>
+  </div>
+  <div class="codebox"><pre><code>torch.nn.init.xavier_normal_(layer.weight)                         # tanh, sigmoid
+torch.nn.init.kaiming_normal_(layer.weight, nonlinearity="relu")   # ReLU</code></pre></div>
+  <p class="key"><b>One line to remember.</b> Xavier (2/(n_in + n_out)) for tanh and sigmoid, Kaiming (2/n_in) for ReLU.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Freezing, weight change"><span class="no">8</span>Freezing weights, and how weights change in training</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How much do each layer's weights change? Can some layers be held fixed? (the basis of transfer learning in chapter 12)</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>for p in net[0].parameters():
+    p.requires_grad = False        # freeze layer 1: no gradients for it
+opt = torch.optim.Adam(
+    [p for p in net.parameters() if p.requires_grad], lr=1e-3)
+print(sum(p.numel() for p in net.parameters() if p.requires_grad))</code></pre></div>
+    <div class="codebox"><pre><code>650        # section 5's network: only layer 2 (64×10 + 10) of 196-64-10 trains</code></pre></div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g8f"><span>layer 1</span><button type="button" data-v="off" aria-pressed="true">Train</button><button type="button" data-v="on" aria-pressed="false">Freeze</button></div>
+      <button type="button" id="b8run">Train</button>
+      <button type="button" id="b8reset">Reset</button>
+    </div>
+    <canvas id="cv8" aria-label="Weight change per layer and the training loss"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Freeze a layer with requires_grad = False. A frozen layer stays as it is; the other layers learn on top of it.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="FFN projects"><span class="no">9</span>Three FFN projects</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What happens when today's tools meet real problems?</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Project</th><th>Input → output</th><th>Loss</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>1 Adding machine</td><td>two numbers a, b → a + b</td><td>MSE</td><td>figure below (trained in the browser)</td></tr>
+      <tr><td>2 Heart disease</td><td>13 test results (age, blood pressure, cholesterol …) → disease or not. 297 patients</td><td>BCE</td><td>82% on 60 held-out patients (mean of 10 splits, SD 5%)</td></tr>
+      <tr><td>3 Filling in missing values</td><td>10 wine features → the missing residual sugar</td><td>MSE</td><td>r = 0.66, error 0.94 g/L (filling with the mean: 1.22 g/L)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="say">Data: Cleveland heart disease (Janosi, Steinbrunn, Pfisterer, Detrano; UCI, CC BY 4.0) and wine quality (chapter 6). Projects 2 and 3 were computed with <code>tools/ch09_numbers.py</code> (PyTorch).</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>a <input type="range" id="i9a" min="-30" max="30" step="1" value="3"><output id="o9a"></output></label>
+      <label>b <input type="range" id="i9b" min="-30" max="30" step="1" value="4"><output id="o9b"></output></label>
+    </div>
+    <canvas id="cv9" aria-label="Answers of a network that learned to add, against the truth"></canvas>
+    <div class="read" id="r9" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Recast a problem as input, output and loss, and the same FFN adds, diagnoses and fills in blanks.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="Summary, dictionary"><span class="no">10</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Confusion matrix</td><td>TP, TN, FP (false alarm), FN (miss)</td><td>422 / 420 / 80 / 78</td></tr>
+      <tr><td>2 Metrics</td><td>precision vs recall, F1</td><td>threshold 0: 0.84, 0.84</td></tr>
+      <tr><td>3 Rare positives</td><td>precision collapses</td><td>1% positive: P = 0.05</td></tr>
+      <tr><td>4 Timing, test &gt; train</td><td>perf_counter; mode differences</td><td>–</td></tr>
+      <tr><td>5 Weight shapes</td><td>Linear(in, out).weight = (out, in)</td><td>(64, 196)</td></tr>
+      <tr><td>6 Initialization</td><td>random, at the right size</td><td>all 0.5: 77.5% vs 100%</td></tr>
+      <tr><td>7 Xavier, Kaiming</td><td>match the activation</td><td>ReLU, 20 layers: 0.84 vs 0.0008</td></tr>
+      <tr><td>8 Freezing</td><td>requires_grad = False</td><td>650 trainable parameters</td></tr>
+      <tr><td>9 Projects</td><td>recast as input, output, loss</td><td>heart disease 82%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 10, Autoencoder) looks at networks that compress and rebuild, and at latent space. The numbers were checked with <code>tools/ch09_numbers.py</code> (PyTorch) and the same calculation in the browser (ch09.js).</p>
+  <h3 id="s10b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>F1</b></td><td>F1 score</td><td>The harmonic mean of precision and recall.</td><td class="num">2</td></tr>
+      <tr><td><b>FN</b></td><td>false negative</td><td>A missed positive.</td><td class="num">1</td></tr>
+      <tr><td><b>FP</b></td><td>false positive</td><td>A false alarm.</td><td class="num">1</td></tr>
+      <tr><td><b>Kaiming, He</b></td><td>Kaiming He initialization</td><td>Initialization for ReLU, Var = 2/n_in.</td><td class="num">7</td></tr>
+      <tr><td><b>n_in, n_out</b></td><td>fan-in, fan-out</td><td>Connections coming into and going out of a layer.</td><td class="num">7</td></tr>
+      <tr><td><b>precision</b></td><td>positive predictive value</td><td>Share of "positive" calls that are right.</td><td class="num">2</td></tr>
+      <tr><td><b>recall</b></td><td>sensitivity, true positive rate</td><td>Share of real positives found.</td><td class="num">2</td></tr>
+      <tr><td><b>requires_grad</b></td><td>–</td><td>If False, that weight is not trained.</td><td class="num">8</td></tr>
+      <tr><td><b>TN, TP</b></td><td>true negative / positive</td><td>Correct calls.</td><td class="num">1</td></tr>
+      <tr><td><b>threshold</b></td><td>decision threshold</td><td>Scores above it count as positive.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>Xavier, Glorot</b></td><td>Xavier Glorot initialization</td><td>Initialization for tanh, Var = 2/(n_in + n_out).</td><td class="num">7</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch09.js"></script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 5 · Overfitting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="5" data-base="ch05-overfitting-regularization">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 5</p>
+  <h1>Overfitting</h1>
+  <p class="topic">Overfitting, cross-validation and regularization</p>
+  <p class="lead">A model that does well on its training data but badly on new data. We see why, then learn in pictures how to measure it by splitting the data (cross-validation) and how to prevent it (regularization: λ, dropout, L1 and L2).</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: overfitting, splitting the data, k-fold, regularization, dropout, L1 and L2" style="font-family: var(--sans);">
+      <defs><marker id="m5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 50Q50 90 108 92" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M28 56Q62 110 108 50" fill="none" stroke="var(--miss)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Overfitting</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">train vs test · section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="22" y="60" width="64" height="20" fill="var(--sig)"/><rect x="86" y="60" width="14" height="20" fill="var(--ok)"/><rect x="100" y="60" width="14" height="20" fill="var(--miss)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Splitting</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">train · dev · test · section 2</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)" opacity="0.8"><rect x="28" y="46" width="80" height="9"/><rect x="28" y="58" width="80" height="9"/><rect x="28" y="70" width="80" height="9"/><rect x="28" y="82" width="80" height="9"/></g><g fill="var(--ok)"><rect x="28" y="46" width="20" height="9"/><rect x="48" y="58" width="20" height="9"/><rect x="68" y="70" width="20" height="9"/><rect x="88" y="82" width="20" height="9"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ k-fold</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">validation in turns · 3–4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M26 80C34 40 42 100 52 60S66 96 76 54S92 92 110 58" fill="none" stroke="var(--fa)" stroke-width="1.4" opacity="0.6"/><path d="M26 82C50 50 80 50 110 64" fill="none" stroke="var(--ink)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Regularization</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">calm it with λ · section 5</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g fill="var(--surface)" stroke="var(--ink)"><circle cx="30" cy="62" r="5"/><circle cx="30" cy="82" r="5"/><circle cx="62" cy="52" r="5"/><circle cx="62" cy="70" r="5"/><circle cx="62" cy="88" r="5"/><circle cx="100" cy="70" r="5"/></g><g stroke="var(--muted)" stroke-width="2"><path d="M57 65L67 75M57 75L67 65"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Dropout</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">switch off at random · 6–7</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m5-arrow)"/><path d="M304 85H318" marker-end="url(#m5-arrow)"/><path d="M456 85H470" marker-end="url(#m5-arrow)"/><path d="M608 85H622" marker-end="url(#m5-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M60 162L74 176L60 190L46 176Z" fill="var(--okwash)" stroke="var(--ok)" stroke-width="1.6"/><circle cx="96" cy="176" r="14" fill="var(--sigwash)" stroke="var(--sig)" stroke-width="1.6"/><text x="400" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑥ L1 (diamond) vs L2 (circle): two shapes of weight penalty</text><text x="400" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">L1 makes weights exactly 0 · section 8</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Overfitting"><span class="no">1</span>Overfitting and generalization</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If the training error is close to 0, is the model good?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>overfitting</dt><dd>Memorising even the noise in the training data, then getting new data wrong.</dd>
+    <dt>underfitting</dt><dd>A model so simple it cannot even fit the training data.</dd>
+    <dt>generalization</dt><dd>Doing well on data the model has never seen.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{generalization gap} = \Co{E_{\text{test}}} - \Cb{E_{\text{train}}}"></div>
+  <ul class="legend"><li><b class="c-sig">E_train</b> error on the training data</li><li><b class="c-miss">E_test</b> error on unseen data</li><li>a large gap = overfitting</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: fitting polynomials to 15 points (200 test points)</p>
+    <div class="eq" data-tex="\text{degree 1}: \Cb{0.086} / \Co{0.196} \qquad \text{degree 3}: \Cb{0.024} / \Co{0.095} \qquad \text{degree 14}: \Cb{0.003} / \Co{4.9\times10^{6}}"></div>
+    <div class="mean"><b>→ Meaning.</b> Degree 14 has 15 parameters for 15 points and passes almost exactly through them (smallest training error). But it swings wildly between the points, and the test error explodes.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Degree 0 → 3: both errors fall together.</li>
+        <li>Degree 10 and up: the red curve jumps between the points, and on the right the test error (orange) shoots up.</li>
+      </ol>
+    </div>
+    <div class="ctl"><label>polynomial degree <input type="range" id="i1d" min="0" max="14" step="1" value="3"><output id="o1d"></output></label></div>
+    <canvas id="cv1" aria-label="A polynomial fitted to 15 points and the training and test error for each degree"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Judged by training error alone, more complex always looks better. The error on unseen data traces a U: too simple underfits, too complex overfits.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Train, dev, test"><span class="no">2</span>Splitting into train, dev and test</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Where does "unseen data" come from? What do we use to choose settings?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>dev</dt><dd><b>development set</b>, also called the validation set. Used to choose settings.</dd>
+    <dt>hold-out</dt><dd>Data set aside and never used for training.</dd>
+  </dl></div>
+  <div class="stage">
+    <div class="ctl">
+      <label>train <input type="range" id="i2tr" min="50" max="90" step="5" value="70"><output id="o2tr"></output></label>
+      <label>dev <input type="range" id="i2dev" min="5" max="25" step="5" value="15"><output id="o2dev"></output></label>
+      <button type="button" id="b2shuffle">Shuffle again</button>
+    </div>
+    <canvas id="cv2" aria-label="100 samples split into train, dev and test"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Learn on train, choose on dev, and look at test only once, at the end. Shuffle before splitting.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="k-fold cross-validation"><span class="no">3</span>k-fold cross-validation</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if the data are too few to set aside a big dev set? Every point takes a turn at validation.</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>CV</dt><dd><b>cross-validation</b>.</dd>
+    <dt>k-fold</dt><dd>Split the data into k groups (folds) and train k times, validating on a different group each time.</dd>
+    <dt>LOO</dt><dd><b>leave-one-out</b>. k = the number of data points: leave each one out in turn.</dd>
+  </dl></div>
+  <div class="eq" data-tex="E_{\text{CV}} = \frac{1}{\Co{k}} \sum_{f=1}^{\Co{k}} \Cg{E_{\text{val}}^{(f)}}"></div>
+  <ul class="legend"><li><b class="c-miss">k</b> number of folds = number of training runs</li><li><b class="c-ok">E_val⁽ᶠ⁾</b> error on fold f of the model trained without fold f</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: choosing the degree for section 1's 15 points with k = 5</p>
+    <div class="eq" data-tex="\text{degree 3}: E_{\text{CV}} = 0.102, \quad \text{degree 5}: E_{\text{CV}} = 0.080 \;(\text{smallest}), \quad \text{degree 8}: E_{\text{CV}} = 4.1\times10^{4}"></div>
+    <div class="mean"><b>→ Meaning.</b> The degree chosen without ever looking at the test data (5) has test error 0.125, close to the best degree (4, 0.093). With only 15 points the choice wobbles a little with k (k = 3 picks 3).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>k <input type="range" id="i3k" min="2" max="15" step="1" value="5"><output id="o3k"></output></label>
+      <button type="button" id="b3play">Step through</button>
+    </div>
+    <canvas id="cv3" aria-label="The k-fold split and the validation error for each degree"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> k-fold = train k times and average the validation error. A way to choose settings without wasting data.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Splitting in code"><span class="no">4</span>Splitting in code: scikit-learn and DataLoader</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How many lines of code do sections 2–3 take?</p></div>
+  <div class="row2">
+    <div>
+      <div class="codebox"><pre><code>import numpy as np
+from sklearn.model_selection import train_test_split, KFold
+X = np.arange(20).reshape(10, 2); y = np.arange(10)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.2, random_state=0)   # shuffle, 20% to test
+print(len(X_tr), len(X_te))
+for k, (tr, va) in enumerate(KFold(n_splits=4,
+        shuffle=True, random_state=0).split(X_tr)):
+    print(k, va)                           # this run's validation fold</code></pre></div>
+      <div class="codebox"><pre><code>8 2
+0 [2 6]
+1 [1 7]
+2 [0 3]
+3 [4 5]</code></pre></div>
+    </div>
+    <div>
+      <div class="codebox"><pre><code>import torch
+from torch.utils.data import TensorDataset, DataLoader, random_split
+ds = TensorDataset(torch.randn(100, 2), torch.randint(0, 2, (100,)))
+train_ds, dev_ds, test_ds = random_split(
+    ds, [70, 15, 15], generator=torch.Generator().manual_seed(0))
+train_dl = DataLoader(train_ds, batch_size=16, shuffle=True)
+print(len(train_ds), len(dev_ds), len(test_ds), len(train_dl))
+xb, yb = next(iter(train_dl))              # one batch
+print(xb.shape, yb.shape)</code></pre></div>
+      <div class="codebox"><pre><code>70 15 15 5
+torch.Size([16, 2]) torch.Size([16])</code></pre></div>
+    </div>
+  </div>
+  <p class="say">70 training samples in batches of 16 make 5 batches (16 + 16 + 16 + 16 + 6). Batches are covered properly in chapter 7.</p>
+  <p class="key"><b>One line to remember.</b> Splitting: train_test_split, KFold, random_split. Serving data during training: DataLoader(batch_size, shuffle=True).</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Regularization"><span class="no">5</span>Regularization: penalising complexity</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can we use a complex model and still prevent overfitting?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>regularization</dt><dd>Methods that add a "complexity penalty" to the loss to keep the model calm.</dd>
+    <dt>λ</dt><dd>lambda. The strength of the penalty.</dd>
+    <dt>ridge</dt><dd>Regularization that penalises the sum of squared weights (coefficients) (= L2).</dd>
+  </dl></div>
+  <div class="eq" data-tex="J(\mathbf w) = \underbrace{\Cb{L(\mathbf w)}}_{\text{fit the data}} + \Co{\lambda}\,\underbrace{\Cr{R(\mathbf w)}}_{\text{stay simple}}"></div>
+  <ul class="legend"><li><b class="c-sig">L</b> the original loss</li><li><b class="c-fa">R</b> the penalty (e.g. Σ w²)</li><li><b class="c-miss">λ</b> the balance between them</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: adding ridge to section 1's degree 14</p>
+    <div class="eq" data-tex="\Co{\lambda} = 0:\ \text{test } 4.9\times10^{6},\ \max|c| = 4315 \qquad \Co{\lambda} = 0.1:\ \text{test } 0.106,\ \max|c| = 0.64"></div>
+    <div class="mean"><b>→ Meaning.</b> Still degree 14, but with the coefficients held small the test error falls to about that of degree 3 (0.095). λ itself is chosen like any setting, with dev or k-fold (sections 2–3).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>λ <input type="range" id="i5l" min="0" max="28" step="1" value="20"><output id="o5l"></output></label></div>
+    <canvas id="cv5" aria-label="A degree-14 polynomial with ridge, and the error for each λ"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Regularization = loss + λ × penalty. λ too small overfits; λ too large underfits.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="train(), eval()"><span class="no">6</span>train() mode and eval() mode</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Tools like dropout are only for training. How are they switched off for testing?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch
+torch.manual_seed(0)
+drop = torch.nn.Dropout(p=0.5)
+x = torch.ones(8)
+drop.train(); print(drop(x))   # training: half become 0, the rest ×2
+drop.eval();  print(drop(x))   # evaluation: unchanged</code></pre></div>
+    <div class="codebox"><pre><code>tensor([0., 0., 2., 0., 0., 0., 2., 2.])
+tensor([1., 1., 1., 1., 1., 1., 1., 1.])</code></pre></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>model.train()</th><th>model.eval()</th></tr></thead>
+    <tbody>
+      <tr><td>dropout (section 7)</td><td>switch off at random, keep the rest × 1/(1 − p)</td><td>all on, unchanged</td></tr>
+      <tr><td>batch normalization (chapter 6)</td><td>this batch's mean and variance</td><td>mean and variance collected during training</td></tr>
+      <tr><td>when</td><td>before the training loop</td><td>when measuring on dev or test (together with torch.no_grad())</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> model.train() before training, model.eval() before evaluating. Forget to switch and the test score wobbles.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Dropout"><span class="no">7</span>Dropout</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Why does switching off random neurons during training reduce overfitting?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>p</dt><dd>The probability of switching a unit off (dropout rate).</dd>
+    <dt>m</dt><dd>The mask: 1 = on, 0 = off.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\tilde h_i = \frac{\Cg{m_i}\, h_i}{1 - \Co{p}}, \qquad \Cg{m_i} = \begin{cases}0 & \text{with probability } \Co{p}\\ 1 & \text{with probability } 1 - \Co{p}\end{cases}"></div>
+  <p class="say">In words: every step trains a network with a different set of neurons missing. No neuron can be relied on alone, so the work gets shared. Multiplying by 1/(1 − p) keeps the average size the same.</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>p <input type="range" id="i7p" min="0.1" max="0.8" step="0.1" value="0.5"><output id="o7p"></output></label>
+      <button type="button" id="b7a">Show a few training steps</button>
+    </div>
+    <canvas id="cv7a" aria-label="Units switched off at random at each training step"></canvas>
+  </div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 60 noisy points, a 2-24-24-1 network, 500 epochs</p>
+    <div class="eq" data-tex="\text{no dropout}: \text{train } 98\%,\ \text{test } 79\% \qquad \text{dropout } 0.5: \text{train } 87\%,\ \text{test } 81\%"></div>
+    <div class="mean"><b>→ Meaning.</b> Dropout deliberately lowers the training score to stop memorisation. The train–test gap shrinks from 19 to 6 points (mean of 3 seeds).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try"><li><b>Train both</b>: on the left the boundary bends towards individual training points to get all of them right. On the right a few training points are missed, and the test score is higher. Dark points = training data, faint points = test data.</li></ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b7run">Train both</button>
+      <button type="button" id="b7reset">Reset</button>
+    </div>
+    <canvas id="cv7b" aria-label="Two boundaries, trained without and with dropout"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Dropout = switch neurons off with probability p during training only. The training score drops a little and the train–test gap shrinks.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="L1, L2"><span class="no">8</span>L1 and L2 weight regularization</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What changes if the weight penalty uses |w| instead of w²?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>L1, lasso</dt><dd>Penalises |w₁| + |w₂| + …. Points with the same penalty form a diamond.</dd>
+    <dt>L2, ridge</dt><dd>Penalises w₁² + w₂² + …. Points with the same penalty form a circle. PyTorch's weight_decay.</dd>
+  </dl></div>
+  <div class="eq" data-tex="J_{\text{L1}} = L + \Co{\lambda}\,(|w_1| + |w_2|), \qquad J_{\text{L2}} = L + \tfrac{\Co{\lambda}}{2}\,(w_1^2 + w_2^2)"></div>
+  <ul class="legend"><li>L1's slope = λ·sign(w): the same push however small w is, all the way to 0</li><li>L2's slope = λ·w: the push weakens as w shrinks, so it stops near 0</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the answer without a penalty is w* = (2, 0.6)</p>
+    <div class="eq" data-tex="\Co{\lambda} = 0.5:\quad \text{L2} \to (1.343,\ 0.563), \qquad \text{L1} \to (1.740,\ \mathbf{0})"></div>
+    <div class="mean"><b>→ Meaning.</b> L1 sets the less important w₂ to exactly 0 (from λ ≥ 0.34). That is why L1 is used to "pick the features to keep".</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>Blue contours = the original loss L (lowest at w* in the middle). Green = all points with the same penalty as the current solution (circle, diamond). Orange dashes = the path the solution takes as λ grows from 0.</li></ul>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try"><li>Raise λ slowly: L1's solution sticks to a corner of the diamond (on the horizontal axis), so w₂ = 0. L2 shrinks both a little at a time along its circle.</li></ol>
+    </div>
+    <div class="ctl"><label>λ <input type="range" id="i8l" min="0" max="1.5" step="0.01" value="0.5"><output id="o8l"></output></label></div>
+    <canvas id="cv8" aria-label="L2's circle and L1's diamond with the loss contours and the solution paths"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> L2 shrinks every weight evenly; L1 sets some weights exactly to 0.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Summary, dictionary"><span class="no">9</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Overfitting</td><td>the test error traces a U</td><td>degree 3: 0.095, degree 14: 4.9×10⁶</td></tr>
+      <tr><td>2 Splitting</td><td>learn on train, choose on dev, test once</td><td>70 / 15 / 15</td></tr>
+      <tr><td>3 k-fold</td><td>train k times, average the validation error</td><td>k = 5 → degree 5</td></tr>
+      <tr><td>4 Code</td><td>train_test_split, KFold, DataLoader</td><td>70 samples / batch 16 = 5 batches</td></tr>
+      <tr><td>5 Regularization</td><td>loss + λ × penalty</td><td>λ = 0.1: test 0.106</td></tr>
+      <tr><td>6 train / eval</td><td>dropout and batch norm behave differently by mode</td><td>[0, 0, 2, …] vs [1, 1, 1, …]</td></tr>
+      <tr><td>7 Dropout</td><td>switch off with probability p, in training only</td><td>gap 19 → 6 points</td></tr>
+      <tr><td>8 L1, L2</td><td>L1 makes zeros, L2 shrinks evenly</td><td>λ = 0.5: L1 w₂ = 0</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 6, Activation & Loss) sets out how to choose activations, losses and normalization. The numbers were checked with <code>tools/ch05_numbers.py</code> and the same calculation in the browser (the dropout numbers come from browser training).</p>
+  <h3 id="s9b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>CV</b></td><td>cross-validation</td><td>Splitting so that validation takes turns.</td><td class="num">3</td></tr>
+      <tr><td><b>DataLoader</b></td><td>–</td><td>The PyTorch tool that serves data in batches.</td><td class="num">4</td></tr>
+      <tr><td><b>dev</b></td><td>development (validation) set</td><td>The data used to choose settings.</td><td class="num">2</td></tr>
+      <tr><td><b>dropout</b></td><td>–</td><td>Switch neurons off at random during training.</td><td class="num">6, 7</td></tr>
+      <tr><td><b>k-fold</b></td><td>–</td><td>Split the data into k groups and train k times.</td><td class="num">3</td></tr>
+      <tr><td><b>L1, lasso</b></td><td>least absolute shrinkage and selection operator</td><td>Penalises |w|; drives weights to 0.</td><td class="num">8</td></tr>
+      <tr><td><b>L2, ridge</b></td><td>– (weight decay)</td><td>Penalises w²; shrinks evenly.</td><td class="num">5, 8</td></tr>
+      <tr><td><b>λ</b></td><td>lambda</td><td>The strength of the penalty.</td><td class="num">5, 8</td></tr>
+      <tr><td><b>LOO</b></td><td>leave-one-out</td><td>k-fold with k = the number of data points.</td><td class="num">3</td></tr>
+      <tr><td><b>overfitting</b></td><td>–</td><td>Memorising the training data and getting new data wrong.</td><td class="num">1</td></tr>
+      <tr><td><b>underfitting</b></td><td>–</td><td>Too simple to fit even the training data.</td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch05.js"></script>
+</body>
+</html>

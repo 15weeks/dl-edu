@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 5장 · Overfitting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="5" data-base="ch05-overfitting-regularization">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 5장</p>
+  <h1>Overfitting</h1>
+  <p class="topic">overfitting, cross-validation, regularization</p>
+  <p class="lead">학습 data에서는 잘 되는데 새 data에서는 안 되는 model. 왜 그런지 보고, data를 나눠서 재는 법(cross-validation)과 막는 법(regularization: λ, dropout, L1·L2)을 그림으로 익힌다.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: overfitting, data 나누기, k-fold, regularization, dropout, L1과 L2" style="font-family: var(--sans);">
+      <defs><marker id="m5-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 50Q50 90 108 92" fill="none" stroke="var(--sig)" stroke-width="2"/><path d="M28 56Q62 110 108 50" fill="none" stroke="var(--miss)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① overfitting</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">학습 vs 시험 · 1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="22" y="60" width="64" height="20" fill="var(--sig)"/><rect x="86" y="60" width="14" height="20" fill="var(--ok)"/><rect x="100" y="60" width="14" height="20" fill="var(--miss)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② 나누기</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">train·dev·test · 2절</text></g></a>
+      <a href="#s3"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)" opacity="0.8"><rect x="28" y="46" width="80" height="9"/><rect x="28" y="58" width="80" height="9"/><rect x="28" y="70" width="80" height="9"/><rect x="28" y="82" width="80" height="9"/></g><g fill="var(--ok)"><rect x="28" y="46" width="20" height="9"/><rect x="48" y="58" width="20" height="9"/><rect x="68" y="70" width="20" height="9"/><rect x="88" y="82" width="20" height="9"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ k-fold</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">돌아가며 검증 · 3~4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M26 80C34 40 42 100 52 60S66 96 76 54S92 92 110 58" fill="none" stroke="var(--fa)" stroke-width="1.4" opacity="0.6"/><path d="M26 82C50 50 80 50 110 64" fill="none" stroke="var(--ink)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ regularization</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">벌 λ로 얌전하게 · 5절</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g fill="var(--surface)" stroke="var(--ink)"><circle cx="30" cy="62" r="5"/><circle cx="30" cy="82" r="5"/><circle cx="62" cy="52" r="5"/><circle cx="62" cy="70" r="5"/><circle cx="62" cy="88" r="5"/><circle cx="100" cy="70" r="5"/></g><g stroke="var(--muted)" stroke-width="2"><path d="M57 65L67 75M57 75L67 65"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ dropout</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">무작위로 끄기 · 6~7절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m5-arrow)"/><path d="M304 85H318" marker-end="url(#m5-arrow)"/><path d="M456 85H470" marker-end="url(#m5-arrow)"/><path d="M608 85H622" marker-end="url(#m5-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M60 162L74 176L60 190L46 176Z" fill="var(--okwash)" stroke="var(--ok)" stroke-width="1.6"/><circle cx="96" cy="176" r="14" fill="var(--sigwash)" stroke="var(--sig)" stroke-width="1.6"/><text x="400" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑥ L1 (마름모) vs L2 (원): weight에 주는 벌의 두 가지 모양</text><text x="400" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">L1은 weight를 정확히 0으로 만든다 · 8절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="overfitting"><span class="no">1</span>overfitting과 일반화</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습 오차가 0에 가까우면 좋은 model인가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>overfitting</dt><dd>(과적합). 학습 data의 잡음까지 외워서 새 data에서 틀리는 것.</dd>
+    <dt>underfitting</dt><dd>(과소적합). model이 너무 단순해서 학습 data도 못 맞히는 것.</dd>
+    <dt>generalization</dt><dd>(일반화). 처음 보는 data에서도 잘 맞히는 것.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{일반화 차이} = \Co{E_{\text{test}}} - \Cb{E_{\text{train}}}"></div>
+  <ul class="legend"><li><b class="c-sig">E_train</b> 학습 data의 오차</li><li><b class="c-miss">E_test</b> 처음 보는 data의 오차</li><li>차이가 크면 overfitting</li></ul>
+  <div class="calc">
+    <p class="h">예제: 점 15개에 다항식 맞추기 (시험 점 200개)</p>
+    <div class="eq" data-tex="\text{차수 1}: \Cb{0.086} / \Co{0.196} \qquad \text{차수 3}: \Cb{0.024} / \Co{0.095} \qquad \text{차수 14}: \Cb{0.003} / \Co{4.9\times10^{6}}"></div>
+    <div class="mean"><b>→ 뜻.</b> 차수 14는 parameter 15개로 점 15개를 거의 그대로 지나간다(학습 오차 최소). 그런데 점 사이에서 날뛰어 시험 오차가 폭발한다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>차수 0 → 3: 두 오차가 함께 준다.</li>
+        <li>차수 10 이상: 빨간 곡선이 점 사이에서 튄다. 오른쪽에서 시험 오차(주황)가 하늘로 간다.</li>
+      </ol>
+    </div>
+    <div class="ctl"><label>다항식 차수 <input type="range" id="i1d" min="0" max="14" step="1" value="3"><output id="o1d"></output></label></div>
+    <canvas id="cv1" aria-label="점 15개에 맞춘 다항식과 차수마다 학습·시험 오차"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 학습 오차만 보면 복잡할수록 좋아 보인다. 처음 보는 data의 오차는 U자를 그린다: 너무 단순하면 underfitting, 너무 복잡하면 overfitting.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="train, dev, test"><span class="no">2</span>train, dev, test로 나누기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"처음 보는 data"는 어디서 구하나? 설정은 무엇으로 고르나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>dev</dt><dd><b>development set</b>, validation set (검증 data). 설정을 고를 때 쓴다.</dd>
+    <dt>hold-out</dt><dd>학습에 쓰지 않고 따로 떼어 둔 data.</dd>
+  </dl></div>
+  <div class="stage">
+    <div class="ctl">
+      <label>train <input type="range" id="i2tr" min="50" max="90" step="5" value="70"><output id="o2tr"></output></label>
+      <label>dev <input type="range" id="i2dev" min="5" max="25" step="5" value="15"><output id="o2dev"></output></label>
+      <button type="button" id="b2shuffle">다시 섞기</button>
+    </div>
+    <canvas id="cv2" aria-label="data 100개를 train, dev, test로 나눈 그림"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> train으로 배우고, dev로 고르고, test는 마지막에 한 번만 본다. 나누기 전에 섞는다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="k-fold cross-validation"><span class="no">3</span>k-fold cross-validation</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>data가 적어서 dev를 크게 떼기 아까우면? 모든 점이 돌아가며 한 번씩 검증을 맡는다.</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>CV</dt><dd><b>cross-validation</b> (교차 검증).</dd>
+    <dt>k-fold</dt><dd>data를 k 묶음(fold)으로 나눠 k번 학습. 매번 다른 묶음 하나로 검증.</dd>
+    <dt>LOO</dt><dd><b>leave-one-out</b>. k = data 수. 하나씩 빼 보기.</dd>
+  </dl></div>
+  <div class="eq" data-tex="E_{\text{CV}} = \frac{1}{\Co{k}} \sum_{f=1}^{\Co{k}} \Cg{E_{\text{val}}^{(f)}}"></div>
+  <ul class="legend"><li><b class="c-miss">k</b> 묶음 수 = 학습 횟수</li><li><b class="c-ok">E_val⁽ᶠ⁾</b> f번째 묶음을 뺀 model의, 그 묶음에서의 오차</li></ul>
+  <div class="calc">
+    <p class="h">예제: 1절의 점 15개, k = 5로 차수 고르기</p>
+    <div class="eq" data-tex="\text{차수 3}: E_{\text{CV}} = 0.102, \quad \text{차수 5}: E_{\text{CV}} = 0.080 \;(\text{최소}), \quad \text{차수 8}: E_{\text{CV}} = 4.1\times10^{4}"></div>
+    <div class="mean"><b>→ 뜻.</b> 시험 data를 한 번도 보지 않고 고른 차수(5)의 시험 오차 0.125는 가장 좋은 차수(4, 0.093)와 가깝다. 점이 15개뿐이라 k에 따라 고른 답이 조금 흔들린다(k = 3이면 3).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>k <input type="range" id="i3k" min="2" max="15" step="1" value="5"><output id="o3k"></output></label>
+      <button type="button" id="b3play">차례로 보기</button>
+    </div>
+    <canvas id="cv3" aria-label="k-fold 나누기와 차수마다 검증 오차"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> k-fold = k번 학습해서 검증 오차를 평균. data를 아끼면서 설정을 고르는 방법.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="code로 나누기"><span class="no">4</span>code로 나누기: scikit-learn과 DataLoader</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>2~3절을 code로는 몇 줄에 하나?</p></div>
+  <div class="row2">
+    <div>
+      <div class="codebox"><pre><code>import numpy as np
+from sklearn.model_selection import train_test_split, KFold
+X = np.arange(20).reshape(10, 2); y = np.arange(10)
+X_tr, X_te, y_tr, y_te = train_test_split(
+    X, y, test_size=0.2, random_state=0)   # 섞고 20%를 test로
+print(len(X_tr), len(X_te))
+for k, (tr, va) in enumerate(KFold(n_splits=4,
+        shuffle=True, random_state=0).split(X_tr)):
+    print(k, va)                           # 이번 검증 묶음</code></pre></div>
+      <div class="codebox"><pre><code>8 2
+0 [2 6]
+1 [1 7]
+2 [0 3]
+3 [4 5]</code></pre></div>
+    </div>
+    <div>
+      <div class="codebox"><pre><code>import torch
+from torch.utils.data import TensorDataset, DataLoader, random_split
+ds = TensorDataset(torch.randn(100, 2), torch.randint(0, 2, (100,)))
+train_ds, dev_ds, test_ds = random_split(
+    ds, [70, 15, 15], generator=torch.Generator().manual_seed(0))
+train_dl = DataLoader(train_ds, batch_size=16, shuffle=True)
+print(len(train_ds), len(dev_ds), len(test_ds), len(train_dl))
+xb, yb = next(iter(train_dl))              # batch 하나
+print(xb.shape, yb.shape)</code></pre></div>
+      <div class="codebox"><pre><code>70 15 15 5
+torch.Size([16, 2]) torch.Size([16])</code></pre></div>
+    </div>
+  </div>
+  <p class="say">train 70개를 batch 16으로 나누면 5 묶음 (16 + 16 + 16 + 16 + 6). batch는 7장에서 자세히 본다.</p>
+  <p class="key"><b>기억할 한 줄.</b> 나누기: train_test_split, KFold, random_split. 학습 때 꺼내 쓰기: DataLoader(batch_size, shuffle=True).</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="regularization"><span class="no">5</span>regularization: 복잡함에 벌 주기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>복잡한 model을 쓰면서 overfitting을 막을 수는 없나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>regularization</dt><dd>(규제, 정칙화). loss에 "복잡함 벌점"을 더해 model을 얌전하게 만드는 방법들.</dd>
+    <dt>λ</dt><dd>lambda. 벌점의 세기.</dd>
+    <dt>ridge</dt><dd>weight(계수)의 제곱합을 벌하는 regularization (= L2).</dd>
+  </dl></div>
+  <div class="eq" data-tex="J(\mathbf w) = \underbrace{\Cb{L(\mathbf w)}}_{\text{data를 맞혀라}} + \Co{\lambda}\,\underbrace{\Cr{R(\mathbf w)}}_{\text{단순하게 있어라}}"></div>
+  <ul class="legend"><li><b class="c-sig">L</b> 원래 loss</li><li><b class="c-fa">R</b> 벌점 (예: Σ w²)</li><li><b class="c-miss">λ</b> 둘 사이의 저울</li></ul>
+  <div class="calc">
+    <p class="h">예제: 1절의 차수 14에 ridge를 더하면</p>
+    <div class="eq" data-tex="\Co{\lambda} = 0:\ \text{시험 } 4.9\times10^{6},\ \max|c| = 4315 \qquad \Co{\lambda} = 0.1:\ \text{시험 } 0.106,\ \max|c| = 0.64"></div>
+    <div class="mean"><b>→ 뜻.</b> 같은 차수 14인데 계수를 작게 묶었더니 시험 오차가 차수 3(0.095)만큼 작아졌다. λ도 2~3절처럼 dev나 k-fold로 고른다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>λ <input type="range" id="i5l" min="0" max="28" step="1" value="20"><output id="o5l"></output></label></div>
+    <canvas id="cv5" aria-label="차수 14 다항식에 ridge를 더한 곡선과 λ마다 오차"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> regularization = loss + λ × 벌점. λ가 너무 작으면 overfitting, 너무 크면 underfitting.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="train(), eval()"><span class="no">6</span>train() mode와 eval() mode</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>dropout처럼 학습 때만 쓰는 장치는 시험 때 어떻게 끄나?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch
+torch.manual_seed(0)
+drop = torch.nn.Dropout(p=0.5)
+x = torch.ones(8)
+drop.train(); print(drop(x))   # 학습: 절반을 0, 나머지 ×2
+drop.eval();  print(drop(x))   # 평가: 그대로</code></pre></div>
+    <div class="codebox"><pre><code>tensor([0., 0., 2., 0., 0., 0., 2., 2.])
+tensor([1., 1., 1., 1., 1., 1., 1., 1.])</code></pre></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>model.train()</th><th>model.eval()</th></tr></thead>
+    <tbody>
+      <tr><td>dropout (7절)</td><td>무작위로 끄고 남은 것 × 1/(1 − p)</td><td>모두 켬, 그대로</td></tr>
+      <tr><td>batch normalization (6장)</td><td>이번 batch의 평균·분산</td><td>학습 때 모아 둔 평균·분산</td></tr>
+      <tr><td>언제</td><td>학습 loop 시작 전</td><td>dev·test로 잴 때 (with torch.no_grad()와 함께)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> 학습 전 model.train(), 평가 전 model.eval(). 바꾸는 것을 잊으면 시험 성적이 흔들린다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="dropout"><span class="no">7</span>dropout</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습 때 neuron을 무작위로 끄면 왜 overfitting이 줄어드나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>p</dt><dd>끄는 확률 (dropout rate).</dd>
+    <dt>m</dt><dd>mask. 켜면 1, 끄면 0.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\tilde h_i = \frac{\Cg{m_i}\, h_i}{1 - \Co{p}}, \qquad \Cg{m_i} = \begin{cases}0 & \text{확률 } \Co{p}\\ 1 & \text{확률 } 1 - \Co{p}\end{cases}"></div>
+  <p class="say">말로: 매 step 다른 일부 neuron이 빠진 network로 배운다. 어느 neuron 하나에 기대지 못하니, 여러 neuron이 나눠서 일하게 된다. 1/(1 − p)를 곱해 평균 크기를 맞춘다.</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>p <input type="range" id="i7p" min="0.1" max="0.8" step="0.1" value="0.5"><output id="o7p"></output></label>
+      <button type="button" id="b7a">학습 step 몇 번 보기</button>
+    </div>
+    <canvas id="cv7a" aria-label="학습 step마다 무작위로 꺼지는 unit"></canvas>
+  </div>
+  <div class="calc">
+    <p class="h">예제: 점 60개(잡음 많음)로 2-24-24-1 network를 500 epoch</p>
+    <div class="eq" data-tex="\text{dropout 없음}: \text{학습 } 98\%,\ \text{시험 } 79\% \qquad \text{dropout } 0.5: \text{학습 } 87\%,\ \text{시험 } 81\%"></div>
+    <div class="mean"><b>→ 뜻.</b> dropout은 학습 성적을 일부러 낮춰 외우기를 막는다. 학습과 시험의 차이가 19%p → 6%p로 준다 (seed 3개 평균).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try"><li><b>둘 다 학습</b>: 왼쪽은 학습 점을 100% 맞히려고 경계가 학습 점 쪽으로 휘어 들어간다. 오른쪽은 학습 점을 몇 개 틀리는 대신 시험 점수가 더 높다. 진한 점 = 학습 data, 연한 점 = 시험 data.</li></ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b7run">둘 다 학습</button>
+      <button type="button" id="b7reset">처음으로</button>
+    </div>
+    <canvas id="cv7b" aria-label="dropout 없이와 dropout으로 학습한 두 경계"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> dropout = 학습 때만 neuron을 확률 p로 끈다. 학습 성적은 조금 내려가고 학습·시험의 차이가 준다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="L1, L2"><span class="no">8</span>L1과 L2 weight regularization</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>weight에 주는 벌을 |w|로 하느냐 w²로 하느냐가 무엇을 바꾸나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>L1, lasso</dt><dd>|w₁| + |w₂| + … 를 벌한다. 같은 크기의 점들 = 마름모.</dd>
+    <dt>L2, ridge</dt><dd>w₁² + w₂² + … 를 벌한다. 같은 크기의 점들 = 원. PyTorch의 weight_decay.</dd>
+  </dl></div>
+  <div class="eq" data-tex="J_{\text{L1}} = L + \Co{\lambda}\,(|w_1| + |w_2|), \qquad J_{\text{L2}} = L + \tfrac{\Co{\lambda}}{2}\,(w_1^2 + w_2^2)"></div>
+  <ul class="legend"><li>L1의 기울기 = λ·sign(w): 작아도 같은 힘으로 0까지 민다</li><li>L2의 기울기 = λ·w: 작아질수록 힘이 약해져 0 근처에서 멈춘다</li></ul>
+  <div class="calc">
+    <p class="h">예제: 벌이 없을 때의 답 w* = (2, 0.6)</p>
+    <div class="eq" data-tex="\Co{\lambda} = 0.5:\quad \text{L2} \to (1.343,\ 0.563), \qquad \text{L1} \to (1.740,\ \mathbf{0})"></div>
+    <div class="mean"><b>→ 뜻.</b> L1은 덜 중요한 w₂를 정확히 0으로 만든다(λ ≥ 0.34부터). 그래서 L1은 "쓸 feature 고르기"에 쓰인다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li>파란 등고선 = 원래 loss L (가운데 w*가 가장 낮다). 초록 = 지금 해와 같은 벌점을 갖는 점들(원, 마름모). 주황 점선 = λ를 0에서 키울 때 해가 지나는 길.</li></ul>
+      <p class="tag">해 볼 것</p>
+      <ol class="try"><li>λ를 천천히 키운다: L1의 해는 마름모 모서리(가로축 위)에 붙어 w₂ = 0이 된다. L2는 원 위에서 둘 다 조금씩 준다.</li></ol>
+    </div>
+    <div class="ctl"><label>λ <input type="range" id="i8l" min="0" max="1.5" step="0.01" value="0.5"><output id="o8l"></output></label></div>
+    <canvas id="cv8" aria-label="L2의 원과 L1의 마름모, loss 등고선과 해의 경로"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> L2는 모든 weight를 고르게 줄이고, L1은 일부 weight를 정확히 0으로 만든다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="정리, 약자 사전"><span class="no">9</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 overfitting</td><td>시험 오차는 U자</td><td>차수 3: 0.095, 차수 14: 4.9×10⁶</td></tr>
+      <tr><td>2 나누기</td><td>train으로 배우고 dev로 고르고 test는 한 번</td><td>70 / 15 / 15</td></tr>
+      <tr><td>3 k-fold</td><td>k번 학습해 검증 오차 평균</td><td>k = 5 → 차수 5</td></tr>
+      <tr><td>4 code</td><td>train_test_split, KFold, DataLoader</td><td>70개 / batch 16 = 5 묶음</td></tr>
+      <tr><td>5 regularization</td><td>loss + λ × 벌점</td><td>λ = 0.1: 시험 0.106</td></tr>
+      <tr><td>6 train / eval</td><td>dropout·batchnorm이 mode에 따라 다르게</td><td>[0, 0, 2, …] vs [1, 1, 1, …]</td></tr>
+      <tr><td>7 dropout</td><td>학습 때만 확률 p로 끈다</td><td>차이 19%p → 6%p</td></tr>
+      <tr><td>8 L1, L2</td><td>L1은 0을 만들고 L2는 고르게 줄인다</td><td>λ = 0.5: L1 w₂ = 0</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(6장 Activation·Loss)에서는 activation, loss, normalization을 고르는 기준을 본다. 숫자는 <code>tools/ch05_numbers.py</code>와 browser의 같은 계산으로 확인했다 (dropout 숫자는 browser 학습).</p>
+  <h3 id="s9b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>CV</b></td><td>cross-validation</td><td>교차 검증</td><td>돌아가며 검증하는 나누기.</td><td class="num">3</td></tr>
+      <tr><td><b>DataLoader</b></td><td>–</td><td>–</td><td>data를 batch로 꺼내 주는 PyTorch 도구.</td><td class="num">4</td></tr>
+      <tr><td><b>dev</b></td><td>development (validation) set</td><td>검증 data</td><td>설정을 고르는 data.</td><td class="num">2</td></tr>
+      <tr><td><b>dropout</b></td><td>–</td><td>드롭아웃</td><td>학습 때 neuron을 무작위로 끈다.</td><td class="num">6, 7</td></tr>
+      <tr><td><b>k-fold</b></td><td>–</td><td>k겹</td><td>data를 k 묶음으로 나눠 k번 학습.</td><td class="num">3</td></tr>
+      <tr><td><b>L1, lasso</b></td><td>least absolute shrinkage and selection operator</td><td>–</td><td>|w|를 벌한다. weight를 0으로.</td><td class="num">8</td></tr>
+      <tr><td><b>L2, ridge</b></td><td>– (weight decay)</td><td>–</td><td>w²를 벌한다. 고르게 줄인다.</td><td class="num">5, 8</td></tr>
+      <tr><td><b>λ</b></td><td>lambda</td><td>람다</td><td>벌점의 세기.</td><td class="num">5, 8</td></tr>
+      <tr><td><b>LOO</b></td><td>leave-one-out</td><td>하나씩 빼기</td><td>k = data 수인 k-fold.</td><td class="num">3</td></tr>
+      <tr><td><b>overfitting</b></td><td>–</td><td>과적합</td><td>학습 data를 외워 새 data에서 틀린다.</td><td class="num">1</td></tr>
+      <tr><td><b>underfitting</b></td><td>–</td><td>과소적합</td><td>너무 단순해 학습 data도 못 맞힌다.</td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="ch05.js"></script>
+</body>
+</html>

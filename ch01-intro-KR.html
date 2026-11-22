@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 1장 · 기초</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="1" data-base="ch01-intro">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 1장</p>
+  <h1>기초</h1>
+  <p class="topic">딥러닝을 위한 수학·통계·코드</p>
+  <p class="lead">딥러닝은 생각보다 적은 도구로 만들어진다. 숫자를 늘어놓는 법(vector, matrix), 곱해서 더하는 법(dot product), 점수를 확률로 바꾸는 법(softmax), 틀린 정도를 재는 법(cross-entropy), 결과를 믿어도 되는지 재는 법(평균, 분산, t-test), 그리고 이것을 몇 줄로 쓰는 법(NumPy, PyTorch)이다. 이 장은 그 도구를 하나씩 손으로 계산하고, 그림으로 움직여 보며 익힌다. 전문용어는 영어로 쓰고 처음 나올 때 한글을 괄호로 붙였다.</p>
+  <div class="howto">
+    <p class="tag">이 페이지 읽는 법</p>
+    <ol>
+      <li><b>알고 싶은 것</b>: 질문으로 시작한다.</li>
+      <li><b>이 절에 나오는 약자</b>: 모르는 말은 여기서 먼저 확인한다. 전체 목록은 맨 아래 <a href="#s14">약자 사전</a>에 있다.</li>
+      <li><b>예제</b>: 하려는 것 → 계산 → <span class="mean-chip">→ 뜻</span> 상자에서 그 숫자가 무엇을 말하는지.</li>
+      <li><b>직접 해 보기</b>: 그림에 무엇이 있는지, 각 버튼과 slider가 무엇인지, 무엇을 해 보면 무엇이 보이는지. 그림 아래 회색 상자가 지금 설정의 결과를 숫자로 풀어 준다.</li>
+      <li><b>기억할 한 줄</b>로 절을 닫는다. 왼쪽 메뉴(☰ 버튼으로 접고 편다)에서 절 사이를 오간다.</li>
+    </ol>
+  </div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 250" role="img" aria-label="이 장의 지도: 작은 분류기 한 번이 숫자로 바꾸기, W x + b, softmax, cross-entropy, 미분으로 고치기를 차례로 쓰고, 통계와 code가 이를 받친다" style="font-family: var(--sans);">
+      <defs><marker id="m1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도: 사진 한 장을 분류하는 작은 계산이 이 장의 도구를 모두 쓴다 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><rect x="16" y="44" width="136" height="70" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="84" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① 숫자로 바꾸기</text><text x="84" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">사진 → 숫자 64개 x</text><text x="84" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">1절</text></a>
+      <a href="#s3"><rect x="170" y="44" width="136" height="70" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="238" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② z = W x + b</text><text x="238" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">dot product, matrix 곱</text><text x="238" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">2~4절</text></a>
+      <a href="#s5"><rect x="324" y="44" width="136" height="70" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="392" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ softmax</text><text x="392" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">점수 z → 확률</text><text x="392" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">5절 · argmax 8절</text></a>
+      <a href="#s7"><rect x="478" y="44" width="136" height="70" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="546" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ cross-entropy</text><text x="546" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">−ln(정답의 확률)</text><text x="546" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">6~7절</text></a>
+      <a href="#s13"><rect x="632" y="44" width="136" height="70" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="700" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ 미분으로 고치기</text><text x="700" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">기울기 → W 수정</text><text x="700" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">13절 → 2장</text></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 79H168" marker-end="url(#m1-arrow)"/><path d="M306 79H322" marker-end="url(#m1-arrow)"/><path d="M460 79H476" marker-end="url(#m1-arrow)"/><path d="M614 79H630" marker-end="url(#m1-arrow)"/><path d="M700 114V134H84V118" stroke-dasharray="4 3" marker-end="url(#m1-arrow)"/></g>
+      <text x="392" y="148" font-size="11" text-anchor="middle" fill="var(--muted)">이 고리를 수천 번 돌면 "학습"이 된다 (2~3장)</text>
+      <a href="#s9"><rect x="16" y="166" width="368" height="64" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="200" y="190" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">통계: 평균·분산, sampling과 seed, t-test</text><text x="200" y="208" font-size="11" text-anchor="middle" fill="var(--muted)">"이 결과를 믿어도 되나?"를 잰다 (9~11절)</text></a>
+      <a href="#s12"><rect x="400" y="166" width="368" height="64" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="584" y="190" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">code: Python · NumPy · PyTorch</text><text x="584" y="208" font-size="11" text-anchor="middle" fill="var(--muted)">위 계산을 몇 줄로 쓴다 (12절)</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="숫자로 바꾸기"><span class="no">1</span>세상을 숫자로: scalar, vector, matrix, tensor</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>사진, 글자, 소리는 숫자가 아니다. computer는 이것을 어떻게 계산하나? 딥러닝 code에서 늘 보는 (32, 3, 224, 224) 같은 숫자는 무슨 뜻인가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>scalar</dt><dd>(스칼라). 숫자 하나. 예: 온도 21.5.</dd>
+    <dt>vector</dt><dd>(벡터). 숫자를 한 줄로 늘어놓은 것. 예: [키, 몸무게] = [172, 68].</dd>
+    <dt>matrix</dt><dd>(행렬). 숫자를 가로·세로 표로 늘어놓은 것. 흑백 사진이 그렇다.</dd>
+    <dt>tensor</dt><dd>(텐서). 숫자를 여러 방향(축)으로 늘어놓은 것의 일반 이름. scalar는 0축, vector는 1축, matrix는 2축 tensor다.</dd>
+    <dt>shape</dt><dd>(모양). 축마다 숫자가 몇 개인지 적은 것. 예: (28, 28) = 가로 28, 세로 28.</dd>
+    <dt>pixel</dt><dd><b>picture element</b> (화소). 사진의 점 하나. 흑백이면 밝기 숫자 하나, 컬러면 빨강·초록·파랑(RGB) 숫자 세 개.</dd>
+    <dt>channel</dt><dd>(채널). 컬러 사진의 R, G, B처럼 같은 자리에 겹쳐 있는 숫자 판의 수.</dd>
+    <dt>one-hot</dt><dd>(원-핫). 종류(class) 중 하나만 1이고 나머지는 0인 vector. 글자나 종류를 숫자로 바꾸는 가장 쉬운 방법.</dd>
+  </dl></div>
+  <div class="idea">
+    <p>딥러닝 model은 숫자만 계산한다. 그래서 모든 data를 먼저 숫자 묶음으로 바꾼다. 이 묶음의 "모양"이 shape다.</p>
+  </div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 200" role="img" aria-label="tensor의 축: scalar는 점 하나, vector는 한 줄, matrix는 표, 3축 tensor는 표가 겹친 것" style="font-family: var(--sans);">
+      <text x="16" y="20" font-size="13" font-weight="600" fill="var(--ink)">축이 하나씩 늘어날 때마다: scalar → vector → matrix → tensor</text>
+      <rect x="70" y="90" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><text x="83" y="108" font-size="11" text-anchor="middle" fill="var(--ink)">21</text>
+      <g><rect x="230" y="40" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="230" y="66" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="230" y="92" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="230" y="118" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><text x="243" y="58" font-size="11" text-anchor="middle" fill="var(--ink)">3</text><text x="243" y="84" font-size="11" text-anchor="middle" fill="var(--ink)">1</text><text x="243" y="110" font-size="11" text-anchor="middle" fill="var(--ink)">4</text><text x="243" y="136" font-size="11" text-anchor="middle" fill="var(--ink)">1</text></g>
+      <g fill="var(--sigwash)" stroke="var(--sig)"><rect x="370" y="53" width="26" height="26" rx="3"/><rect x="396" y="53" width="26" height="26" rx="3"/><rect x="422" y="53" width="26" height="26" rx="3"/><rect x="370" y="79" width="26" height="26" rx="3"/><rect x="396" y="79" width="26" height="26" rx="3"/><rect x="422" y="79" width="26" height="26" rx="3"/><rect x="370" y="105" width="26" height="26" rx="3"/><rect x="396" y="105" width="26" height="26" rx="3"/><rect x="422" y="105" width="26" height="26" rx="3"/></g>
+      <g fill="var(--surface)" stroke="var(--fa)"><rect x="590" y="40" width="78" height="78" rx="3"/></g>
+      <g fill="var(--surface)" stroke="var(--ok)"><rect x="578" y="52" width="78" height="78" rx="3"/></g>
+      <g fill="var(--sigwash)" stroke="var(--sig)"><rect x="566" y="64" width="78" height="78" rx="3"/></g>
+      <text x="676" y="56" font-size="10.5" fill="var(--fa)">R</text><text x="664" y="68" font-size="10.5" fill="var(--ok)">G</text><text x="652" y="80" font-size="10.5" fill="var(--sig)">B</text>
+      <text x="83" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">scalar · 0축</text><text x="83" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape () · 온도 하나</text>
+      <text x="243" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">vector · 1축</text><text x="243" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape (4,) · 특징 4개</text>
+      <text x="409" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">matrix · 2축</text><text x="409" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape (3, 3) · 흑백 사진</text>
+      <text x="610" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">tensor · 3축</text><text x="610" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape (3, H, W) · 컬러 사진</text>
+    </svg>
+  </div>
+  <div class="tbl"><table>
+    <caption>현실의 data → 숫자 묶음 (PyTorch의 shape 순서)</caption>
+    <thead><tr><th>data</th><th>숫자로 바꾸면</th><th>shape</th><th class="num">숫자 개수</th></tr></thead>
+    <tbody>
+      <tr><td>오늘 기온</td><td>21.5</td><td>()</td><td class="num">1</td></tr>
+      <tr><td>사람 한 명 (키, 몸무게)</td><td>[172, 68]</td><td>(2,)</td><td class="num">2</td></tr>
+      <tr><td>손글씨 숫자 흑백 사진</td><td>밝기 0~1의 표</td><td>(28, 28)</td><td class="num">784</td></tr>
+      <tr><td>컬러 사진 한 장</td><td>R, G, B 표 세 장</td><td>(3, 224, 224)</td><td class="num">150,528</td></tr>
+      <tr><td>컬러 사진 32장 묶음(batch)</td><td>위 tensor 32개</td><td>(32, 3, 224, 224)</td><td class="num">4,816,896</td></tr>
+      <tr><td>종류 "개" (고양이, 개, 새 중)</td><td>one-hot [0, 1, 0]</td><td>(3,)</td><td class="num">3</td></tr>
+    </tbody>
+  </table></div>
+  <div class="calc">
+    <p class="h">예제: 사진 32장 묶음에는 숫자가 몇 개 있나</p>
+    <p class="goal">하려는 것: shape의 숫자를 모두 곱하면 전체 숫자 개수다.</p>
+    <div class="eq" data-tex="32 \times 3 \times 224 \times 224 = 4{,}816{,}896"></div>
+    <div class="mean"><b>→ 뜻.</b> 사진 32장을 한 번에 model에 넣으면 숫자 약 480만 개를 동시에 계산한다. 딥러닝이 GPU(그래픽 카드)를 쓰는 이유다. shape를 읽는 습관이 딥러닝 code를 읽는 첫걸음이다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul>
+        <li><b>왼쪽</b>: 8 × 8 pixel 흑백 사진. 칸마다 밝기가 있다(흰색 0, 검정 1).</li>
+        <li><b>오른쪽</b>: 같은 사진을 숫자로 적은 matrix. computer가 실제로 보는 것은 이 숫자다.</li>
+      </ul>
+      <p class="tag">조작</p>
+      <dl><dt>칸 누르기</dt><dd>그 pixel 밝기가 0 → 0.5 → 1 → 0으로 바뀐다. 끌면서 칠할 수도 있다.</dd><dt>버튼</dt><dd>숫자 7을 그리거나, 지우거나, 흑백을 뒤집는다.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>"7 그리기"를 누르고 오른쪽 숫자에서 7 모양의 1들을 찾아보기. 사람 눈에는 그림, computer에는 숫자 64개다.</li>
+        <li>"흑백 뒤집기": 모든 숫자가 1 − 값으로 바뀐다. 그림의 뜻은 같아도 숫자는 완전히 달라진다.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b1seven">7 그리기</button><button id="b1clear">지우기</button><button id="b1inv">흑백 뒤집기</button></div>
+    <canvas id="cv1" aria-label="8 by 8 pixel 사진과 같은 사진의 숫자 matrix"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 딥러닝의 모든 입력은 tensor(숫자 묶음)이고, shape는 축마다 숫자가 몇 개인지 적은 것이다. shape의 숫자를 곱하면 전체 숫자 개수다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="transpose와 shape"><span class="no">2</span>transpose와 shape: 행과 열 바꾸기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>논문과 code에 늘 나오는 Aᵀ, x.T는 무엇이고 왜 필요한가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>Aᵀ</dt><dd><b>A transpose</b> (전치 행렬). A의 행(가로줄)과 열(세로줄)을 바꾼 것.</dd>
+    <dt>A<sub>ij</sub></dt><dd>A의 i번째 행, j번째 열에 있는 숫자.</dd>
+    <dt>(m × n)</dt><dd>행 m개, 열 n개인 matrix의 shape. "m by n"이라고 읽는다.</dd>
+  </dl></div>
+  <div class="idea"><p>transpose는 matrix를 대각선을 축으로 뒤집는 것이다. 첫 번째 행이 첫 번째 열이 된다. shape (m × n)이 (n × m)으로 바뀐다. 다음 절의 dot product와 matrix 곱에서 "모양을 맞추려고" 자주 쓴다.</p></div>
+  <div class="eq" data-tex="(A^\top)_{ij} = A_{ji}, \qquad A = \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix}_{(2 \times 3)} \;\Rightarrow\; A^\top = \begin{bmatrix} 1 & 4 \\ 2 & 5 \\ 3 & 6 \end{bmatrix}_{(3 \times 2)}"></div>
+  <div class="mean"><b>→ 뜻.</b> A의 1행 (1, 2, 3)이 Aᵀ의 1열이 되었다. 예: A<sub>23</sub> = 6은 Aᵀ<sub>32</sub> = 6으로 옮겨 간다. 숫자는 그대로이고 자리만 바뀐다.</div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul>
+        <li><b>위</b>: A와 Aᵀ의 숫자 칸. 칸을 누르거나 mouse를 올리면 짝이 되는 두 칸이 <span class="sw" style="--k: var(--sig)"></span>파랗게, 그 칸이 있는 A의 행과 Aᵀ의 열이 <span class="sw" style="--k: var(--ok)"></span>초록으로 칠해진다.</li>
+        <li><b>아래</b>: A의 칸들이 점선 대각선을 거울 삼아 Aᵀ 자리로 옮겨 가는 그림. 파란 칸 = A의 1행, 초록 칸 = A의 2행.</li>
+      </ul>
+      <p class="tag">조작</p>
+      <dl><dt>t</dt><dd>0이면 A, 1이면 Aᵀ. 그 사이는 옮겨 가는 중간.</dd><dt>움직이기</dt><dd>t를 0 ↔ 1로 천천히 움직인다.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>A의 6을 누르기: "A의 2행 3열 = Aᵀ의 3행 2열"이 나온다.</li>
+        <li>"움직이기": 가로로 누운 파란 1행 (1, 2, 3)이 세로 1열로 선다. 대각선 위의 1과 5는 자리가 그대로다.</li>
+      </ol>
+    </div>
+    <div class="mats" id="t2"></div>
+    <div class="read" id="r2" aria-live="polite">칸을 눌러 보세요.</div>
+    <div class="ctl"><label>t <input type="range" id="i2t" min="0" max="1" step="0.01" value="0"><output id="o2t"></output></label><button id="b2play">움직이기</button></div>
+    <canvas id="cv2" aria-label="A의 칸이 대각선을 거울 삼아 A transpose 자리로 옮겨 가는 animation"></canvas>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> transpose = 행과 열을 바꾼다. shape (m × n) → (n × m). 숫자는 그대로, 자리만 바뀐다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="dot product"><span class="no">3</span>dot product: 두 vector가 얼마나 같은 방향인가</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>딥러닝에서 가장 많이 하는 계산은 무엇일까? "같은 자리끼리 곱해서 모두 더하기" 하나다. 이 계산은 무엇을 재나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>a · b</dt><dd><b>dot product</b> (내적). 같은 자리 숫자끼리 곱해서 모두 더한 값.</dd>
+    <dt>|a|</dt><dd><b>norm</b> (길이). vector의 길이. √(a₁² + a₂² + …).</dd>
+    <dt>θ</dt><dd><b>theta</b> (각도). 두 vector 사이의 각.</dd>
+    <dt>w, b</dt><dd><b>weight, bias</b> (가중치, 치우침). neuron이 입력 x에 곱하는 숫자들과 더하는 숫자 하나.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\mathbf{a} \cdot \mathbf{b} = \sum_{i} a_i b_i = |\mathbf{a}|\,|\mathbf{b}| \cos\theta"></div>
+  <div class="calc">
+    <p class="h">예제 ①: a = (2, 1), b = (1, 3)</p>
+    <p class="goal">하려는 것: 같은 자리끼리 곱해 더하고, 길이로 나눠 각도를 구한다.</p>
+    <div class="eq" data-tex="\mathbf{a} \cdot \mathbf{b} = 2 \times 1 + 1 \times 3 = 5, \qquad |\mathbf{a}| = \sqrt{2^2 + 1^2} = 2.236, \qquad |\mathbf{b}| = \sqrt{1^2 + 3^2} = 3.162"></div>
+    <div class="eq" data-tex="\cos\theta = \frac{5}{2.236 \times 3.162} = 0.707 \;\Rightarrow\; \theta = 45^\circ"></div>
+    <div class="mean"><b>→ 뜻.</b> dot product는 "두 vector가 얼마나 같은 쪽을 보나"를 잰다. 같은 방향이면 크고, 직각이면 0, 반대면 음수다. 길이로 나눈 cos θ만 보면 길이와 상관없이 방향만 비교한다(얼굴 인식이 쓰는 cosine similarity).</div>
+    <p class="h">예제 ②: neuron 하나는 dot product 하나다</p>
+    <p class="goal">하려는 것: 입력 x = (1, 2, 3), weight w = (0.5, −1, 2), bias b = 0.5일 때 neuron의 점수 z를 구한다.</p>
+    <div class="eq" data-tex="z = \mathbf{w} \cdot \mathbf{x} + b = 0.5 \times 1 + (-1) \times 2 + 2 \times 3 + 0.5 = 0.5 - 2 + 6 + 0.5 = 5"></div>
+    <div class="mean"><b>→ 뜻.</b> neuron은 "입력이 내가 좋아하는 모양(w)과 얼마나 닮았나"를 dot product로 잰다. 3번째 입력(3)에 큰 weight(2)가 곱해져 점수 대부분을 만들었다. 학습은 이 w와 b를 고치는 일이다(2~3장).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul>
+        <li><span class="sw" style="--k: var(--sig)"></span>파란 화살표 = a, <span class="sw" style="--k: var(--miss)"></span>주황 화살표 = b. 점선 = b를 a 방향으로 비춘 그림자(projection). 그림자 길이 × |a| = a · b다.</li>
+      </ul>
+      <p class="tag">조작</p>
+      <dl><dt>화살표 끝 끌기</dt><dd>a나 b의 끝점을 끌어 방향과 길이를 바꾼다.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>처음 상태(a = (2, 1), b = (1, 3)): a · b = 5, 각도 45°(예제 ①).</li>
+        <li>b를 a와 직각이 되게 끌기: a · b가 0이 된다. 그림자도 사라진다.</li>
+        <li>b를 a의 반대쪽으로: a · b가 음수가 되고, 그림자가 a의 반대 방향에 생긴다.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b3r">처음 위치로</button></div>
+    <canvas id="cv3" aria-label="두 vector a와 b를 끌어서 dot product와 각도를 보는 평면"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> dot product = 같은 자리끼리 곱해서 더하기 = 두 vector가 얼마나 같은 방향인가. neuron 하나의 계산이 바로 이것(w · x + b)이다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="matrix 곱"><span class="no">4</span>matrix 곱: dot product를 한꺼번에</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>neuron이 수백 개면 dot product도 수백 번이다. 이것을 한 번에 적는 방법이 matrix 곱이다. 어떤 규칙으로 계산하고, shape는 어떻게 맞추나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>AB, A @ B</dt><dd><b>matrix multiplication</b> (행렬 곱). Python에서는 @로 쓴다.</dd>
+    <dt>W</dt><dd><b>weight matrix</b> (가중치 행렬). 행 하나가 neuron 하나의 weight다.</dd>
+  </dl></div>
+  <div class="idea">
+    <p><b>규칙 하나</b>: 결과의 (i, j) 칸 = A의 i번째 행과 B의 j번째 열의 dot product.</p>
+    <p><b>shape 규칙</b>: (m × <b>n</b>) @ (<b>n</b> × p) = (m × p). 안쪽 두 숫자(n)가 같아야 곱할 수 있다. dot product를 하려면 길이가 같아야 하기 때문이다.</p>
+  </div>
+  <div class="eq" data-tex="(AB)_{ij} = \sum_{k} A_{ik} B_{kj}, \qquad \underset{(2 \times 3)}{\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix}} \underset{(3 \times 2)}{\begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \end{bmatrix}} = \underset{(2 \times 2)}{\begin{bmatrix} 4 & 5 \\ 10 & 11 \end{bmatrix}}"></div>
+  <div class="calc">
+    <p class="h">예제: 결과의 1행 2열 한 칸</p>
+    <p class="goal">하려는 것: A의 1행 (1, 2, 3)과 B의 2열 (0, 1, 1)의 dot product를 구한다.</p>
+    <div class="eq" data-tex="(AB)_{12} = 1 \times 0 + 2 \times 1 + 3 \times 1 = 5"></div>
+    <div class="mean"><b>→ 뜻.</b> 2 × 2 = 4칸이므로 dot product를 4번 한 것이다. neuron 층(layer)으로 보면, W의 행 하나가 neuron 하나의 weight이고 입력 x와의 matrix 곱 W x 한 번이 그 층의 neuron 전부를 한꺼번에 계산한다. GPU는 이 곱을 아주 빨리 한다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li>A(2 × 3), B(3 × 2), 결과 C = A @ B(2 × 2). 결과 칸을 누르면 그 칸을 만든 <span class="sw" style="--k: var(--sig)"></span>A의 행과 <span class="sw" style="--k: var(--ok)"></span>B의 열이 칠해진다.</li></ul>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>결과의 오른쪽 위 칸(5)을 누르기: 예제의 1 × 0 + 2 × 1 + 3 × 1 = 5가 아래에 나온다.</li>
+        <li>"차례로 보기": 네 칸을 하나씩 돌며, A의 행 하나와 B의 열 하나가 만나 C의 칸 하나가 되는 것을 보여 준다.</li>
+        <li>"새 숫자"를 눌러 다른 matrix로 직접 손으로 한 칸 계산해 보고, 눌러서 맞는지 확인하기.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b4play">차례로 보기</button><button id="b4new">새 숫자</button><button id="b4reset">처음 숫자로</button></div>
+    <div class="mats" id="t4"></div>
+    <div class="read" id="r4" aria-live="polite">결과 C의 칸을 눌러 보세요.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> matrix 곱 = dot product를 표 모양으로 한꺼번에. (m × n) @ (n × p) = (m × p), 안쪽 숫자가 같아야 한다. neuron 한 층 = W x 한 번.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="softmax"><span class="no">5</span>softmax: 점수를 확률로 바꾸기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>model의 마지막 층은 종류(class)마다 점수를 낸다. 예: 고양이 2.0, 개 1.0, 새 0.0. 이 점수를 "고양이일 확률 66%"처럼 바꾸려면?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>logit</dt><dd>(로짓). softmax에 넣기 전의 점수 z. 음수일 수도 있다.</dd>
+    <dt>e</dt><dd><b>Euler's number</b> (자연상수). 약 2.718. eᶻ는 z가 1 커질 때마다 2.718배 커진다.</dd>
+    <dt>T</dt><dd><b>temperature</b> (온도). 점수를 T로 나눈 뒤 softmax한다. T가 작으면 1등에 몰리고, 크면 고르게 퍼진다.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\mathrm{softmax}(\mathbf{z})_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}"></div>
+  <p class="sym">두 단계다. ① 모든 점수를 eᶻ로 바꿔 양수로 만든다. ② 합으로 나눠 모두 더해 1이 되게 한다.</p>
+  <div class="calc">
+    <p class="h">예제: z = (2, 1, 0), T = 1</p>
+    <div class="eq" data-tex="e^{2} = 7.389, \quad e^{1} = 2.718, \quad e^{0} = 1, \qquad \text{sum} = 11.107"></div>
+    <div class="eq" data-tex="\mathrm{softmax} = \left(\frac{7.389}{11.107},\ \frac{2.718}{11.107},\ \frac{1}{11.107}\right) = (0.665,\ 0.245,\ 0.090)"></div>
+    <div class="mean"><b>→ 뜻.</b> 점수 차이 1이 확률로는 약 2.7배 차이가 된다. 같은 점수에 T = 0.5를 쓰면 (0.867, 0.117, 0.016)으로 1등에 몰리고, T = 2면 (0.506, 0.307, 0.186)으로 퍼진다. 순서(1등)는 T와 상관없이 같다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li><b>왼쪽</b>: 점수 z(logit), 0 위로 양수, 아래로 음수. <b>오른쪽</b>: softmax 확률, 합은 항상 1. 가장 높은 확률(argmax, 8절)은 진하게 칠해진다.</li></ul>
+      <p class="tag">조작</p>
+      <dl><dt>z₁, z₂, z₃</dt><dd>세 종류(고양이, 개, 새)의 점수.</dd><dt>T</dt><dd>temperature.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>세 점수에 모두 5를 더해 보기(예: 7, 6, 5): 확률은 그대로다. softmax는 점수의 "차이"만 본다.</li>
+        <li>T를 0.2로: 거의 1등만 1이 된다. T를 5로: 거의 1/3씩 고르게 된다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>z₁ 고양이 <input type="range" id="i5a" min="-3" max="8" step="0.1" value="2"><output id="o5a"></output></label>
+      <label>z₂ 개 <input type="range" id="i5b" min="-3" max="8" step="0.1" value="1"><output id="o5b"></output></label>
+      <label>z₃ 새 <input type="range" id="i5c" min="-3" max="8" step="0.1" value="0"><output id="o5c"></output></label>
+      <label>T <input type="range" id="i5t" min="0.2" max="5" step="0.1" value="1"><output id="o5t"></output></label>
+    </div>
+    <canvas id="cv5" aria-label="세 점수와 softmax 확률 막대"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> softmax = eᶻ로 양수로 만들고 합으로 나눈다. 결과는 합이 1인 확률이고, 점수의 차이만 중요하다. temperature가 "얼마나 1등에 몰지"를 정한다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="log와 exp"><span class="no">6</span>log와 exp: 곱을 합으로 바꾸는 도구</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>딥러닝의 loss 식에는 왜 ln(log)이 꼭 들어갈까?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>exp(x), eˣ</dt><dd><b>exponential</b> (지수 함수). e를 x번 곱한 값.</dd>
+    <dt>ln x</dt><dd><b>natural logarithm</b> (자연로그). "e를 몇 번 곱하면 x가 되나". exp의 반대.</dd>
+    <dt>underflow</dt><dd>(언더플로). 숫자가 너무 작아져 computer가 0으로 처리하는 것.</dd>
+  </dl></div>
+  <div class="idea">
+    <ul>
+      <li>ln은 exp를 되돌린다: ln(eˣ) = x. 그래프로는 y = x 직선을 거울로 삼아 서로 뒤집은 모양이다.</li>
+      <li><b>곱 → 합</b>: ln(a × b) = ln a + ln b. 확률을 여러 개 곱해야 할 때 log를 쓰면 더하기가 된다.</li>
+      <li>확률(0~1)의 ln은 0 이하다. 확률이 작을수록 ln이 크게 음수다.</li>
+    </ul>
+  </div>
+  <div class="calc">
+    <p class="h">예제 ①: 곱이 합이 된다</p>
+    <div class="eq" data-tex="\ln(0.9 \times 0.8) = \ln 0.72 = -0.3285 = \ln 0.9 + \ln 0.8 = -0.1054 + (-0.2231)"></div>
+    <p class="h">예제 ②: 작은 확률을 200번 곱하면</p>
+    <div class="eq" data-tex="0.01^{200} = 10^{-400} \;\rightarrow\; 0 \ (\text{underflow}), \qquad \ln\!\left(0.01^{200}\right) = 200 \times \ln 0.01 = 200 \times (-4.605) = -921.0"></div>
+    <div class="mean"><b>→ 뜻.</b> computer의 숫자(float64)는 약 10⁻³⁰⁸보다 작으면 0이 된다. 확률을 그대로 곱하면 금방 0이 되지만, log를 쓰면 −921 같은 보통 숫자로 남는다. 그래서 딥러닝은 확률 대신 log 확률로 계산한다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li><span class="sw" style="--k: var(--sig)"></span>파랑 = y = ln x, <span class="sw" style="--k: var(--miss)"></span>주황 = y = eˣ, 회색 점선 = y = x. 두 점은 거울(y = x)을 사이에 둔 짝이다.</li></ul>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>x를 1로: ln 1 = 0. 확률 1(확실함)의 log는 0이다.</li>
+        <li>x를 0.05까지 줄이기: ln x가 −3 아래로 빠르게 내려간다. 작은 확률일수록 log가 크게 음수다.</li>
+      </ol>
+    </div>
+    <div class="ctl"><label>x <input type="range" id="i6x" min="0.05" max="4" step="0.05" value="2"><output id="o6x"></output></label></div>
+    <canvas id="cv6" aria-label="ln x와 e의 x승 그래프와 y = x 거울"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> ln은 exp의 반대이고, 곱을 합으로 바꾼다. 확률을 곱하면 0이 되어 버리므로 딥러닝은 log 확률을 더한다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="entropy, cross-entropy"><span class="no">7</span>entropy와 cross-entropy: 놀람의 평균</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>model이 "정답이 개일 확률 0.7"이라고 했다. 이 답은 얼마나 틀렸나? 숫자 하나로 재는 방법이 cross-entropy이고, 분류 model은 거의 모두 이것을 loss로 쓴다.</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>surprise</dt><dd>(놀람). 확률 p인 일이 일어났을 때 −ln p. 드문 일일수록 크다.</dd>
+    <dt>H(p)</dt><dd><b>entropy</b> (엔트로피). 놀람의 평균. 결과가 얼마나 예측하기 어려운가.</dd>
+    <dt>CE</dt><dd><b>cross-entropy</b> (교차 엔트로피). 정답 분포 y와 예측 분포 ŷ 사이의 놀람. 정답이 one-hot이면 −ln(정답에 준 확률).</dd>
+    <dt>nat, bit</dt><dd>정보량의 단위. ln으로 재면 nat, log₂로 재면 bit. 1 bit = 0.693 nat.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{surprise} = -\ln p, \qquad H(p) = -\sum_i p_i \ln p_i, \qquad \mathrm{CE}(\mathbf{y}, \hat{\mathbf{y}}) = -\sum_c y_c \ln \hat{y}_c = -\ln \hat{y}_{\text{correct}}"></div>
+  <div class="calc">
+    <p class="h">예제 ①: 동전의 entropy</p>
+    <div class="eq" data-tex="H(0.5) = -(0.5 \ln 0.5 + 0.5 \ln 0.5) = 0.693\ \text{nat} = 1\ \text{bit}, \qquad H(0.9) = 0.325, \qquad H(0.99) = 0.056"></div>
+    <div class="mean"><b>→ 뜻.</b> 반반 동전은 결과를 가장 예측하기 어렵다(entropy 최대). 앞면이 99% 나오는 동전은 거의 놀랄 일이 없다(0.056).</div>
+    <p class="h">예제 ②: 정답이 "개"일 때 두 model의 cross-entropy</p>
+    <p class="goal">하려는 것: 정답 y = (0, 1, 0)(고양이, 개, 새). one-hot이라 정답 칸의 −ln만 남는다.</p>
+    <div class="eq" data-tex="\hat{\mathbf{y}}_A = (0.2,\ 0.7,\ 0.1): \ \mathrm{CE} = -\ln 0.7 = 0.357, \qquad \hat{\mathbf{y}}_B = (0.6,\ 0.3,\ 0.1): \ \mathrm{CE} = -\ln 0.3 = 1.204"></div>
+    <div class="mean"><b>→ 뜻.</b> model A는 정답에 0.7을 줘서 loss가 작고, model B는 정답에 0.3만 줘서 loss가 3배 이상 크다. 정답에 확률 1을 주면 loss는 0이다. 학습은 이 숫자를 줄이는 방향으로 weight를 고친다. PyTorch의 nn.CrossEntropyLoss가 이 계산(softmax + −ln)을 한다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul>
+        <li><b>왼쪽</b>: 동전에서 앞면 확률 p에 따른 entropy H(p). 가운데(0.5)가 가장 높다.</li>
+        <li><b>오른쪽</b>: model이 정답에 준 확률 q에 따른 cross-entropy −ln q. q가 0에 가까우면 loss가 폭발한다.</li>
+      </ul>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>q를 0.7로(예제 model A): 0.357. q를 0.3으로(model B): 1.204.</li>
+        <li>q를 0.01로: loss 4.6. 확신을 갖고 틀리면 아주 크게 벌을 받는다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>동전 p <input type="range" id="i7p" min="0.01" max="0.99" step="0.01" value="0.9"><output id="o7p"></output></label>
+      <label>정답 확률 q <input type="range" id="i7q" min="0.01" max="1" step="0.01" value="0.7"><output id="o7q"></output></label>
+    </div>
+    <canvas id="cv7" aria-label="동전 entropy 곡선과 cross-entropy −ln q 곡선"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> entropy = 놀람(−ln p)의 평균. cross-entropy = model이 정답에 준 확률의 −ln. 분류 model은 이것을 loss로 줄인다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="argmax"><span class="no">8</span>min/max와 argmin/argmax: 값과 자리</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>model이 확률 (0.2, 0.7, 0.1)을 냈다. 최종 답 "개"는 어떻게 고르나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>max, min</dt><dd>가장 큰 값, 가장 작은 값.</dd>
+    <dt>argmax, argmin</dt><dd><b>argument of the maximum / minimum</b>. 가장 큰(작은) 값이 있는 <b>자리(index)</b>.</dd>
+    <dt>index</dt><dd>(번호). Python은 0부터 센다.</dd>
+  </dl></div>
+  <div class="calc">
+    <p class="h">예제: 점수 v = (2.0, 3.5, 1.2) (고양이, 개, 새)</p>
+    <div class="eq" data-tex="\max(\mathbf{v}) = 3.5, \quad \operatorname{argmax}(\mathbf{v}) = 1, \qquad \min(\mathbf{v}) = 1.2, \quad \operatorname{argmin}(\mathbf{v}) = 2"></div>
+    <div class="mean"><b>→ 뜻.</b> max는 "얼마나"를, argmax는 "어디"를 알려 준다. 분류에서 답은 argmax다. index 1(0부터 세므로 두 번째) = "개". softmax는 순서를 바꾸지 않으므로 점수의 argmax와 확률의 argmax는 같다. 그래서 답만 필요하면 softmax 없이 점수에서 바로 argmax를 해도 된다. 2장의 gradient descent는 loss의 argmin(loss를 가장 작게 하는 weight)을 찾는 일이다.</div>
+  </div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 252" role="img" aria-label="왼쪽: 점수 막대에서 max는 가장 높은 막대의 높이 3.5, argmax는 그 막대의 자리 1. 오른쪽: loss 곡선에서 min은 가장 낮은 loss, argmin은 그때의 weight 2" style="font-family: var(--sans);">
+      <defs><marker id="m8-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ok)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">분류: 값(max)과 자리(argmax)</text>
+      <path d="M60 50V190H340" fill="none" stroke="var(--muted)"/>
+      <rect x="85" y="118" width="50" height="72" fill="var(--sig)" opacity="0.35"/>
+      <rect x="175" y="64" width="50" height="126" fill="var(--sig)"/>
+      <rect x="265" y="146.8" width="50" height="43.2" fill="var(--sig)" opacity="0.35"/>
+      <g font-size="11.5" text-anchor="middle" fill="var(--ink)" style="font-family: var(--mono);"><text x="110" y="112">2.0</text><text x="200" y="58">3.5</text><text x="290" y="141">1.2</text></g>
+      <path d="M60 64H175" stroke="var(--fa)" stroke-dasharray="4 3"/>
+      <text x="232" y="74" font-size="12" font-weight="700" fill="var(--fa)">max = 3.5: 얼마나 큰가</text>
+      <g font-size="11" text-anchor="middle" fill="var(--muted)"><text x="110" y="207">index 0</text><text x="200" y="207" font-weight="700" fill="var(--sig)">index 1</text><text x="290" y="207">index 2</text><text x="110" y="223">고양이</text><text x="200" y="223" font-weight="700" fill="var(--sig)">개</text><text x="290" y="223">새</text></g>
+      <text x="200" y="244" font-size="12" font-weight="700" text-anchor="middle" fill="var(--sig)">argmax = 1: 어디에 있나 → 답은 "개"</text>
+      <text x="410" y="22" font-size="13" font-weight="600" fill="var(--ink)">학습: loss를 가장 작게 하는 weight (argmin)</text>
+      <path d="M440 50V190H760" fill="none" stroke="var(--muted)"/>
+      <text x="446" y="56" font-size="11" fill="var(--muted)">loss</text>
+      <text x="760" y="207" font-size="11" text-anchor="end" fill="var(--muted)">weight w</text>
+      <path d="M440 121.6Q590 247.6 740 58.6" fill="none" stroke="var(--sig)" stroke-width="2.4"/>
+      <path d="M560 172V190M440 172H560" stroke="var(--fa)" stroke-dasharray="4 3"/>
+      <circle cx="560" cy="172" r="5.5" fill="var(--fa)"/>
+      <text x="446" y="166" font-size="11.5" font-weight="700" fill="var(--fa)">min = 0.5</text>
+      <text x="560" y="207" font-size="12" font-weight="700" text-anchor="middle" fill="var(--fa)">argmin = 2</text>
+      <text x="560" y="223" font-size="11" text-anchor="middle" fill="var(--muted)">(loss가 가장 작아지는 w)</text>
+      <circle cx="680" cy="121.6" r="5" fill="var(--ok)"/>
+      <path d="M674 128L630 152" fill="none" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m8-arrow)"/>
+      <text x="575" y="74" font-size="11.5" font-weight="600" text-anchor="middle" fill="var(--ok)">2장: 기울기를 따라 내려가</text>
+      <text x="575" y="90" font-size="11.5" font-weight="600" text-anchor="middle" fill="var(--ok)">argmin을 찾는다</text>
+    </svg>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> max = 가장 큰 값, argmax = 그 값의 자리. 분류의 답은 argmax, 학습의 목표는 loss의 argmin이다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="평균, 분산, SD"><span class="no">9</span>mean, variance, standard deviation: 가운데와 퍼짐</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>model을 5번 학습했더니 정확도가 매번 조금씩 다르다. "보통 얼마"이고 "얼마나 흔들리나"를 숫자 두 개로 말하려면?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>x̄, μ</dt><dd><b>mean</b> (평균). x̄ = 가진 data의 평균, μ = 전체(population)의 참 평균.</dd>
+    <dt>variance, σ²</dt><dd>(분산). 평균에서 떨어진 거리의 제곱의 평균.</dd>
+    <dt>SD, σ</dt><dd><b>standard deviation</b> (표준편차). 분산의 제곱근. data와 같은 단위의 "보통 퍼짐".</dd>
+    <dt>n − 1</dt><dd>표본에서 분산을 구할 때 n 대신 n − 1로 나누는 보정(sample variance).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i, \qquad \sigma^2 = \frac{1}{n}\sum_{i=1}^{n} (x_i - \bar{x})^2, \qquad \sigma = \sqrt{\sigma^2}"></div>
+  <div class="calc">
+    <p class="h">예제: x = (2, 4, 4, 4, 5, 5, 7, 9)</p>
+    <div class="eq" data-tex="\bar{x} = \frac{2 + 4 + 4 + 4 + 5 + 5 + 7 + 9}{8} = \frac{40}{8} = 5"></div>
+    <div class="eq" data-tex="\sum (x_i - 5)^2 = 9 + 1 + 1 + 1 + 0 + 0 + 4 + 16 = 32, \qquad \sigma^2 = \frac{32}{8} = 4, \qquad \sigma = 2"></div>
+    <p class="goal">한 칸 예: 첫 값 2는 평균 5에서 −3 떨어져 있고, 제곱하면 9다. 제곱을 쓰는 이유는 위아래 거리가 서로 지워지지 않게 하려는 것이다.</p>
+    <div class="mean"><b>→ 뜻.</b> 이 data는 "보통 5이고, 보통 ±2 정도 퍼져 있다". 가진 data가 전체의 일부(표본)이면 n − 1로 나눠 32 ÷ 7 = 4.571, SD 2.138로 조금 크게 잡는다. NumPy의 np.var는 기본이 n으로, PyTorch의 torch.var는 기본이 n − 1로 나눈다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul>
+        <li><b>위</b>: 예제의 data 8개(x₁~x₈). 같은 값 4가 세 번 있어서 겹치지 않게 점마다 한 줄씩 쓴다. <span class="sw" style="--k: var(--ok)"></span>초록 세로선 = 평균, <span class="sw" style="--k: var(--sig)"></span>점에서 평균까지의 가로선 = 거리.</li>
+        <li><b>아래</b>: 점마다 거리의 제곱 (x − 평균)²을 막대로 그렸다. <span class="sw" style="--k: var(--ok)"></span>초록 점선 = 막대 높이의 평균 = 분산.</li>
+      </ul>
+      <p class="tag">조작</p><dl><dt>점 끌기</dt><dd>위 그림의 점을 좌우로 끌어 값을 바꾼다(0.5 단위).</dd><dt>처음 값으로</dt><dd>예제 data로 되돌린다.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>x₈(9)을 10으로 끌기: 그 점의 막대가 16에서 약 24로 자라 분산이 4에서 5.11로 커진다. 제곱 때문에 멀리 떨어진 값 하나가 분산을 크게 흔든다.</li>
+        <li>모든 점을 한곳에 모으기: 막대가 모두 사라지고 분산이 0이 된다.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b9r">처음 값으로</button></div>
+    <canvas id="cv9" aria-label="숫자 선 위 data 점, 평균선, 평균까지 거리의 정사각형"></canvas>
+    <div class="read" id="r9" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 평균 = 가운데, 분산 = 평균에서 떨어진 거리 제곱의 평균, SD = 그 제곱근(같은 단위의 보통 퍼짐).</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="sampling과 seed"><span class="no">10</span>random sampling과 seed: 우연을 다시 만들기</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>딥러닝은 무작위를 많이 쓴다(처음 weight, data 섞기, dropout). 그러면 결과가 매번 다르다. 얼마나 다르고, 같은 결과를 다시 얻으려면 어떻게 하나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>population, sample</dt><dd>(모집단, 표본). 전체와, 그중 뽑은 일부.</dd>
+    <dt>sampling variability</dt><dd>(표본 변동). 표본을 다시 뽑을 때마다 평균 같은 숫자가 달라지는 것.</dd>
+    <dt>SE</dt><dd><b>standard error</b> (표준오차). 표본 평균이 흔들리는 정도 = σ ÷ √n.</dd>
+    <dt>seed</dt><dd>(씨앗). 무작위 숫자 생성기의 시작값. seed가 같으면 "무작위" 숫자도 똑같이 나온다.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\mathrm{SE} = \frac{\sigma}{\sqrt{n}}: \qquad \sigma = 10,\ n = 10 \Rightarrow 3.16, \qquad n = 100 \Rightarrow 1.0"></div>
+  <div class="mean"><b>→ 뜻.</b> 시험 점수가 평균 70, SD 10인 집단에서 10명을 뽑아 평균을 내면 보통 ±3.2 정도 흔들린다. 100명이면 ±1로 줄어든다. 100배 많이 뽑아야 흔들림이 1/10이 된다(√100 = 10).</div>
+  <div class="codebox"><pre><code>import numpy as np, torch
+np.random.seed(42); print(np.random.rand(3))   # [0.3745 0.9507 0.732 ]
+np.random.seed(42); print(np.random.rand(3))   # 다시 똑같이 [0.3745 0.9507 0.732 ]
+torch.manual_seed(42)                          # PyTorch도 seed를 따로 정한다</code></pre></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul>
+        <li><b>왼쪽</b> 회색 = population: 시험 점수(평균 70, SD 10)가 어떻게 퍼져 있나.</li>
+        <li><b>오른쪽</b> 파랑 = n명을 뽑아 낸 평균들을 모은 histogram. 빨간 곡선 = 이론이 예측하는 모양(가운데 70, 폭 SE).</li>
+      </ul>
+      <p class="tag">조작</p>
+      <dl><dt>n</dt><dd>표본 하나에 뽑는 사람 수.</dd><dt>뽑기 버튼</dt><dd>표본을 1번 또는 1,000번 뽑아 평균을 쌓는다.</dd><dt>seed</dt><dd>이 숫자로 표본 1개를 뽑는다. 같은 seed는 항상 같은 표본을 준다.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>n = 10으로 1,000번: 평균들이 70 ± 3 정도에 모인다. n = 100이면 폭이 1/3로 좁아진다.</li>
+        <li>seed 42로 두 번 뽑기: 숫자가 똑같다. seed를 43으로 바꾸면 달라진다. 이 page의 생성기는 NumPy와 달라서, 같은 seed라도 NumPy와 같은 숫자는 아니다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g10n"><span>n</span><button data-v="5" aria-pressed="false">5</button><button data-v="10" aria-pressed="true">10</button><button data-v="100" aria-pressed="false">100</button></div>
+      <button id="b10one">1번 뽑기</button><button id="b10many">1,000번 뽑기</button><button id="b10clear">지우기</button>
+      <label>seed <input type="number" id="i10seed" value="42" min="0" step="1"></label><button id="b10seed">이 seed로 뽑기</button>
+    </div>
+    <canvas id="cv10" aria-label="population histogram과 표본 평균 histogram"></canvas>
+    <div class="read" id="r10" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 무작위 결과는 뽑을 때마다 흔들리고, 평균의 흔들림은 σ ÷ √n이다. 같은 결과를 다시 얻으려면 seed를 정한다.</p>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <h2 data-short="t-test"><span class="no">11</span>t-test: 두 결과의 차이는 진짜인가</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>model A는 정확도 평균 0.82, model B는 0.85였다(각 5번 학습). B가 정말 더 좋은가, 아니면 우연인가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>t</dt><dd><b>t statistic</b> (t 값). 평균 차이 ÷ 그 차이의 흔들림(SE). "신호 ÷ 잡음".</dd>
+    <dt>df</dt><dd><b>degrees of freedom</b> (자유도). data 수에서 정해지는 숫자. t 분포의 모양을 정한다.</dd>
+    <dt>p-value</dt><dd>(유의확률). 진짜 차이가 0인데도 이만큼 큰 t가 우연히 나올 확률. 보통 0.05보다 작으면 "우연이라 보기 어렵다"고 한다.</dd>
+    <dt>Welch</dt><dd><b>Bernard L. Welch의 이름</b>. 두 그룹의 퍼짐이 달라도 쓸 수 있는 t-test.</dd>
+  </dl></div>
+  <div class="eq" data-tex="t = \frac{\bar{x}_B - \bar{x}_A}{\sqrt{\dfrac{s_A^2}{n_A} + \dfrac{s_B^2}{n_B}}}"></div>
+  <div class="calc">
+    <p class="h">예제: A = (0.81, 0.83, 0.80, 0.82, 0.84), B = (0.84, 0.86, 0.83, 0.85, 0.87)</p>
+    <p class="goal">① 평균: A 0.82, B 0.85, 차이 0.03. ② 각 그룹의 SD(n − 1로 나눔)는 둘 다 0.0158이다.</p>
+    <div class="eq" data-tex="\mathrm{SE}_{\text{diff}} = \sqrt{\frac{0.0158^2}{5} + \frac{0.0158^2}{5}} = \sqrt{0.00005 + 0.00005} = 0.01, \qquad t = \frac{0.03}{0.01} = 3.0"></div>
+    <div class="eq" data-tex="df = 8, \qquad p = 0.017"></div>
+    <div class="mean"><b>→ 뜻.</b> 차이(0.03)가 그 흔들림(0.01)의 3배라 우연이라 보기 어렵다(p = 0.017 &lt; 0.05). 같은 0.03 차이라도 흔들림이 0.03이면 t = 1로 우연일 수 있다. 그래서 model을 비교할 때는 여러 seed로 여러 번 돌려서 평균과 흔들림을 함께 본다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li><span class="sw" style="--k: var(--miss)"></span>주황 점 = model A의 실행마다 정확도, <span class="sw" style="--k: var(--sig)"></span>파란 점 = model B. 굵은 세로선 = 평균, 가로 막대 = 평균 ± SE.</li></ul>
+      <p class="tag">조작</p>
+      <dl><dt>참 차이</dt><dd>B가 실제로 얼마나 좋은지(시뮬레이션이라 정할 수 있다).</dd><dt>잡음 SD</dt><dd>실행마다 흔들리는 정도.</dd><dt>n</dt><dd>model마다 실행 횟수(seed 수).</dd><dt>다시 뽑기</dt><dd>같은 설정으로 실험을 새로 한 번 한다. 처음 화면은 위 예제의 숫자다.</dd><dt>200번 반복</dt><dd>지금 설정으로 새 실험을 200번 해서 p &lt; 0.05가 몇 번 나오는지 센다.</dd></dl>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>참 차이 0.03, 잡음 0.016, n = 5에서 몇 번 다시 뽑기: t가 대개 2~4 근처이고 p는 자주 0.05 아래다. 200번 반복하면 약 70%가 p &lt; 0.05다.</li>
+        <li>잡음을 0.04로: 같은 차이인데 p가 자주 0.05 위로 올라간다(200번 반복에서 약 16%만 p &lt; 0.05). 흔들림이 크면 차이를 믿기 어렵다.</li>
+        <li>잡음 0.016으로 돌리고 n을 10으로: 약 98%가 p &lt; 0.05. 실행 횟수를 늘리면 진짜 차이를 더 잘 알아챈다.</li>
+        <li>참 차이를 0으로 하고 200번 반복: 그래도 약 5%(20번에 1번)는 p &lt; 0.05가 나온다. 차이가 없는데 나오는 "우연한 유의"다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>참 차이 <input type="range" id="i11d" min="0" max="0.05" step="0.005" value="0.03"><output id="o11d"></output></label>
+      <label>잡음 SD <input type="range" id="i11s" min="0.005" max="0.04" step="0.001" value="0.016"><output id="o11s"></output></label>
+      <label>n <input type="range" id="i11n" min="3" max="30" step="1" value="5"><output id="o11n"></output></label>
+      <button id="b11">다시 뽑기</button><button id="b11many">200번 반복</button>
+    </div>
+    <canvas id="cv11" aria-label="두 model의 실행별 정확도 점과 평균, t-test 결과"></canvas>
+    <div class="read" id="r11" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> t = 평균 차이 ÷ 그 차이의 흔들림. 신호가 잡음보다 충분히 크면(p &lt; 0.05) 우연이라 보기 어렵다. model 비교는 여러 seed로 한다.</p>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <h2 data-short="Python·NumPy·PyTorch"><span class="no">12</span>Python, NumPy, PyTorch 첫걸음</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>위의 계산을 code로는 어떻게 쓰나? NumPy와 PyTorch는 무엇이 같고 무엇이 다른가?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>NumPy</dt><dd><b>Numerical Python</b>. 숫자 배열(array) 계산 library. CPU에서 돈다.</dd>
+    <dt>PyTorch</dt><dd>딥러닝 library. NumPy와 거의 같은 tensor 계산에 GPU와 자동 미분(autograd)을 더했다.</dd>
+    <dt>GPU</dt><dd><b>Graphics Processing Unit</b> (그래픽 처리 장치). 같은 계산을 수천 개 동시에 하는 장치.</dd>
+    <dt>autograd</dt><dd><b>automatic differentiation</b> (자동 미분). 계산 과정을 기억해 두었다가 미분값(gradient)을 자동으로 구한다.</dd>
+    <dt>broadcasting</dt><dd>(브로드캐스팅). shape가 다른 배열끼리 계산할 때 크기 1인 축을 자동으로 늘려 맞추는 규칙.</dd>
+    <dt>Colab</dt><dd><b>Google Colaboratory</b>. 설치 없이 browser에서 Python과 GPU를 쓰는 notebook.</dd>
+  </dl></div>
+  <div class="idea">
+    <ul>
+      <li>Python list는 숫자 계산용이 아니다: [1, 2, 3] * 2 = [1, 2, 3, 1, 2, 3] (반복). NumPy array는 숫자로 계산한다: np.array([1, 2, 3]) * 2 = [2, 4, 6].</li>
+      <li>PyTorch tensor는 NumPy array와 사용법이 거의 같고, 두 가지가 더 있다. ① .to("cuda")로 GPU에서 계산 ② requires_grad=True면 미분을 자동으로 구한다.</li>
+      <li>처음에는 Google Colab에서 시작하면 설치가 필요 없다.</li>
+    </ul>
+  </div>
+  <div class="row2">
+    <div class="codebox"><pre><code># NumPy: 이 장의 계산들
+import numpy as np
+A = np.array([[1, 2, 3], [4, 5, 6]])
+B = np.array([[1, 0], [0, 1], [1, 1]])
+print(A.shape, A.T.shape)        # (2, 3) (3, 2)
+print(np.array([2, 1]) @ np.array([1, 3]))   # 5
+print(A @ B)                     # [[ 4  5] [10 11]]
+
+z = np.array([2.0, 1.0, 0.0])
+p = np.exp(z) / np.exp(z).sum()  # softmax
+print(p.round(3))                # [0.665 0.245 0.09 ]
+print(-np.log(0.7))              # 0.357 (cross-entropy)
+x = np.array([2, 4, 4, 4, 5, 5, 7, 9])
+print(x.mean(), x.var(), x.std())  # 5.0 4.0 2.0</code></pre></div>
+    <div class="codebox"><pre><code># PyTorch: 같은 계산 + GPU + 자동 미분
+import torch
+A = torch.tensor([[1., 2., 3.], [4., 5., 6.]])
+B = torch.tensor([[1., 0.], [0., 1.], [1., 1.]])
+print(A.shape)                   # torch.Size([2, 3])
+print((A @ B).tolist())          # [[4.0, 5.0], [10.0, 11.0]]
+print(torch.softmax(torch.tensor([2., 1., 0.]), dim=0))
+# tensor([0.6652, 0.2447, 0.0900])
+
+x = torch.tensor(3.0, requires_grad=True)
+y = x ** 2
+y.backward()                     # dy/dx 를 자동으로
+print(x.grad)                    # tensor(6.)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+A = A.to(device)                 # GPU가 있으면 GPU로</code></pre></div>
+  </div>
+  <div class="tbl"><table>
+    <caption>NumPy와 PyTorch 이름 비교</caption>
+    <thead><tr><th>하는 일</th><th>NumPy</th><th>PyTorch</th></tr></thead>
+    <tbody>
+      <tr><td>만들기</td><td>np.array([...])</td><td>torch.tensor([...])</td></tr>
+      <tr><td>모양</td><td>a.shape</td><td>t.shape (또는 t.size())</td></tr>
+      <tr><td>transpose</td><td>a.T</td><td>t.T</td></tr>
+      <tr><td>matrix 곱</td><td>a @ b</td><td>t @ u</td></tr>
+      <tr><td>평균, 분산</td><td>a.mean(), a.var() (n으로 나눔)</td><td>t.mean(), t.var() (n − 1로 나눔)</td></tr>
+      <tr><td>무작위 seed</td><td>np.random.seed(42)</td><td>torch.manual_seed(42)</td></tr>
+      <tr><td>서로 바꾸기</td><td>np.asarray(t.cpu())</td><td>torch.from_numpy(a)</td></tr>
+    </tbody>
+  </table></div>
+  <h3 id="s12b" data-short="broadcasting">broadcasting: shape가 달라도 계산되는 규칙</h3>
+  <div class="idea"><p>뒤(오른쪽) 축부터 짝지어 보면서, 두 크기가 같거나 한쪽이 1이면 계산된다. 1인 쪽은 복사해서 늘린다. 둘 다 1이 아니고 다르면 error다.</p></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">해 볼 것</p>
+      <ol class="try"><li>세 경우를 차례로 눌러 보기. 옅은 칸 = 크기 1인 축을 복사해 늘린 부분이다. 마지막 경우는 규칙에 맞지 않아 error가 난다.</li></ol>
+    </div>
+    <div class="ctl"><div class="seg" id="g12"><span>경우</span><button data-v="0" aria-pressed="true">(3, 1) + (1, 4)</button><button data-v="1" aria-pressed="false">(3, 4) + (4,)</button><button data-v="2" aria-pressed="false">(2, 3) + (3, 2)</button></div></div>
+    <div class="mats" id="t12"></div>
+    <div class="read" id="r12" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> NumPy = 숫자 배열 계산, PyTorch = 같은 계산 + GPU + 자동 미분. shape가 다르면 broadcasting 규칙(같거나 1)을 확인한다.</p>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <h2 data-short="미분 맛보기"><span class="no">13</span>미분 맛보기: 기울기는 "조금 바꾸면 얼마나 변하나"</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>학습은 loss를 줄이는 쪽으로 weight를 조금씩 고치는 일이다. "어느 쪽으로, 얼마나"는 어떻게 아나? 미분(기울기)이 그 답이다. 자세한 것은 2장에서 하고, 여기서는 감만 잡는다.</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>dy/dx, f′(x)</dt><dd><b>derivative</b> (미분, 도함수). x를 아주 조금 바꿨을 때 y가 변하는 비율 = 그 점의 기울기.</dd>
+    <dt>h</dt><dd>x를 바꾸는 작은 양.</dd>
+    <dt>gradient</dt><dd>(기울기). 변수가 여러 개일 때 미분을 모은 vector.</dd>
+  </dl></div>
+  <div class="eq" data-tex="f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}, \qquad f(x) = x^2 \;\Rightarrow\; f'(x) = 2x"></div>
+  <div class="calc">
+    <p class="h">예제: f(x) = x²에서 x = 3의 기울기</p>
+    <div class="eq" data-tex="\frac{f(3.001) - f(3)}{0.001} = \frac{9.006001 - 9}{0.001} = 6.001 \;\approx\; f'(3) = 2 \times 3 = 6"></div>
+    <div class="mean"><b>→ 뜻.</b> x = 3에서 x를 조금 늘리면 y는 그 6배만큼 는다. 기울기가 양수이므로 y를 줄이려면 x를 줄여야 한다. 이것이 gradient descent(2장)의 전부다: "기울기의 반대쪽으로 조금 간다". 12절의 PyTorch code가 x.grad = 6을 자동으로 구한 것도 이 값이다.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">그림 읽는 법</p>
+      <ul><li>곡선 = y = x². <span class="sw" style="--k: var(--ok)"></span>초록 직선 = x에서의 접선(기울기 2x). <span class="sw" style="--k: var(--miss)"></span>주황 직선 = x와 x + h를 잇는 할선. h가 작아지면 주황이 초록에 붙는다.</li></ul>
+      <p class="tag">해 볼 것</p>
+      <ol class="try">
+        <li>x = 3, h = 2: 할선 기울기 8 (참값 6과 차이 큼). h를 0.01로 줄이면 6.01이 된다.</li>
+        <li>x를 0으로: 기울기 0. 곡선의 바닥 = loss의 최솟값(argmin)이 기울기 0인 곳이다.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>x <input type="range" id="i13x" min="-1" max="4" step="0.1" value="3"><output id="o13x"></output></label>
+      <label>h <input type="range" id="i13h" min="0.01" max="2" step="0.01" value="2"><output id="o13h"></output></label>
+    </div>
+    <canvas id="cv13" aria-label="y = x 제곱 곡선과 접선, 할선"></canvas>
+    <div class="read" id="r13" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 미분 = 조금 바꿨을 때의 변화율 = 기울기. 기울기의 반대 방향으로 가면 값이 줄어든다. 학습은 이것을 weight 수백만 개에 동시에 한다.</p>
+</section>
+
+<!-- 14 -->
+<section id="s14">
+  <h2 data-short="정리, 약자 사전"><span class="no">14</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 tensor</td><td>모든 data는 숫자 묶음, shape = 축마다 개수</td><td>(32, 3, 224, 224) = 4,816,896개</td></tr>
+      <tr><td>2 transpose</td><td>행과 열을 바꾼다</td><td>(2 × 3) → (3 × 2)</td></tr>
+      <tr><td>3 dot product</td><td>같은 자리끼리 곱해 더하기 = 같은 방향인 정도</td><td>(2, 1)·(1, 3) = 5, 45°</td></tr>
+      <tr><td>4 matrix 곱</td><td>dot product를 표로 한꺼번에, 안쪽 크기가 같아야</td><td>[[4, 5], [10, 11]]</td></tr>
+      <tr><td>5 softmax</td><td>점수 → 합이 1인 확률</td><td>(2, 1, 0) → (0.665, 0.245, 0.090)</td></tr>
+      <tr><td>6 log</td><td>곱을 합으로, 작은 확률을 안전하게</td><td>200 × ln 0.01 = −921</td></tr>
+      <tr><td>7 cross-entropy</td><td>정답에 준 확률의 −ln = 분류 loss</td><td>−ln 0.7 = 0.357</td></tr>
+      <tr><td>8 argmax</td><td>가장 큰 값의 자리 = 분류의 답</td><td>argmax(2.0, 3.5, 1.2) = 1</td></tr>
+      <tr><td>9 평균, 분산</td><td>가운데와 퍼짐</td><td>평균 5, 분산 4, SD 2</td></tr>
+      <tr><td>10 sampling</td><td>평균의 흔들림 σ/√n, seed로 재현</td><td>10/√10 = 3.16</td></tr>
+      <tr><td>11 t-test</td><td>차이 ÷ 흔들림</td><td>t = 3.0, p = 0.017</td></tr>
+      <tr><td>12 code</td><td>NumPy ≈ PyTorch, PyTorch는 GPU와 자동 미분</td><td>x.grad = 6</td></tr>
+      <tr><td>13 미분</td><td>기울기의 반대로 가면 줄어든다</td><td>(x²)′ = 6 at x = 3</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(2장 Gradient descent)에서는 이 도구로 model이 배우는 방법을 보고, 3장에서 neuron을 이어 붙여 신경망을 만든다. 예제 숫자는 <code>tools/ch01_numbers.py</code>로 NumPy, SciPy, PyTorch에서 계산해 확인했다.</p>
+  <h3 id="s14b">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>argmax, argmin</b></td><td>argument of the maximum / minimum</td><td>최댓값·최솟값의 자리</td><td>가장 큰(작은) 값이 있는 index.</td><td class="num">8</td></tr>
+      <tr><td><b>autograd</b></td><td>automatic differentiation</td><td>자동 미분</td><td>계산을 기억해 두었다가 gradient를 자동으로 구한다.</td><td class="num">12</td></tr>
+      <tr><td><b>broadcasting</b></td><td>–</td><td>브로드캐스팅</td><td>크기 1인 축을 늘려 shape를 맞추는 규칙.</td><td class="num">12</td></tr>
+      <tr><td><b>CE</b></td><td>cross-entropy</td><td>교차 엔트로피</td><td>−ln(정답에 준 확률). 분류 loss.</td><td class="num">7</td></tr>
+      <tr><td><b>Colab</b></td><td>Google Colaboratory</td><td>–</td><td>browser에서 Python과 GPU를 쓰는 notebook.</td><td class="num">12</td></tr>
+      <tr><td><b>df</b></td><td>degrees of freedom</td><td>자유도</td><td>t 분포의 모양을 정하는 숫자.</td><td class="num">11</td></tr>
+      <tr><td><b>e, exp</b></td><td>Euler's number, exponential</td><td>자연상수, 지수 함수</td><td>e ≈ 2.718. eˣ는 x가 1 늘 때마다 2.718배.</td><td class="num">5, 6</td></tr>
+      <tr><td><b>GPU</b></td><td>Graphics Processing Unit</td><td>그래픽 처리 장치</td><td>같은 계산을 수천 개 동시에 하는 장치.</td><td class="num">1, 12</td></tr>
+      <tr><td><b>H(p)</b></td><td>entropy</td><td>엔트로피</td><td>놀람(−ln p)의 평균.</td><td class="num">7</td></tr>
+      <tr><td><b>ln</b></td><td>natural logarithm</td><td>자연로그</td><td>e를 몇 번 곱하면 되나. exp의 반대.</td><td class="num">6</td></tr>
+      <tr><td><b>logit</b></td><td>–</td><td>로짓</td><td>softmax에 넣기 전 점수.</td><td class="num">5</td></tr>
+      <tr><td><b>nat, bit</b></td><td>natural unit, binary digit</td><td>정보량 단위</td><td>ln으로 재면 nat, log₂면 bit. 1 bit = 0.693 nat.</td><td class="num">7</td></tr>
+      <tr><td><b>NumPy</b></td><td>Numerical Python</td><td>–</td><td>숫자 배열 계산 library.</td><td class="num">12</td></tr>
+      <tr><td><b>one-hot</b></td><td>–</td><td>원-핫</td><td>하나만 1이고 나머지는 0인 vector.</td><td class="num">1</td></tr>
+      <tr><td><b>pixel</b></td><td>picture element</td><td>화소</td><td>사진의 점 하나.</td><td class="num">1</td></tr>
+      <tr><td><b>p-value</b></td><td>probability value</td><td>유의확률</td><td>차이가 0인데도 이만한 t가 우연히 나올 확률.</td><td class="num">11</td></tr>
+      <tr><td><b>SD, σ</b></td><td>standard deviation</td><td>표준편차</td><td>분산의 제곱근. 보통 퍼짐.</td><td class="num">9</td></tr>
+      <tr><td><b>SE</b></td><td>standard error</td><td>표준오차</td><td>평균이 흔들리는 정도 = σ/√n.</td><td class="num">10, 11</td></tr>
+      <tr><td><b>seed</b></td><td>random seed</td><td>씨앗</td><td>무작위 생성기의 시작값. 같으면 같은 결과.</td><td class="num">10</td></tr>
+      <tr><td><b>shape</b></td><td>–</td><td>모양</td><td>축마다 숫자의 개수.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>softmax</b></td><td>–</td><td>소프트맥스</td><td>점수를 합이 1인 확률로.</td><td class="num">5</td></tr>
+      <tr><td><b>T</b></td><td>temperature</td><td>온도</td><td>softmax 전에 점수를 나누는 수.</td><td class="num">5</td></tr>
+      <tr><td><b>t</b></td><td>t statistic</td><td>t 값</td><td>평균 차이 ÷ 그 흔들림.</td><td class="num">11</td></tr>
+      <tr><td><b>tensor</b></td><td>–</td><td>텐서</td><td>여러 축으로 늘어놓은 숫자 묶음.</td><td class="num">1</td></tr>
+      <tr><td><b>w, b</b></td><td>weight, bias</td><td>가중치, 치우침</td><td>neuron이 곱하는 숫자들과 더하는 숫자.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>Welch</b></td><td>Bernard L. Welch의 이름</td><td>–</td><td>두 그룹 퍼짐이 달라도 쓰는 t-test.</td><td class="num">11</td></tr>
+      <tr><td><b>x̄, μ, σ²</b></td><td>sample mean, population mean, variance</td><td>표본 평균, 모평균, 분산</td><td>가운데와 퍼짐의 기호.</td><td class="num">9</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="ch01.js"></script>
+</body>
+</html>

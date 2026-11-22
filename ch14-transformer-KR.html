@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 14장 · Transformer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="14" data-base="ch14-transformer">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 14장</p>
+  <h1>Transformer</h1>
+  <p class="topic">attention, ViT, LLM</p>
+  <p class="lead">한 칸씩 기억을 넘기는 대신(13장), 모든 칸이 모든 칸을 바로 본다. query·key·value로 "어디를 볼지" 정하는 attention에서 시작해 Transformer block, 그림을 patch로 읽는 ViT, 다음 token을 맞히는 LLM까지. 실제 GPT-2 small의 attention과 확률을 본다.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: attention, Q K V, multi-head, 위치, block, mask, ViT, LLM" style="font-family: var(--sans);">
+      <defs><marker id="m14-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="var(--surface)" stroke="var(--line)"><rect x="18" y="74" width="20" height="14"/><rect x="42" y="74" width="20" height="14"/><rect x="66" y="74" width="20" height="14"/><rect x="90" y="74" width="20" height="14"/></g><path d="M100 72Q64 36 28 72" fill="none" stroke="var(--miss)" stroke-width="3"/><path d="M100 72Q76 52 52 72" fill="none" stroke="var(--miss)" stroke-width="1.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① 어디를 볼까</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="68" y="64" font-size="13" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)">softmax(QKᵀ)V</text><g fill="var(--miss)"><rect x="40" y="72" width="12" height="12" opacity="0.8"/><rect x="54" y="72" width="12" height="12" opacity="0.25"/><rect x="68" y="72" width="12" height="12" opacity="0.4"/><rect x="82" y="72" width="12" height="12" opacity="0.1"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Q, K, V</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">2~3절</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M20 66Q28 50 36 66T52 66T68 66T84 66T100 66T116 66" fill="none" stroke="var(--sig)" stroke-width="1.8"/><path d="M20 76Q44 60 68 76T116 76" fill="none" stroke="var(--fa)" stroke-width="1.8"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ 위치 encoding</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><rect x="34" y="46" width="68" height="16" rx="3" fill="var(--surface)" stroke="var(--miss)"/><text x="68" y="58" font-size="9.5" text-anchor="middle" fill="var(--miss)">attention</text><rect x="34" y="68" width="68" height="16" rx="3" fill="var(--surface)" stroke="var(--sig)"/><text x="68" y="80" font-size="9.5" text-anchor="middle" fill="var(--sig)">FFN</text><path d="M28 90V44M28 44H32M28 66H32" stroke="var(--ok)" stroke-width="1.6" fill="none"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Transformer block</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">5~6절</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sigwash)" stroke="var(--sig)"><rect x="38" y="46" width="14" height="14"/><rect x="54" y="46" width="14" height="14"/><rect x="70" y="46" width="14" height="14"/><rect x="38" y="62" width="14" height="14"/><rect x="54" y="62" width="14" height="14" fill="var(--wash)" stroke="var(--miss)"/><rect x="70" y="62" width="14" height="14"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ ViT: patch</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">7절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m14-arrow)"/><path d="M304 85H318" marker-end="url(#m14-arrow)"/><path d="M456 85H470" marker-end="url(#m14-arrow)"/><path d="M608 85H622" marker-end="url(#m14-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">LLM: block을 쌓고 "다음 token 맞히기"만 엄청나게 많이 학습 (GPT-2 small의 실제 확률)</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">8절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="어디를 볼까"><span class="no">1</span>attention의 아이디어: 어디를 볼까</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"it"이 무엇을 가리키는지 알려면 문장의 어느 단어를 봐야 하나? 13장처럼 한 칸씩 넘기지 않고 바로 볼 수 있나?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <label>층 <input type="range" id="i1l" min="1" max="12" step="1" value="5"><output id="o1l"></output></label>
+      <label>head <input type="range" id="i1h" min="1" max="12" step="1" value="4"><output id="o1h"></output></label>
+    </div>
+    <canvas id="cv1" aria-label="문장의 단어를 누르면 그 단어가 앞 단어들을 보는 attention"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: GPT-2 small (12층 × head 12개)에서 "it"이 "animal"을 가장 많이 보는 head</p>
+    <div class="eq" data-tex="\text{5층 head 4}: \; a(\text{it} \to \text{animal}) = \Cg{0.846}"></div>
+    <div class="mean"><b>→ 뜻.</b> 단어마다 앞의 모든 단어에 "얼마나 볼지" 비율(합 1)을 정하고, 그 비율로 정보를 섞어 온다. 거리가 멀어도 한 번에 본다. 다른 head는 전혀 다른 것을 본다 (층·head slider).</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> attention = 단어마다 "다른 단어를 얼마나 볼지" 비율을 정해 정보를 섞는 것. 거리와 상관없이 한 번에.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Q, K, V"><span class="no">2</span>query, key, value와 scaled dot-product attention</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"얼마나 볼지" 비율은 어떻게 계산하나?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>Q (query)</dt><dd>내가 찾는 것 ("질문").</dd>
+    <dt>K (key)</dt><dd>각 token의 이름표. Q와 내적이 크면 잘 맞는다.</dd>
+    <dt>V (value)</dt><dd>실제로 가져갈 내용.</dd>
+    <dt>d_k</dt><dd>Q, K 벡터의 길이.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{Attention}(\Cb{Q}, \Cv{K}, \Cg{V}) = \Co{\operatorname{softmax}}\!\left( \frac{\Cb{Q} \Cv{K}^{\top}}{\sqrt{d_k}} \right) \Cg{V}"></div>
+  <div class="calc">
+    <p class="h">예제: token 3개, d_k = 2</p>
+    <div class="eq" data-tex="\Cb{Q} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \end{bmatrix}, \; \Cv{K} = \begin{bmatrix} 2 & 0 \\ 0 & 2 \\ 1 & 1 \end{bmatrix}, \; \Cg{V} = \begin{bmatrix} 10 & 0 \\ 0 & 10 \\ 5 & 5 \end{bmatrix}"></div>
+    <p>1행 한 줄만: 점수 → √2로 나누기 → softmax → value 섞기.</p>
+    <div class="eq" data-tex="\begin{aligned} q_1 K^{\top} &= (2,\ 0,\ 1) \;\to\; \div\sqrt{2} = (1.414,\ 0,\ 0.707) \;\to\; \operatorname{softmax} = (\Co{0.576},\ 0.140,\ 0.284) \\ o_1 &= 0.576 \cdot (10, 0) + 0.140 \cdot (0, 10) + 0.284 \cdot (5, 5) = (\Cg{7.18},\ \Cg{2.82}) \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> token 1의 질문 (1, 0)은 key (2, 0)과 가장 잘 맞아 token 1의 value를 가장 많이 (57.6%) 가져온다. 출력은 value들의 가중 평균이다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b2step">다음 단계</button></div>
+    <canvas id="cv2" aria-label="Q Kᵀ, √d로 나누기, softmax, V를 곱하기를 shape와 함께"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> softmax(QKᵀ/√d_k)V: 질문과 이름표의 내적 → 비율 → 내용의 가중 평균.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="self, multi-head"><span class="no">3</span>self-attention과 multi-head attention</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>Q, K, V는 어디서 오나? 여러 종류의 관계(문법, 가리킴, 바로 앞)를 동시에 보려면?</p></div>
+  <div class="eq" data-tex="\Cb{Q} = X W^{Q}, \; \Cv{K} = X W^{K}, \; \Cg{V} = X W^{V} \qquad \text{MultiHead}(X) = [\text{head}_1, \dots, \text{head}_h] \, W^{O}"></div>
+  <p class="say">말로: 같은 문장 X에서 세 가지 weight로 Q, K, V를 만든다 (self). d를 h조각으로 나눠 head마다 따로 attention을 하고 이어 붙인다. GPT-2 small: d = 768, head 12개 → head마다 64.</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>층 <input type="range" id="i3l" min="1" max="12" step="1" value="5"><output id="o3l"></output></label>
+      <label>head <input type="range" id="i3h" min="1" max="12" step="1" value="12"><output id="o3h"></output></label>
+      <button type="button" id="b3prev">바로 앞 head</button>
+      <button type="button" id="b3it">"it" head</button>
+      <button type="button" id="b3first">첫 token head</button>
+    </div>
+    <canvas id="cv3" aria-label="head 하나의 attention 표"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: GPT-2 small, 같은 문장, head 144개 가운데</p>
+    <div class="eq" data-tex="\text{5층 head 12}: \text{바로 앞 token을 평균 } \Cg{99.9\%} \qquad \text{144개 평균}: \text{첫 token에 } \Co{64.4\%}"></div>
+    <div class="mean"><b>→ 뜻.</b> head마다 맡은 일이 다르다: 바로 앞 단어만 보는 head, 가리키는 말을 찾는 head. 많은 head는 볼 것이 없을 때 첫 token에 attention을 몰아 둔다 (attention sink): 사람이 정한 규칙이 아니라 학습에서 생긴 버릇이다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> self-attention = 같은 X에서 Q, K, V. multi-head = 여러 관점을 따로 보고 이어 붙이기.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="위치 encoding"><span class="no">4</span>positional encoding</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>attention은 순서를 모른다 (단어를 섞어도 같은 비율). 자리를 어떻게 알려 주나?</p></div>
+  <div class="eq" data-tex="PE(\Cb{pos}, 2i) = \sin\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad PE(\Cb{pos}, 2i{+}1) = \cos\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad x_{\text{입력}} = e_{\text{token}} + PE(pos)"></div>
+  <div class="calc">
+    <p class="h">예제: 자리 1, 첫 두 차원 (i = 0)</p>
+    <div class="eq" data-tex="PE(1, 0) = \sin(1) = 0.8415, \qquad PE(1, 1) = \cos(1) = 0.5403"></div>
+    <div class="mean"><b>→ 뜻.</b> 차원마다 빠르기가 다른 물결을 겹쳐 자리마다 고유한 무늬를 만든다 (시계의 초침·분침·시침처럼). GPT-2는 이 식 대신 자리마다 벡터를 학습한다: 그래도 가까운 자리끼리 비슷해진다 (자리 10과 11: 0.998, 10과 40: 0.64).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>자리 pos <input type="range" id="i4p" min="0" max="63" step="1" value="10"><output id="o4p"></output></label></div>
+    <canvas id="cv4" aria-label="positional encoding 물결 그림"></canvas>
+    <canvas id="cv4b" aria-label="고른 자리와 다른 자리의 유사도: 사인 방식과 GPT-2가 학습한 위치"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> 위치 encoding = token 벡터에 자리 무늬를 더한다. 사인 식이든 학습이든 가까운 자리는 비슷하다.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Transformer block"><span class="no">5</span>Transformer block: attention + FFN + residual + layer norm</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>attention 하나로 끝인가? 실제 Transformer의 한 층에는 무엇이 들어 있나?</p></div>
+  <div class="stage">
+    <svg viewBox="0 0 680 210" role="img" aria-label="Transformer block: layer norm, attention, 더하기, layer norm, FFN, 더하기" style="font-family: var(--sans); width: 100%; height: auto;">
+      <defs><marker id="m14-a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="20" y="108" font-size="13" font-weight="700" fill="var(--ink)">x</text>
+      <path d="M34 104H70" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="72" y="88" width="70" height="32" rx="6" fill="var(--surface)" stroke="var(--line)"/><text x="107" y="108" font-size="11.5" text-anchor="middle" fill="var(--ink)">LayerNorm</text>
+      <path d="M142 104H162" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="164" y="84" width="110" height="40" rx="6" fill="var(--wash)" stroke="var(--miss)"/><text x="219" y="102" font-size="12" text-anchor="middle" fill="var(--miss)" font-weight="700">multi-head</text><text x="219" y="117" font-size="12" text-anchor="middle" fill="var(--miss)" font-weight="700">attention</text>
+      <path d="M274 104H296" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <circle cx="306" cy="104" r="10" fill="var(--surface)" stroke="var(--ok)" stroke-width="1.6"/><text x="306" y="109" font-size="15" text-anchor="middle" fill="var(--ok)">+</text>
+      <path d="M52 104V50H306V92" fill="none" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#m14-a5)"/><text x="180" y="44" font-size="11" text-anchor="middle" fill="var(--ok)">residual (12장)</text>
+      <path d="M316 104H344" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="346" y="88" width="70" height="32" rx="6" fill="var(--surface)" stroke="var(--line)"/><text x="381" y="108" font-size="11.5" text-anchor="middle" fill="var(--ink)">LayerNorm</text>
+      <path d="M416 104H436" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="438" y="84" width="110" height="40" rx="6" fill="var(--sigwash)" stroke="var(--sig)"/><text x="493" y="102" font-size="12" text-anchor="middle" fill="var(--sig)" font-weight="700">FFN</text><text x="493" y="117" font-size="10.5" text-anchor="middle" fill="var(--sig)">d → 4d → d (8장)</text>
+      <path d="M548 104H570" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <circle cx="580" cy="104" r="10" fill="var(--surface)" stroke="var(--ok)" stroke-width="1.6"/><text x="580" y="109" font-size="15" text-anchor="middle" fill="var(--ok)">+</text>
+      <path d="M330 104V160H580V116" fill="none" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#m14-a5)"/>
+      <path d="M590 104H630" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/><text x="640" y="108" font-size="13" font-weight="700" fill="var(--ink)">x′</text>
+      <text x="340" y="196" font-size="11.5" text-anchor="middle" fill="var(--muted)">attention = token끼리 정보를 섞기, FFN = token마다 따로 가공하기. 이 block을 N번 쌓는다</text>
+    </svg>
+  </div>
+  <div class="eq" data-tex="x \leftarrow x + \Co{\text{MHA}}(\text{LN}(x)), \qquad x \leftarrow x + \Cb{\text{FFN}}(\text{LN}(x))"></div>
+  <div class="tbl"><table>
+    <caption>block 하나의 parameter (d 64, head 4, FFN 256; <code>nn.TransformerEncoderLayer</code>로 셌다)</caption>
+    <thead><tr><th>부분</th><th>계산</th><th class="num">parameter</th></tr></thead>
+    <tbody>
+      <tr><td>attention (W^Q, W^K, W^V, W^O)</td><td>4 · 64 · 64 + 4 · 64</td><td class="num">16,640</td></tr>
+      <tr><td>FFN (64 → 256 → 64)</td><td>64 · 256 + 256 + 256 · 64 + 64</td><td class="num">33,088</td></tr>
+      <tr><td>LayerNorm 2개</td><td>2 · (64 + 64)</td><td class="num">256</td></tr>
+      <tr><td><b>합계</b></td><td></td><td class="num"><b>49,984</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> Transformer block = (LN → attention → 더하기) + (LN → FFN → 더하기). parameter의 2/3는 FFN에 있다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="encoder, decoder, mask"><span class="no">6</span>encoder, decoder, masking</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>글을 만들 때는 아직 쓰지 않은 뒷말을 보면 안 된다. 어떻게 막나?</p></div>
+  <div class="eq" data-tex="\text{mask}_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases} \qquad A = \operatorname{softmax}\!\left( \frac{QK^{\top}}{\sqrt{d_k}} + \text{mask} \right) \quad (e^{-\infty} = 0)"></div>
+  <div class="stage">
+    <div class="ctl"><div class="seg" id="g6m"><span>causal mask</span><button type="button" data-v="on" aria-pressed="true">켬</button><button type="button" data-v="off" aria-pressed="false">끔</button></div></div>
+    <canvas id="cv6" aria-label="mask를 켜고 끈 점수와 softmax"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>구조</th><th>mask</th><th>예</th><th>잘하는 일</th></tr></thead>
+    <tbody>
+      <tr><td>encoder만</td><td>없음 (모두가 모두를)</td><td>BERT, ViT</td><td>이해, 분류</td></tr>
+      <tr><td>decoder만</td><td>causal (앞만)</td><td>GPT, 대부분의 LLM</td><td>글 만들기</td></tr>
+      <tr><td>encoder + decoder</td><td>decoder에 causal + encoder 출력을 보는 cross-attention</td><td>처음 Transformer (2017, 번역), T5</td><td>번역, 요약</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> causal mask = 미래 칸을 −∞로 → softmax에서 0. encoder는 다 보고, decoder는 앞만 본다.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="ViT"><span class="no">7</span>Vision Transformer (ViT): 사진을 patch로</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>그림도 문장처럼 token으로 나눠 Transformer에 넣을 수 있나?</p></div>
+  <div class="eq" data-tex="\underbrace{28 \times 28}_{\text{그림}} \;\to\; \underbrace{16 \times 49}_{7\times7 \text{ patch } 16\text{개}} \;\xrightarrow{\text{Linear}}\; 16 \times 64 \;\to\; [\text{CLS}; \dots] + \text{pos} = 17 \times 64 \;\to\; \text{block} \times 2 \;\to\; \text{CLS} \to 10"></div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b7next">다른 숫자</button>
+      <div class="seg" id="g7l"><span>층</span><button type="button" data-v="0" aria-pressed="false">1</button><button type="button" data-v="1" aria-pressed="true">2</button></div>
+      <div class="seg" id="g7h"><span>head</span><button type="button" data-v="0" aria-pressed="true">평균</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">2</button><button type="button" data-v="3" aria-pressed="false">3</button><button type="button" data-v="4" aria-pressed="false">4</button></div>
+    </div>
+    <canvas id="cv7" aria-label="숫자를 patch로 나눈 것과 CLS token의 attention"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: MNIST, 4 epoch, 시험 10,000장 (PyTorch)</p>
+    <div class="eq" data-tex="\text{ViT (d 64, 2층)}: 96.7\%\ (105{,}098 \text{ 개}) \qquad \text{11장 CNN}: \Cg{98.6\%}\ (11{,}274 \text{ 개})"></div>
+    <div class="mean"><b>→ 뜻.</b> 작은 data에서는 CNN이 이긴다: CNN은 "가까운 칸끼리, 어디서나 같은 무늬"라는 가정을 처음부터 갖고, ViT는 그것까지 data에서 배워야 한다. data가 아주 많으면(수억 장) ViT가 CNN을 앞선다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> ViT = 그림을 patch token으로 잘라 Transformer에 넣기. CLS token의 출력으로 분류한다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="LLM"><span class="no">8</span>LLM: 다음 token 예측</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>ChatGPT 같은 LLM은 결국 무엇을 학습한 것인가?</p></div>
+  <div class="eq" data-tex="p(\Co{x_{t+1}} \mid x_1, \dots, x_t) = \operatorname{softmax}\!\left( \frac{W h_t}{\Cr{T}} \right), \qquad L = -\log p(\text{진짜 다음 token})"></div>
+  <ul class="legend"><li class="c-miss"><b>x_{t+1}</b> 다음 token</li><li class="c-fa"><b>T</b> 온도 (13장 5절과 같다)</li></ul>
+  <div class="stage">
+    <canvas id="cv8b" aria-label="영어 문장과 한국어 문장을 GPT-2 token으로 나눈 것"></canvas>
+  </div>
+  <p class="say">token = 글자와 단어 사이의 조각 (BPE). GPT-2의 token 표는 영어 위주라 한국어는 글자 하나가 byte 조각 2~3개(▢)로 쪼개진다: 11글자가 24 token. 한국어용 LLM은 다른 token 표를 쓴다.</p>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g8p"><span>문장</span><button type="button" data-v="0" aria-pressed="false">France</button><button type="button" data-v="1" aria-pressed="true">cup of</button><button type="button" data-v="2" aria-pressed="false">cat sat</button><button type="button" data-v="3" aria-pressed="false">1, 2, 3, 4,</button></div>
+      <label>온도 T <input type="range" id="i8t" min="0.3" max="2" step="0.05" value="1"><output id="o8t"></output></label>
+    </div>
+    <canvas id="cv8" aria-label="GPT-2 small의 다음 token 확률 위 10개"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과: GPT-2 small (OpenAI 2019, parameter 124,439,808개, 12층 × head 12, d 768, token 50,257종, 문맥 1,024)</p>
+    <div class="eq" data-tex="\text{I drank a cup of} \to \text{coffee } \Cg{27.4\%},\ \text{tea } 15.6\% \qquad \text{The capital of France is} \to \text{the } 8.5\%,\ \text{Paris } \Cr{3.2\%}"></div>
+    <div class="mean"><b>→ 뜻.</b> 작은 GPT-2는 문법은 알지만 지식은 약하다 ("Paris"가 5등). 같은 구조를 수천 배 키우고 data를 늘리고, 사람의 피드백으로 다듬은 것이 오늘의 LLM이다. 가장 그럴듯한 것만 이어 붙이면 (greedy): "Deep learning is a very powerful tool for learning about the world around us. It's a tool that can help us".</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> LLM = causal Transformer를 "다음 token 맞히기"로 아주 많이 학습한 것. 출력은 확률이고, 온도로 고르는 법을 정한다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="정리, 약자 사전"><span class="no">9</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 attention</td><td>어디를 볼지 비율을 정해 섞기</td><td>it → animal 0.846</td></tr>
+      <tr><td>2 Q, K, V</td><td>softmax(QKᵀ/√d)V</td><td>(0.576, 0.140, 0.284)</td></tr>
+      <tr><td>3 multi-head</td><td>head마다 다른 관계</td><td>바로 앞 99.9%</td></tr>
+      <tr><td>4 위치</td><td>token + 자리 무늬</td><td>sin 1 = 0.8415</td></tr>
+      <tr><td>5 block</td><td>attention + FFN, residual, LN</td><td>49,984개 (d 64)</td></tr>
+      <tr><td>6 mask</td><td>미래를 −∞로</td><td>(0.196, 0.804)</td></tr>
+      <tr><td>7 ViT</td><td>patch를 token으로</td><td>96.7% vs CNN 98.6%</td></tr>
+      <tr><td>8 LLM</td><td>다음 token 맞히기</td><td>coffee 27.4%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(15장 GAN·Diffusion)에서는 그림을 만드는 생성 model을 본다. 숫자는 <code>tools/ch14_numbers.py</code>(PyTorch)와 <code>tools/ch14_gpt2.py</code>(Hugging Face transformers, GPT-2 small, MIT license)로 계산했다. 더 긴 설명은 왼쪽 메뉴의 "Attention·Transformer 따라가기" artifact.</p>
+  <h3 id="s9b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>BERT</b></td><td>Bidirectional Encoder Representations from Transformers</td><td>–</td><td>encoder만 쓴 Transformer (양쪽을 다 본다).</td><td class="num">6</td></tr>
+      <tr><td><b>BPE</b></td><td>byte-pair encoding</td><td>–</td><td>자주 붙어 나오는 조각을 합쳐 token 표를 만드는 법.</td><td class="num">8</td></tr>
+      <tr><td><b>CLS</b></td><td>classification token</td><td>분류 token</td><td>맨 앞에 붙여 전체 요약을 모으는 token.</td><td class="num">7</td></tr>
+      <tr><td><b>FFN</b></td><td>feed-forward network</td><td>–</td><td>token마다 따로 쓰는 작은 MLP (8장).</td><td class="num">5</td></tr>
+      <tr><td><b>GPT</b></td><td>generative pre-trained transformer</td><td>–</td><td>decoder만 쓴 Transformer, 다음 token 예측.</td><td class="num">8</td></tr>
+      <tr><td><b>LLM</b></td><td>large language model</td><td>대규모 언어 model</td><td>아주 큰 GPT류 model.</td><td class="num">8</td></tr>
+      <tr><td><b>LN</b></td><td>layer normalization</td><td>층 정규화</td><td>token마다 벡터를 평균 0, 분산 1로 맞추기 (6장).</td><td class="num">5</td></tr>
+      <tr><td><b>MHA</b></td><td>multi-head attention</td><td>–</td><td>여러 head의 attention을 이어 붙인 것.</td><td class="num">3, 5</td></tr>
+      <tr><td><b>PE</b></td><td>positional encoding</td><td>위치 부호화</td><td>자리를 알려 주는 벡터.</td><td class="num">4</td></tr>
+      <tr><td><b>Q, K, V</b></td><td>query, key, value</td><td>질문, 이름표, 내용</td><td>attention의 세 재료.</td><td class="num">2</td></tr>
+      <tr><td><b>token</b></td><td>token</td><td>–</td><td>model이 한 칸으로 읽는 조각.</td><td class="num">8</td></tr>
+      <tr><td><b>ViT</b></td><td>Vision Transformer</td><td>–</td><td>그림을 patch token으로 읽는 Transformer.</td><td class="num">7</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch14_data.js"></script>
+<script src="ch14.js"></script>
+</body>
+</html>

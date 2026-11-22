@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 1 · Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="1" data-base="ch01-intro">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 1</p>
+  <h1>Foundations</h1>
+  <p class="topic">The math, statistics and code behind deep learning</p>
+  <p class="lead">Deep learning is built from fewer tools than you might think: a way to line numbers up (vectors, matrices), a way to multiply and add them (the dot product), a way to turn scores into probabilities (softmax), a way to measure how wrong an answer is (cross-entropy), a way to tell whether a result can be trusted (mean, variance, the t-test), and a way to write all of this in a few lines (NumPy, PyTorch). This chapter takes those tools one at a time, computes each by hand, and lets you move it around in a picture.</p>
+  <div class="howto">
+    <p class="tag">HOW TO READ THIS PAGE</p>
+    <ol>
+      <li><b>What we want to know</b>: each section opens with a question.</li>
+      <li><b>Terms in this section</b>: check unfamiliar words here first. The full list is in the <a href="#s14">dictionary</a> at the end.</li>
+      <li><b>Worked example</b>: the goal → the calculation → the <span class="mean-chip">→ Meaning</span> box, which says what the number tells you.</li>
+      <li><b>Try it yourself</b>: what is in the figure, what each button and slider does, and what to try. The grey box under each figure spells out the current result in numbers.</li>
+      <li><b>One line to remember</b> closes each section. Use the left menu (fold it with the ☰ button) to jump between sections.</li>
+    </ol>
+  </div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 250" role="img" aria-label="Map of this chapter: one pass of a small classifier uses turning data into numbers, W x + b, softmax, cross-entropy and fixing with derivatives, with statistics and code underneath" style="font-family: var(--sans);">
+      <defs><marker id="m1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map: classifying one picture uses every tool in this chapter (click a box to jump there)</text>
+      <a href="#s1"><rect x="16" y="44" width="136" height="70" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="84" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① To numbers</text><text x="84" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">picture → 64 numbers x</text><text x="84" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 1</text></a>
+      <a href="#s3"><rect x="170" y="44" width="136" height="70" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="238" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② z = W x + b</text><text x="238" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">dot product, matmul</text><text x="238" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 2–4</text></a>
+      <a href="#s5"><rect x="324" y="44" width="136" height="70" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="392" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ softmax</text><text x="392" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">scores z → probabilities</text><text x="392" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">5 · argmax in 8</text></a>
+      <a href="#s7"><rect x="478" y="44" width="136" height="70" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="546" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ cross-entropy</text><text x="546" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">−ln(prob. of answer)</text><text x="546" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 6–7</text></a>
+      <a href="#s13"><rect x="632" y="44" width="136" height="70" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="700" y="68" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Fix with slopes</text><text x="700" y="86" font-size="11" text-anchor="middle" fill="var(--muted)">gradient → update W</text><text x="700" y="102" font-size="10.5" text-anchor="middle" fill="var(--sig)">13 → chapter 2</text></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 79H168" marker-end="url(#m1-arrow)"/><path d="M306 79H322" marker-end="url(#m1-arrow)"/><path d="M460 79H476" marker-end="url(#m1-arrow)"/><path d="M614 79H630" marker-end="url(#m1-arrow)"/><path d="M700 114V134H84V118" stroke-dasharray="4 3" marker-end="url(#m1-arrow)"/></g>
+      <text x="392" y="148" font-size="11" text-anchor="middle" fill="var(--muted)">Run this loop thousands of times and you have "learning" (chapters 2–3)</text>
+      <a href="#s9"><rect x="16" y="166" width="368" height="64" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="200" y="190" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Statistics: mean, variance, sampling, seeds, t-test</text><text x="200" y="208" font-size="11" text-anchor="middle" fill="var(--muted)">answers "can I trust this result?" (sections 9–11)</text></a>
+      <a href="#s12"><rect x="400" y="166" width="368" height="64" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="584" y="190" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Code: Python · NumPy · PyTorch</text><text x="584" y="208" font-size="11" text-anchor="middle" fill="var(--muted)">writes all of the above in a few lines (section 12)</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Numbers and tensors"><span class="no">1</span>Turning the world into numbers: scalar, vector, matrix, tensor</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Pictures, text and sound are not numbers. So how does a computer calculate with them? And what do numbers like (32, 3, 224, 224), which show up all over deep-learning code, actually mean?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>scalar</dt><dd>A single number. Example: a temperature of 21.5.</dd>
+    <dt>vector</dt><dd>Numbers lined up in one row. Example: [height, weight] = [172, 68].</dd>
+    <dt>matrix</dt><dd>Numbers laid out in a table of rows and columns. A greyscale photo is one.</dd>
+    <dt>tensor</dt><dd>The general name for numbers laid out along several directions (axes). A scalar has 0 axes, a vector 1, a matrix 2.</dd>
+    <dt>shape</dt><dd>How many numbers there are along each axis. Example: (28, 28) = 28 down, 28 across.</dd>
+    <dt>pixel</dt><dd><b>picture element</b>. One dot of a picture. One brightness number in greyscale, three numbers (red, green, blue: RGB) in colour.</dd>
+    <dt>channel</dt><dd>The number of stacked number-sheets at the same position, such as R, G and B in a colour photo.</dd>
+    <dt>one-hot</dt><dd>A vector with a single 1 and 0 everywhere else. The simplest way to turn a category into numbers.</dd>
+  </dl></div>
+  <div class="idea">
+    <p>A deep-learning model only computes with numbers, so every piece of data is first turned into a bundle of numbers. The "form" of that bundle is its shape.</p>
+  </div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 200" role="img" aria-label="Axes of a tensor: a scalar is one cell, a vector a column, a matrix a table, a 3-axis tensor stacked tables" style="font-family: var(--sans);">
+      <text x="16" y="20" font-size="13" font-weight="600" fill="var(--ink)">One more axis each step: scalar → vector → matrix → tensor</text>
+      <rect x="70" y="90" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><text x="83" y="108" font-size="11" text-anchor="middle" fill="var(--ink)">21</text>
+      <g><rect x="230" y="40" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="230" y="66" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="230" y="92" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><rect x="230" y="118" width="26" height="26" rx="3" fill="var(--sigwash)" stroke="var(--sig)"/><text x="243" y="58" font-size="11" text-anchor="middle" fill="var(--ink)">3</text><text x="243" y="84" font-size="11" text-anchor="middle" fill="var(--ink)">1</text><text x="243" y="110" font-size="11" text-anchor="middle" fill="var(--ink)">4</text><text x="243" y="136" font-size="11" text-anchor="middle" fill="var(--ink)">1</text></g>
+      <g fill="var(--sigwash)" stroke="var(--sig)"><rect x="370" y="53" width="26" height="26" rx="3"/><rect x="396" y="53" width="26" height="26" rx="3"/><rect x="422" y="53" width="26" height="26" rx="3"/><rect x="370" y="79" width="26" height="26" rx="3"/><rect x="396" y="79" width="26" height="26" rx="3"/><rect x="422" y="79" width="26" height="26" rx="3"/><rect x="370" y="105" width="26" height="26" rx="3"/><rect x="396" y="105" width="26" height="26" rx="3"/><rect x="422" y="105" width="26" height="26" rx="3"/></g>
+      <g fill="var(--surface)" stroke="var(--fa)"><rect x="590" y="40" width="78" height="78" rx="3"/></g>
+      <g fill="var(--surface)" stroke="var(--ok)"><rect x="578" y="52" width="78" height="78" rx="3"/></g>
+      <g fill="var(--sigwash)" stroke="var(--sig)"><rect x="566" y="64" width="78" height="78" rx="3"/></g>
+      <text x="676" y="56" font-size="10.5" fill="var(--fa)">R</text><text x="664" y="68" font-size="10.5" fill="var(--ok)">G</text><text x="652" y="80" font-size="10.5" fill="var(--sig)">B</text>
+      <text x="83" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">scalar · 0 axes</text><text x="83" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape () · one temperature</text>
+      <text x="243" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">vector · 1 axis</text><text x="243" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape (4,) · 4 features</text>
+      <text x="409" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">matrix · 2 axes</text><text x="409" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape (3, 3) · greyscale photo</text>
+      <text x="610" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--ink)">tensor · 3 axes</text><text x="610" y="188" font-size="10.5" text-anchor="middle" fill="var(--muted)">shape (3, H, W) · colour photo</text>
+    </svg>
+  </div>
+  <div class="tbl"><table>
+    <caption>Real data → bundles of numbers (shape order as in PyTorch)</caption>
+    <thead><tr><th>data</th><th>as numbers</th><th>shape</th><th class="num">how many numbers</th></tr></thead>
+    <tbody>
+      <tr><td>today's temperature</td><td>21.5</td><td>()</td><td class="num">1</td></tr>
+      <tr><td>one person (height, weight)</td><td>[172, 68]</td><td>(2,)</td><td class="num">2</td></tr>
+      <tr><td>a handwritten digit, greyscale</td><td>a table of brightness 0–1</td><td>(28, 28)</td><td class="num">784</td></tr>
+      <tr><td>one colour photo</td><td>three tables: R, G, B</td><td>(3, 224, 224)</td><td class="num">150,528</td></tr>
+      <tr><td>a batch of 32 colour photos</td><td>32 of the tensor above</td><td>(32, 3, 224, 224)</td><td class="num">4,816,896</td></tr>
+      <tr><td>the class "dog" (out of cat, dog, bird)</td><td>one-hot [0, 1, 0]</td><td>(3,)</td><td class="num">3</td></tr>
+    </tbody>
+  </table></div>
+  <div class="calc">
+    <p class="h">Example: how many numbers are in a batch of 32 photos?</p>
+    <p class="goal">Goal: multiply all the numbers in the shape to get the total count.</p>
+    <div class="eq" data-tex="32 \times 3 \times 224 \times 224 = 4{,}816{,}896"></div>
+    <div class="mean"><b>→ Meaning.</b> Feeding 32 photos to a model at once means computing with about 4.8 million numbers at the same time. That is why deep learning uses GPUs (graphics cards). Reading shapes is the first step to reading deep-learning code.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul>
+        <li><b>Left</b>: an 8 × 8 pixel greyscale picture. Each cell has an ink value (white 0, black 1).</li>
+        <li><b>Right</b>: the same picture written as a matrix of numbers. These numbers are what the computer actually sees.</li>
+      </ul>
+      <p class="tag">CONTROLS</p>
+      <dl><dt>Click a cell</dt><dd>Its value cycles 0 → 0.5 → 1 → 0. You can also drag to paint.</dd><dt>Buttons</dt><dd>Draw a 7, clear, or invert black and white.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Press "Draw 7" and find the 7-shaped run of 1s on the right. To people it is a picture; to the computer it is 64 numbers.</li>
+        <li>"Invert": every number becomes 1 − value. The picture means the same thing, but the numbers are completely different.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b1seven">Draw 7</button><button id="b1clear">Clear</button><button id="b1inv">Invert</button></div>
+    <canvas id="cv1" aria-label="An 8 by 8 pixel picture and the matrix of the same picture"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Every input to deep learning is a tensor (a bundle of numbers), and its shape lists how many numbers lie along each axis. Multiply the shape's numbers to get the total count.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Transpose, shape"><span class="no">2</span>Transpose and shape: swapping rows and columns</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What are the Aᵀ and x.T that appear in every paper and codebase, and why are they needed?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>Aᵀ</dt><dd><b>A transpose</b>. A with its rows (horizontal lines) and columns (vertical lines) swapped.</dd>
+    <dt>A<sub>ij</sub></dt><dd>The number in row i, column j of A.</dd>
+    <dt>(m × n)</dt><dd>The shape of a matrix with m rows and n columns. Read "m by n".</dd>
+  </dl></div>
+  <div class="idea"><p>Transposing flips a matrix over its diagonal. The first row becomes the first column, and the shape (m × n) becomes (n × m). The next sections use it constantly to "make the shapes fit" for dot products and matrix multiplication.</p></div>
+  <div class="eq" data-tex="(A^\top)_{ij} = A_{ji}, \qquad A = \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix}_{(2 \times 3)} \;\Rightarrow\; A^\top = \begin{bmatrix} 1 & 4 \\ 2 & 5 \\ 3 & 6 \end{bmatrix}_{(3 \times 2)}"></div>
+  <div class="mean"><b>→ Meaning.</b> Row 1 of A, (1, 2, 3), became column 1 of Aᵀ. For example, A<sub>23</sub> = 6 moves to Aᵀ<sub>32</sub> = 6. The numbers stay the same; only their places change.</div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul>
+        <li><b>Top</b>: the cells of A and Aᵀ. Click or hover over a cell: the matching pair turns <span class="sw" style="--k: var(--sig)"></span>blue, and the row of A and column of Aᵀ that hold it turn <span class="sw" style="--k: var(--ok)"></span>green.</li>
+        <li><b>Bottom</b>: the cells of A sliding to their places in Aᵀ, using the dotted diagonal as a mirror. Blue cells = row 1 of A, green cells = row 2 of A.</li>
+      </ul>
+      <p class="tag">CONTROLS</p>
+      <dl><dt>t</dt><dd>0 shows A, 1 shows Aᵀ, values in between show the move.</dd><dt>Play</dt><dd>Moves t slowly from 0 to 1 or back.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Click the 6 in A: the box says "row 2, column 3 of A = row 3, column 2 of Aᵀ".</li>
+        <li>Press "Play": the blue row 1, (1, 2, 3), lying flat, stands up as column 1. The 1 and the 5 sit on the diagonal and do not move.</li>
+      </ol>
+    </div>
+    <div class="mats" id="t2"></div>
+    <div class="read" id="r2" aria-live="polite">Click a cell.</div>
+    <div class="ctl"><label>t <input type="range" id="i2t" min="0" max="1" step="0.01" value="0"><output id="o2t"></output></label><button id="b2play">Play</button></div>
+    <canvas id="cv2" aria-label="Animation of the cells of A moving across the diagonal to their places in A transpose"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> Transpose = swap rows and columns. The shape (m × n) becomes (n × m). The numbers stay; only their places change.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Dot product"><span class="no">3</span>Dot product: how much two vectors point the same way</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What is the single most common calculation in deep learning? "Multiply matching entries and add them all up." What does that measure?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>a · b</dt><dd><b>dot product</b>. Multiply the numbers in matching positions, then add everything up.</dd>
+    <dt>|a|</dt><dd><b>norm</b>. The length of a vector: √(a₁² + a₂² + …).</dd>
+    <dt>θ</dt><dd><b>theta</b>. The angle between two vectors.</dd>
+    <dt>w, b</dt><dd><b>weight, bias</b>. The numbers a neuron multiplies its inputs x by, and the single number it adds.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\mathbf{a} \cdot \mathbf{b} = \sum_{i} a_i b_i = |\mathbf{a}|\,|\mathbf{b}| \cos\theta"></div>
+  <div class="calc">
+    <p class="h">Example ①: a = (2, 1), b = (1, 3)</p>
+    <p class="goal">Goal: multiply matching entries and add, then divide by the lengths to get the angle.</p>
+    <div class="eq" data-tex="\mathbf{a} \cdot \mathbf{b} = 2 \times 1 + 1 \times 3 = 5, \qquad |\mathbf{a}| = \sqrt{2^2 + 1^2} = 2.236, \qquad |\mathbf{b}| = \sqrt{1^2 + 3^2} = 3.162"></div>
+    <div class="eq" data-tex="\cos\theta = \frac{5}{2.236 \times 3.162} = 0.707 \;\Rightarrow\; \theta = 45^\circ"></div>
+    <div class="mean"><b>→ Meaning.</b> The dot product measures how much two vectors point the same way. Same direction gives a large value, perpendicular gives 0, opposite gives a negative value. Dividing by the lengths (cos θ) compares direction only, regardless of length; face recognition uses exactly this, under the name cosine similarity.</div>
+    <p class="h">Example ②: one neuron is one dot product</p>
+    <p class="goal">Goal: with input x = (1, 2, 3), weights w = (0.5, −1, 2) and bias b = 0.5, find the neuron's score z.</p>
+    <div class="eq" data-tex="z = \mathbf{w} \cdot \mathbf{x} + b = 0.5 \times 1 + (-1) \times 2 + 2 \times 3 + 0.5 = 0.5 - 2 + 6 + 0.5 = 5"></div>
+    <div class="mean"><b>→ Meaning.</b> A neuron uses the dot product to ask "how much does the input look like the pattern I like (w)?" The third input (3) times a large weight (2) makes most of the score. Learning means adjusting these w and b (chapters 2–3).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul>
+        <li><span class="sw" style="--k: var(--sig)"></span>Blue arrow = a, <span class="sw" style="--k: var(--miss)"></span>orange arrow = b. The dashed line drops b onto the direction of a; the thick strip it leaves is b's shadow (projection). Shadow length × |a| = a · b.</li>
+      </ul>
+      <p class="tag">CONTROLS</p>
+      <dl><dt>Drag an arrow tip</dt><dd>Drag the end of a or b to change its direction and length.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Start (a = (2, 1), b = (1, 3)): a · b = 5, angle 45° (example ①).</li>
+        <li>Drag b until it is perpendicular to a: a · b becomes 0 and the shadow disappears.</li>
+        <li>Drag b to the opposite side of a: a · b turns negative and the shadow appears on the far side of a.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b3r">Reset</button></div>
+    <canvas id="cv3" aria-label="Plane with two draggable vectors a and b showing their dot product and angle"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Dot product = multiply matching entries and add = how much two vectors point the same way. One neuron computes exactly this (w · x + b).</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Matrix multiplication"><span class="no">4</span>Matrix multiplication: many dot products at once</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>A layer with hundreds of neurons needs hundreds of dot products. Matrix multiplication writes them all at once. What is the rule, and how do the shapes have to fit?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>AB, A @ B</dt><dd><b>matrix multiplication</b>. Written with @ in Python.</dd>
+    <dt>W</dt><dd><b>weight matrix</b>. Each row holds the weights of one neuron.</dd>
+  </dl></div>
+  <div class="idea">
+    <p><b>One rule</b>: cell (i, j) of the result = the dot product of row i of A and column j of B.</p>
+    <p><b>Shape rule</b>: (m × <b>n</b>) @ (<b>n</b> × p) = (m × p). The two inner numbers (n) must match, because a dot product needs two vectors of the same length.</p>
+  </div>
+  <div class="eq" data-tex="(AB)_{ij} = \sum_{k} A_{ik} B_{kj}, \qquad \underset{(2 \times 3)}{\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \end{bmatrix}} \underset{(3 \times 2)}{\begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \end{bmatrix}} = \underset{(2 \times 2)}{\begin{bmatrix} 4 & 5 \\ 10 & 11 \end{bmatrix}}"></div>
+  <div class="calc">
+    <p class="h">Example: one cell of the result, row 1, column 2</p>
+    <p class="goal">Goal: take the dot product of row 1 of A, (1, 2, 3), and column 2 of B, (0, 1, 1).</p>
+    <div class="eq" data-tex="(AB)_{12} = 1 \times 0 + 2 \times 1 + 3 \times 1 = 5"></div>
+    <div class="mean"><b>→ Meaning.</b> The result has 2 × 2 = 4 cells, so this is 4 dot products. Seen as a neural-network layer, each row of W holds one neuron's weights, and a single matrix product W x computes every neuron of the layer at once. GPUs do exactly this kind of product very fast.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>A (2 × 3), B (3 × 2), result C = A @ B (2 × 2). Click a cell of the result to colour the <span class="sw" style="--k: var(--sig)"></span>row of A and <span class="sw" style="--k: var(--ok)"></span>column of B that made it.</li></ul>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Click the top-right cell of the result (5): the box shows the example, 1 × 0 + 2 × 1 + 3 × 1 = 5.</li>
+        <li>"Step through" visits the four cells one by one, showing one row of A meeting one column of B to make one cell of C.</li>
+        <li>Press "New numbers", work out one cell by hand, then click it to check.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b4play">Step through</button><button id="b4new">New numbers</button><button id="b4reset">Original numbers</button></div>
+    <div class="mats" id="t4"></div>
+    <div class="read" id="r4" aria-live="polite">Click a cell of the result C.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Matrix multiplication = dot products arranged as a table. (m × n) @ (n × p) = (m × p); the inner sizes must match. One layer of neurons = one W x.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Softmax"><span class="no">5</span>Softmax: turning scores into probabilities</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>The last layer of a model gives one score per class, for example cat 2.0, dog 1.0, bird 0.0. How do we turn those scores into something like "66% likely to be a cat"?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>logit</dt><dd>The score z before softmax. It can be negative.</dd>
+    <dt>e</dt><dd><b>Euler's number</b>, about 2.718. eᶻ grows 2.718 times each time z goes up by 1.</dd>
+    <dt>T</dt><dd><b>temperature</b>. Divide the scores by T before softmax. Small T piles probability onto the winner; large T spreads it evenly.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\mathrm{softmax}(\mathbf{z})_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}"></div>
+  <p class="sym">Two steps. ① Turn every score into eᶻ, which is always positive. ② Divide by the total so everything adds up to 1.</p>
+  <div class="calc">
+    <p class="h">Example: z = (2, 1, 0), T = 1</p>
+    <div class="eq" data-tex="e^{2} = 7.389, \quad e^{1} = 2.718, \quad e^{0} = 1, \qquad \text{sum} = 11.107"></div>
+    <div class="eq" data-tex="\mathrm{softmax} = \left(\frac{7.389}{11.107},\ \frac{2.718}{11.107},\ \frac{1}{11.107}\right) = (0.665,\ 0.245,\ 0.090)"></div>
+    <div class="mean"><b>→ Meaning.</b> A score gap of 1 becomes a probability ratio of about 2.7. With the same scores, T = 0.5 piles up on the winner, (0.867, 0.117, 0.016), and T = 2 spreads out, (0.506, 0.307, 0.186). The order (who wins) never depends on T.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li><b>Left</b>: the scores z (logits), positive above 0, negative below. <b>Right</b>: softmax probabilities, which always add up to 1. The largest probability (the argmax, section 8) is drawn solid.</li></ul>
+      <p class="tag">CONTROLS</p>
+      <dl><dt>z₁, z₂, z₃</dt><dd>Scores for the three classes (cat, dog, bird).</dd><dt>T</dt><dd>Temperature.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Add 5 to all three scores (for example 7, 6, 5): the probabilities do not change. Softmax only looks at the differences between scores.</li>
+        <li>Set T to 0.2: almost all probability goes to the winner. Set T to 5: nearly 1/3 each.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>z₁ cat <input type="range" id="i5a" min="-3" max="8" step="0.1" value="2"><output id="o5a"></output></label>
+      <label>z₂ dog <input type="range" id="i5b" min="-3" max="8" step="0.1" value="1"><output id="o5b"></output></label>
+      <label>z₃ bird <input type="range" id="i5c" min="-3" max="8" step="0.1" value="0"><output id="o5c"></output></label>
+      <label>T <input type="range" id="i5t" min="0.2" max="5" step="0.1" value="1"><output id="o5t"></output></label>
+    </div>
+    <canvas id="cv5" aria-label="Bars of three scores and their softmax probabilities"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Softmax = make every score positive with eᶻ, then divide by the total. The result is a set of probabilities that add to 1, and only the differences between scores matter. Temperature decides how strongly the winner takes all.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Log and exp"><span class="no">6</span>Log and exp: tools that turn products into sums</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Why does a log (ln) show up in almost every deep-learning loss?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>exp(x), eˣ</dt><dd><b>exponential</b>. e multiplied by itself x times.</dd>
+    <dt>ln x</dt><dd><b>natural logarithm</b>. "What power of e gives x?" The reverse of exp.</dd>
+    <dt>underflow</dt><dd>When a number gets so small that the computer treats it as 0.</dd>
+  </dl></div>
+  <div class="idea">
+    <ul>
+      <li>ln undoes exp: ln(eˣ) = x. On a graph, each is the other flipped over the line y = x.</li>
+      <li><b>Product → sum</b>: ln(a × b) = ln a + ln b. When many probabilities have to be multiplied, taking logs turns it into addition.</li>
+      <li>The ln of a probability (0 to 1) is 0 or below. The smaller the probability, the more negative its ln.</li>
+    </ul>
+  </div>
+  <div class="calc">
+    <p class="h">Example ①: a product becomes a sum</p>
+    <div class="eq" data-tex="\ln(0.9 \times 0.8) = \ln 0.72 = -0.3285 = \ln 0.9 + \ln 0.8 = -0.1054 + (-0.2231)"></div>
+    <p class="h">Example ②: multiplying a small probability 200 times</p>
+    <div class="eq" data-tex="0.01^{200} = 10^{-400} \;\rightarrow\; 0 \ (\text{underflow}), \qquad \ln\!\left(0.01^{200}\right) = 200 \times \ln 0.01 = 200 \times (-4.605) = -921.0"></div>
+    <div class="mean"><b>→ Meaning.</b> A computer's float64 numbers become 0 below about 10⁻³⁰⁸. Multiplying probabilities directly hits 0 quickly, but with logs the answer stays an ordinary number such as −921. That is why deep learning works with log-probabilities instead of probabilities.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li><span class="sw" style="--k: var(--sig)"></span>Blue = y = ln x, <span class="sw" style="--k: var(--miss)"></span>orange = y = eˣ, grey dashed = y = x. The two dots are a mirrored pair across y = x.</li></ul>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Set x to 1: ln 1 = 0. The log of probability 1 (certainty) is 0.</li>
+        <li>Lower x to 0.05: ln x falls quickly below −3. The smaller the probability, the more negative its log.</li>
+      </ol>
+    </div>
+    <div class="ctl"><label>x <input type="range" id="i6x" min="0.05" max="4" step="0.05" value="2"><output id="o6x"></output></label></div>
+    <canvas id="cv6" aria-label="Graphs of ln x and e to the x, mirrored across y = x"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> ln is the reverse of exp, and it turns products into sums. Multiplied probabilities collapse to 0, so deep learning adds log-probabilities instead.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Entropy, cross-entropy"><span class="no">7</span>Entropy and cross-entropy: average surprise</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>A model says "the answer is dog with probability 0.7". How wrong is that? Cross-entropy measures it with one number, and nearly every classification model uses it as its loss.</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>surprise</dt><dd>−ln p when something with probability p happens. The rarer the event, the larger the surprise.</dd>
+    <dt>H(p)</dt><dd><b>entropy</b>. The average surprise: how hard the outcome is to predict.</dd>
+    <dt>CE</dt><dd><b>cross-entropy</b>. The surprise between the true distribution y and the predicted distribution ŷ. When the answer is one-hot, it is −ln(probability given to the right answer).</dd>
+    <dt>nat, bit</dt><dd>Units of information. Measured with ln it is nats, with log₂ it is bits. 1 bit = 0.693 nat.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{surprise} = -\ln p, \qquad H(p) = -\sum_i p_i \ln p_i, \qquad \mathrm{CE}(\mathbf{y}, \hat{\mathbf{y}}) = -\sum_c y_c \ln \hat{y}_c = -\ln \hat{y}_{\text{correct}}"></div>
+  <div class="calc">
+    <p class="h">Example ①: the entropy of a coin</p>
+    <div class="eq" data-tex="H(0.5) = -(0.5 \ln 0.5 + 0.5 \ln 0.5) = 0.693\ \text{nat} = 1\ \text{bit}, \qquad H(0.9) = 0.325, \qquad H(0.99) = 0.056"></div>
+    <div class="mean"><b>→ Meaning.</b> A fair coin is the hardest to predict (maximum entropy). A coin that lands heads 99% of the time is almost never surprising (0.056).</div>
+    <p class="h">Example ②: two models' cross-entropy when the answer is "dog"</p>
+    <p class="goal">Goal: the answer is y = (0, 1, 0) (cat, dog, bird). Because it is one-hot, only −ln of the right answer's entry is left.</p>
+    <div class="eq" data-tex="\hat{\mathbf{y}}_A = (0.2,\ 0.7,\ 0.1): \ \mathrm{CE} = -\ln 0.7 = 0.357, \qquad \hat{\mathbf{y}}_B = (0.6,\ 0.3,\ 0.1): \ \mathrm{CE} = -\ln 0.3 = 1.204"></div>
+    <div class="mean"><b>→ Meaning.</b> Model A gives the right answer 0.7, so its loss is small; model B gives it only 0.3, so its loss is more than three times larger. Probability 1 on the right answer gives a loss of 0. Training adjusts the weights to push this number down. PyTorch's nn.CrossEntropyLoss does exactly this calculation (softmax + −ln).</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul>
+        <li><b>Left</b>: the entropy H(p) of a coin against its probability of heads p. Highest in the middle (0.5).</li>
+        <li><b>Right</b>: cross-entropy −ln q against the probability q that the model gave the right answer. As q approaches 0 the loss explodes.</li>
+      </ul>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Set q to 0.7 (model A in the example): 0.357. Set q to 0.3 (model B): 1.204.</li>
+        <li>Set q to 0.01: loss 4.6. Being confidently wrong is punished very hard.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>coin p <input type="range" id="i7p" min="0.01" max="0.99" step="0.01" value="0.9"><output id="o7p"></output></label>
+      <label>right-answer prob. q <input type="range" id="i7q" min="0.01" max="1" step="0.01" value="0.7"><output id="o7q"></output></label>
+    </div>
+    <canvas id="cv7" aria-label="Coin entropy curve and cross-entropy curve −ln q"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Entropy = average surprise (−ln p). Cross-entropy = −ln of the probability the model gave the right answer. Classification models minimize it as their loss.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Argmax"><span class="no">8</span>Min/max and argmin/argmax: value and position</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>A model outputs probabilities (0.2, 0.7, 0.1). How is the final answer, "dog", chosen?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>max, min</dt><dd>The largest value, the smallest value.</dd>
+    <dt>argmax, argmin</dt><dd><b>argument of the maximum / minimum</b>. The <b>position (index)</b> where the largest (smallest) value sits.</dd>
+    <dt>index</dt><dd>A position number. Python counts from 0.</dd>
+  </dl></div>
+  <div class="calc">
+    <p class="h">Example: scores v = (2.0, 3.5, 1.2) (cat, dog, bird)</p>
+    <div class="eq" data-tex="\max(\mathbf{v}) = 3.5, \quad \operatorname{argmax}(\mathbf{v}) = 1, \qquad \min(\mathbf{v}) = 1.2, \quad \operatorname{argmin}(\mathbf{v}) = 2"></div>
+    <div class="mean"><b>→ Meaning.</b> max says "how much"; argmax says "where". In classification the answer is the argmax: index 1 (the second entry, counting from 0) = "dog". Softmax never changes the order, so the argmax of the scores equals the argmax of the probabilities; if you only need the answer you can skip softmax and take the argmax of the scores directly. Gradient descent in chapter 2 is the search for the argmin of the loss (the weights that make the loss smallest).</div>
+  </div>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 252" role="img" aria-label="Left: in the score bars, max is the height of the tallest bar, 3.5, and argmax is its position, 1. Right: on the loss curve, min is the lowest loss and argmin is the weight where it happens, 2" style="font-family: var(--sans);">
+      <defs><marker id="m8-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ok)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Classification: value (max) and position (argmax)</text>
+      <path d="M60 50V190H340" fill="none" stroke="var(--muted)"/>
+      <rect x="85" y="118" width="50" height="72" fill="var(--sig)" opacity="0.35"/>
+      <rect x="175" y="64" width="50" height="126" fill="var(--sig)"/>
+      <rect x="265" y="146.8" width="50" height="43.2" fill="var(--sig)" opacity="0.35"/>
+      <g font-size="11.5" text-anchor="middle" fill="var(--ink)" style="font-family: var(--mono);"><text x="110" y="112">2.0</text><text x="200" y="58">3.5</text><text x="290" y="141">1.2</text></g>
+      <path d="M60 64H175" stroke="var(--fa)" stroke-dasharray="4 3"/>
+      <text x="232" y="74" font-size="12" font-weight="700" fill="var(--fa)">max = 3.5: how much</text>
+      <g font-size="11" text-anchor="middle" fill="var(--muted)"><text x="110" y="207">index 0</text><text x="200" y="207" font-weight="700" fill="var(--sig)">index 1</text><text x="290" y="207">index 2</text><text x="110" y="223">cat</text><text x="200" y="223" font-weight="700" fill="var(--sig)">dog</text><text x="290" y="223">bird</text></g>
+      <text x="200" y="244" font-size="12" font-weight="700" text-anchor="middle" fill="var(--sig)">argmax = 1: where → the answer is "dog"</text>
+      <text x="410" y="22" font-size="13" font-weight="600" fill="var(--ink)">Learning: the weight with the smallest loss (argmin)</text>
+      <path d="M440 50V190H760" fill="none" stroke="var(--muted)"/>
+      <text x="446" y="56" font-size="11" fill="var(--muted)">loss</text>
+      <text x="760" y="207" font-size="11" text-anchor="end" fill="var(--muted)">weight w</text>
+      <path d="M440 121.6Q590 247.6 740 58.6" fill="none" stroke="var(--sig)" stroke-width="2.4"/>
+      <path d="M560 172V190M440 172H560" stroke="var(--fa)" stroke-dasharray="4 3"/>
+      <circle cx="560" cy="172" r="5.5" fill="var(--fa)"/>
+      <text x="446" y="166" font-size="11.5" font-weight="700" fill="var(--fa)">min = 0.5</text>
+      <text x="560" y="207" font-size="12" font-weight="700" text-anchor="middle" fill="var(--fa)">argmin = 2</text>
+      <text x="560" y="223" font-size="11" text-anchor="middle" fill="var(--muted)">(the w where loss is smallest)</text>
+      <circle cx="680" cy="121.6" r="5" fill="var(--ok)"/>
+      <path d="M674 128L630 152" fill="none" stroke="var(--ok)" stroke-width="1.8" marker-end="url(#m8-arrow)"/>
+      <text x="575" y="74" font-size="11.5" font-weight="600" text-anchor="middle" fill="var(--ok)">Chapter 2: follow the slope down</text>
+      <text x="575" y="90" font-size="11.5" font-weight="600" text-anchor="middle" fill="var(--ok)">to find the argmin</text>
+    </svg>
+  </div>
+  <p class="key"><b>One line to remember.</b> max = the largest value, argmax = where it sits. The answer of a classifier is an argmax; the goal of training is the argmin of the loss.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Mean, variance, SD"><span class="no">9</span>Mean, variance, standard deviation: center and spread</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>You train a model five times and get a slightly different accuracy each time. How do you say "typically how much" and "how much it wobbles" with two numbers?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>x̄, μ</dt><dd><b>mean</b>. x̄ = the mean of the data you have; μ = the true mean of the whole population.</dd>
+    <dt>variance, σ²</dt><dd>The average of the squared distances from the mean.</dd>
+    <dt>SD, σ</dt><dd><b>standard deviation</b>. The square root of the variance: the "typical spread" in the data's own units.</dd>
+    <dt>n − 1</dt><dd>The correction of dividing by n − 1 instead of n when the data is a sample (sample variance).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i, \qquad \sigma^2 = \frac{1}{n}\sum_{i=1}^{n} (x_i - \bar{x})^2, \qquad \sigma = \sqrt{\sigma^2}"></div>
+  <div class="calc">
+    <p class="h">Example: x = (2, 4, 4, 4, 5, 5, 7, 9)</p>
+    <div class="eq" data-tex="\bar{x} = \frac{2 + 4 + 4 + 4 + 5 + 5 + 7 + 9}{8} = \frac{40}{8} = 5"></div>
+    <div class="eq" data-tex="\sum (x_i - 5)^2 = 9 + 1 + 1 + 1 + 0 + 0 + 4 + 16 = 32, \qquad \sigma^2 = \frac{32}{8} = 4, \qquad \sigma = 2"></div>
+    <p class="goal">One entry: the first value, 2, is −3 away from the mean 5; squared, that is 9. Squaring keeps distances above and below the mean from cancelling each other out.</p>
+    <div class="mean"><b>→ Meaning.</b> This data is "typically 5, typically spread by about ±2". If the data is only part of the whole (a sample), divide by n − 1 instead: 32 ÷ 7 = 4.571, SD 2.138, slightly larger. NumPy's np.var divides by n by default; PyTorch's torch.var divides by n − 1 by default.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul>
+        <li><b>Top</b>: the 8 data points of the example (x₁ to x₈). The value 4 appears three times, so each point gets its own row to avoid overlap. <span class="sw" style="--k: var(--ok)"></span>Green vertical line = the mean; <span class="sw" style="--k: var(--sig)"></span>horizontal line from each point to the mean = its distance.</li>
+        <li><b>Bottom</b>: each point's squared distance (x − mean)² as a bar. <span class="sw" style="--k: var(--ok)"></span>Green dashed line = the average bar height = the variance.</li>
+      </ul>
+      <p class="tag">CONTROLS</p><dl><dt>Drag a point</dt><dd>Drag a point in the top panel left or right to change its value (steps of 0.5).</dd><dt>Reset values</dt><dd>Go back to the example data.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Drag x₈ (9) to 10: its bar grows from 16 to about 24 and the variance rises from 4 to 5.11. Because of the squaring, one far-away value shakes the variance a lot.</li>
+        <li>Gather all points in one place: every bar vanishes and the variance becomes 0.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button id="b9r">Reset values</button></div>
+    <canvas id="cv9" aria-label="Data points on a number line, the mean line, and squared-distance bars"></canvas>
+    <div class="read" id="r9" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Mean = the center. Variance = the average squared distance from the mean. SD = its square root (the typical spread, in the data's own units).</p>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <h2 data-short="Sampling, seeds"><span class="no">10</span>Random sampling and seeds: reproducing chance</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Deep learning uses randomness everywhere (initial weights, shuffling data, dropout), so results change from run to run. By how much, and how do you get the same result again?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>population, sample</dt><dd>The whole group, and the part of it you drew.</dd>
+    <dt>sampling variability</dt><dd>Numbers such as the mean change every time you draw a new sample.</dd>
+    <dt>SE</dt><dd><b>standard error</b>. How much a sample mean wobbles = σ ÷ √n.</dd>
+    <dt>seed</dt><dd>The starting value of a random-number generator. Same seed, same "random" numbers.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\mathrm{SE} = \frac{\sigma}{\sqrt{n}}: \qquad \sigma = 10,\ n = 10 \Rightarrow 3.16, \qquad n = 100 \Rightarrow 1.0"></div>
+  <div class="mean"><b>→ Meaning.</b> In a group whose test scores have mean 70 and SD 10, the mean of 10 people drawn at random typically wobbles by about ±3.2. With 100 people it shrinks to ±1. You need 100 times more people to cut the wobble to 1/10 (√100 = 10).</div>
+  <div class="codebox"><pre><code>import numpy as np, torch
+np.random.seed(42); print(np.random.rand(3))   # [0.3745 0.9507 0.732 ]
+np.random.seed(42); print(np.random.rand(3))   # the same again: [0.3745 0.9507 0.732 ]
+torch.manual_seed(42)                          # PyTorch has its own seed</code></pre></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul>
+        <li><b>Left</b>, grey = the population: how test scores (mean 70, SD 10) are spread.</li>
+        <li><b>Right</b>, blue = a histogram of the means of many samples of n people. Red curve = the shape theory predicts (centered at 70, width SE).</li>
+      </ul>
+      <p class="tag">CONTROLS</p>
+      <dl><dt>n</dt><dd>How many people go into one sample.</dd><dt>Draw buttons</dt><dd>Draw one sample, or 1,000, and pile up their means.</dd><dt>seed</dt><dd>Draw one sample with this seed. The same seed always gives the same sample.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>n = 10, draw 1,000: the means pile up around 70 ± 3. With n = 100 the pile is about a third as wide.</li>
+        <li>Draw twice with seed 42: identical numbers. Change the seed to 43 and they differ. This page's generator is not NumPy's, so seed 42 here does not give NumPy's numbers.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g10n"><span>n</span><button data-v="5" aria-pressed="false">5</button><button data-v="10" aria-pressed="true">10</button><button data-v="100" aria-pressed="false">100</button></div>
+      <button id="b10one">Draw 1</button><button id="b10many">Draw 1,000</button><button id="b10clear">Clear</button>
+      <label>seed <input type="number" id="i10seed" value="42" min="0" step="1"></label><button id="b10seed">Draw with this seed</button>
+    </div>
+    <canvas id="cv10" aria-label="Population curve and histogram of sample means"></canvas>
+    <div class="read" id="r10" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Random results wobble from draw to draw, and a mean wobbles by σ ÷ √n. To get the same result again, fix the seed.</p>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <h2 data-short="t-test"><span class="no">11</span>The t-test: is the difference real?</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Model A averaged 0.82 accuracy and model B 0.85, five training runs each. Is B really better, or is it luck?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>t</dt><dd><b>t statistic</b>. The difference in means ÷ the wobble of that difference (SE). "Signal ÷ noise".</dd>
+    <dt>df</dt><dd><b>degrees of freedom</b>. A number set by the amount of data; it decides the shape of the t distribution.</dd>
+    <dt>p-value</dt><dd>The chance of getting a t this large by luck alone if the true difference were 0. Below 0.05 is usually read as "hard to explain by chance".</dd>
+    <dt>Welch</dt><dd>Named after <b>Bernard L. Welch</b>. A t-test that works even when the two groups have different spreads.</dd>
+  </dl></div>
+  <div class="eq" data-tex="t = \frac{\bar{x}_B - \bar{x}_A}{\sqrt{\dfrac{s_A^2}{n_A} + \dfrac{s_B^2}{n_B}}}"></div>
+  <div class="calc">
+    <p class="h">Example: A = (0.81, 0.83, 0.80, 0.82, 0.84), B = (0.84, 0.86, 0.83, 0.85, 0.87)</p>
+    <p class="goal">① Means: A 0.82, B 0.85, difference 0.03. ② Each group's SD (dividing by n − 1) is 0.0158.</p>
+    <div class="eq" data-tex="\mathrm{SE}_{\text{diff}} = \sqrt{\frac{0.0158^2}{5} + \frac{0.0158^2}{5}} = \sqrt{0.00005 + 0.00005} = 0.01, \qquad t = \frac{0.03}{0.01} = 3.0"></div>
+    <div class="eq" data-tex="df = 8, \qquad p = 0.017"></div>
+    <div class="mean"><b>→ Meaning.</b> The difference (0.03) is three times its wobble (0.01), which is hard to explain by luck (p = 0.017 &lt; 0.05). The same 0.03 difference with a wobble of 0.03 would give t = 1 and could easily be luck. That is why models are compared over several runs with different seeds, looking at both the mean and the wobble.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li><span class="sw" style="--k: var(--miss)"></span>Orange dots = the accuracy of each run of model A, <span class="sw" style="--k: var(--sig)"></span>blue dots = model B. Thick vertical line = the mean, horizontal bar = mean ± SE.</li></ul>
+      <p class="tag">CONTROLS</p>
+      <dl><dt>True difference</dt><dd>How much better B really is (this is a simulation, so you can set it).</dd><dt>Noise SD</dt><dd>How much each run wobbles.</dd><dt>n</dt><dd>Runs per model (number of seeds).</dd><dt>Redraw</dt><dd>Run the experiment again with the same settings. The starting screen shows the example's numbers.</dd><dt>Repeat 200×</dt><dd>Run 200 new experiments with the current settings and count how often p &lt; 0.05.</dd></dl>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>True difference 0.03, noise 0.016, n = 5, redraw a few times: t is usually around 2–4 and p is often below 0.05. Repeating 200 times gives p &lt; 0.05 about 70% of the time.</li>
+        <li>Raise the noise to 0.04: the same difference now often gives p above 0.05 (only about 16% of 200 repeats are below). With a large wobble the difference is hard to trust.</li>
+        <li>Put the noise back to 0.016 and set n to 10: about 98% give p &lt; 0.05. More runs catch a real difference more reliably.</li>
+        <li>Set the true difference to 0 and repeat 200 times: about 5% (1 in 20) still give p &lt; 0.05. That is being "significant by chance" when there is no difference at all.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>true difference <input type="range" id="i11d" min="0" max="0.05" step="0.005" value="0.03"><output id="o11d"></output></label>
+      <label>noise SD <input type="range" id="i11s" min="0.005" max="0.04" step="0.001" value="0.016"><output id="o11s"></output></label>
+      <label>n <input type="range" id="i11n" min="3" max="30" step="1" value="5"><output id="o11n"></output></label>
+      <button id="b11">Redraw</button><button id="b11many">Repeat 200×</button>
+    </div>
+    <canvas id="cv11" aria-label="Per-run accuracy of two models with their means, and the t-test result"></canvas>
+    <div class="read" id="r11" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> t = difference in means ÷ the wobble of that difference. When the signal is well above the noise (p &lt; 0.05), luck is a poor explanation. Compare models over several seeds.</p>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <h2 data-short="Python, NumPy, PyTorch"><span class="no">12</span>First steps in Python, NumPy and PyTorch</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How are the calculations above written in code? What do NumPy and PyTorch have in common, and how do they differ?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>NumPy</dt><dd><b>Numerical Python</b>. A library for calculating with arrays of numbers. Runs on the CPU.</dd>
+    <dt>PyTorch</dt><dd>A deep-learning library. Almost the same tensor calculations as NumPy, plus GPUs and automatic differentiation (autograd).</dd>
+    <dt>GPU</dt><dd><b>Graphics Processing Unit</b>. Hardware that runs thousands of identical calculations at the same time.</dd>
+    <dt>autograd</dt><dd><b>automatic differentiation</b>. Records the steps of a calculation and computes the derivatives (gradients) automatically.</dd>
+    <dt>broadcasting</dt><dd>The rule that stretches size-1 axes so that arrays of different shapes can be combined.</dd>
+    <dt>Colab</dt><dd><b>Google Colaboratory</b>. A browser notebook that runs Python, and a GPU, with nothing to install.</dd>
+  </dl></div>
+  <div class="idea">
+    <ul>
+      <li>A Python list is not built for arithmetic: [1, 2, 3] * 2 = [1, 2, 3, 1, 2, 3] (repetition). A NumPy array does arithmetic: np.array([1, 2, 3]) * 2 = [2, 4, 6].</li>
+      <li>A PyTorch tensor is used almost exactly like a NumPy array, with two extras: ① .to("cuda") moves it to the GPU; ② requires_grad=True makes PyTorch compute derivatives automatically.</li>
+      <li>Starting in Google Colab means nothing to install.</li>
+    </ul>
+  </div>
+  <div class="row2">
+    <div class="codebox"><pre><code># NumPy: this chapter's calculations
+import numpy as np
+A = np.array([[1, 2, 3], [4, 5, 6]])
+B = np.array([[1, 0], [0, 1], [1, 1]])
+print(A.shape, A.T.shape)        # (2, 3) (3, 2)
+print(np.array([2, 1]) @ np.array([1, 3]))   # 5
+print(A @ B)                     # [[ 4  5] [10 11]]
+
+z = np.array([2.0, 1.0, 0.0])
+p = np.exp(z) / np.exp(z).sum()  # softmax
+print(p.round(3))                # [0.665 0.245 0.09 ]
+print(-np.log(0.7))              # 0.357 (cross-entropy)
+x = np.array([2, 4, 4, 4, 5, 5, 7, 9])
+print(x.mean(), x.var(), x.std())  # 5.0 4.0 2.0</code></pre></div>
+    <div class="codebox"><pre><code># PyTorch: the same, plus GPU and autograd
+import torch
+A = torch.tensor([[1., 2., 3.], [4., 5., 6.]])
+B = torch.tensor([[1., 0.], [0., 1.], [1., 1.]])
+print(A.shape)                   # torch.Size([2, 3])
+print((A @ B).tolist())          # [[4.0, 5.0], [10.0, 11.0]]
+print(torch.softmax(torch.tensor([2., 1., 0.]), dim=0))
+# tensor([0.6652, 0.2447, 0.0900])
+
+x = torch.tensor(3.0, requires_grad=True)
+y = x ** 2
+y.backward()                     # computes dy/dx automatically
+print(x.grad)                    # tensor(6.)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+A = A.to(device)                 # to the GPU if there is one</code></pre></div>
+  </div>
+  <div class="tbl"><table>
+    <caption>NumPy and PyTorch names side by side</caption>
+    <thead><tr><th>task</th><th>NumPy</th><th>PyTorch</th></tr></thead>
+    <tbody>
+      <tr><td>create</td><td>np.array([...])</td><td>torch.tensor([...])</td></tr>
+      <tr><td>shape</td><td>a.shape</td><td>t.shape (or t.size())</td></tr>
+      <tr><td>transpose</td><td>a.T</td><td>t.T</td></tr>
+      <tr><td>matrix product</td><td>a @ b</td><td>t @ u</td></tr>
+      <tr><td>mean, variance</td><td>a.mean(), a.var() (divides by n)</td><td>t.mean(), t.var() (divides by n − 1)</td></tr>
+      <tr><td>random seed</td><td>np.random.seed(42)</td><td>torch.manual_seed(42)</td></tr>
+      <tr><td>convert</td><td>np.asarray(t.cpu())</td><td>torch.from_numpy(a)</td></tr>
+    </tbody>
+  </table></div>
+  <h3 id="s12b" data-short="Broadcasting">Broadcasting: arithmetic on different shapes</h3>
+  <div class="idea"><p>Pair up the axes starting from the right (the last axis). Each pair works if the two sizes are equal or one of them is 1; the side with 1 is copied to stretch. If the sizes differ and neither is 1, you get an error.</p></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try"><li>Click the three cases in turn. Faded cells = the copies made by stretching a size-1 axis. The last case breaks the rule and gives an error.</li></ol>
+    </div>
+    <div class="ctl"><div class="seg" id="g12"><span>case</span><button data-v="0" aria-pressed="true">(3, 1) + (1, 4)</button><button data-v="1" aria-pressed="false">(3, 4) + (4,)</button><button data-v="2" aria-pressed="false">(2, 3) + (3, 2)</button></div></div>
+    <div class="mats" id="t12"></div>
+    <div class="read" id="r12" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> NumPy = arithmetic on arrays; PyTorch = the same plus GPUs and autograd. When shapes differ, check the broadcasting rule (equal, or 1).</p>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <h2 data-short="Derivatives"><span class="no">13</span>A first taste of derivatives: the slope is "how much it changes"</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Learning means nudging the weights in the direction that lowers the loss. How do we know which direction, and by how much? The derivative (slope) is the answer. Chapter 2 covers it properly; here we just get a feel for it.</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>dy/dx, f′(x)</dt><dd><b>derivative</b>. How fast y changes when x changes by a tiny amount = the slope at that point.</dd>
+    <dt>h</dt><dd>The small amount by which x is changed.</dd>
+    <dt>gradient</dt><dd>When there are several variables, the vector that collects all their derivatives.</dd>
+  </dl></div>
+  <div class="eq" data-tex="f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}, \qquad f(x) = x^2 \;\Rightarrow\; f'(x) = 2x"></div>
+  <div class="calc">
+    <p class="h">Example: the slope of f(x) = x² at x = 3</p>
+    <div class="eq" data-tex="\frac{f(3.001) - f(3)}{0.001} = \frac{9.006001 - 9}{0.001} = 6.001 \;\approx\; f'(3) = 2 \times 3 = 6"></div>
+    <div class="mean"><b>→ Meaning.</b> At x = 3, nudging x up makes y grow about 6 times as much. The slope is positive, so to make y smaller we must make x smaller. That is all gradient descent (chapter 2) is: "take a small step against the slope". The x.grad = 6 that PyTorch computed automatically in section 12 is this same number.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>Curve = y = x². <span class="sw" style="--k: var(--ok)"></span>Green line = the tangent at x (slope 2x). <span class="sw" style="--k: var(--miss)"></span>Orange line = the secant through x and x + h. As h shrinks, the orange line snaps onto the green one.</li></ul>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>x = 3, h = 2: secant slope 8, far from the true 6. Shrink h to 0.01 and it becomes 6.01.</li>
+        <li>Set x to 0: slope 0. The bottom of the curve, the minimum of the loss (its argmin), is where the slope is 0.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>x <input type="range" id="i13x" min="-1" max="4" step="0.1" value="3"><output id="o13x"></output></label>
+      <label>h <input type="range" id="i13h" min="0.01" max="2" step="0.01" value="2"><output id="o13h"></output></label>
+    </div>
+    <canvas id="cv13" aria-label="Curve y = x squared with its tangent and secant lines"></canvas>
+    <div class="read" id="r13" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Derivative = the rate of change under a tiny nudge = the slope. Stepping against the slope makes the value smaller. Training does this for millions of weights at once.</p>
+</section>
+
+<!-- 14 -->
+<section id="s14">
+  <h2 data-short="Summary, dictionary"><span class="no">14</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>This chapter in one line per section</caption>
+    <thead><tr><th>section</th><th>one line</th><th>example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 tensor</td><td>all data is a bundle of numbers; shape = count per axis</td><td>(32, 3, 224, 224) = 4,816,896 numbers</td></tr>
+      <tr><td>2 transpose</td><td>swap rows and columns</td><td>(2 × 3) → (3 × 2)</td></tr>
+      <tr><td>3 dot product</td><td>multiply matching entries and add = how aligned two vectors are</td><td>(2, 1)·(1, 3) = 5, 45°</td></tr>
+      <tr><td>4 matrix product</td><td>dot products as a table; inner sizes must match</td><td>[[4, 5], [10, 11]]</td></tr>
+      <tr><td>5 softmax</td><td>scores → probabilities that add to 1</td><td>(2, 1, 0) → (0.665, 0.245, 0.090)</td></tr>
+      <tr><td>6 log</td><td>products into sums; small probabilities stay safe</td><td>200 × ln 0.01 = −921</td></tr>
+      <tr><td>7 cross-entropy</td><td>−ln of the probability on the right answer = classification loss</td><td>−ln 0.7 = 0.357</td></tr>
+      <tr><td>8 argmax</td><td>position of the largest value = the classifier's answer</td><td>argmax(2.0, 3.5, 1.2) = 1</td></tr>
+      <tr><td>9 mean, variance</td><td>center and spread</td><td>mean 5, variance 4, SD 2</td></tr>
+      <tr><td>10 sampling</td><td>a mean wobbles by σ/√n; a seed makes it repeatable</td><td>10/√10 = 3.16</td></tr>
+      <tr><td>11 t-test</td><td>difference ÷ wobble</td><td>t = 3.0, p = 0.017</td></tr>
+      <tr><td>12 code</td><td>NumPy ≈ PyTorch; PyTorch adds GPUs and autograd</td><td>x.grad = 6</td></tr>
+      <tr><td>13 derivative</td><td>step against the slope to go down</td><td>(x²)′ = 6 at x = 3</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 2, Gradient descent) uses these tools to show how a model learns; chapter 3 joins neurons into a network. Every example number was checked in NumPy, SciPy and PyTorch with <code>tools/ch01_numbers.py</code>.</p>
+  <h3 id="s14b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>term</th><th>full name</th><th>plain meaning</th><th class="num">section</th></tr></thead>
+    <tbody>
+      <tr><td><b>argmax, argmin</b></td><td>argument of the maximum / minimum</td><td>The index where the largest (smallest) value sits.</td><td class="num">8</td></tr>
+      <tr><td><b>autograd</b></td><td>automatic differentiation</td><td>Records a calculation and computes its gradients automatically.</td><td class="num">12</td></tr>
+      <tr><td><b>broadcasting</b></td><td>–</td><td>Stretching size-1 axes so shapes fit.</td><td class="num">12</td></tr>
+      <tr><td><b>CE</b></td><td>cross-entropy</td><td>−ln(probability on the right answer). The classification loss.</td><td class="num">7</td></tr>
+      <tr><td><b>Colab</b></td><td>Google Colaboratory</td><td>A browser notebook with Python and a GPU.</td><td class="num">12</td></tr>
+      <tr><td><b>df</b></td><td>degrees of freedom</td><td>The number that sets the shape of the t distribution.</td><td class="num">11</td></tr>
+      <tr><td><b>e, exp</b></td><td>Euler's number, exponential</td><td>e ≈ 2.718. eˣ grows 2.718 times per +1 in x.</td><td class="num">5, 6</td></tr>
+      <tr><td><b>GPU</b></td><td>Graphics Processing Unit</td><td>Hardware that runs thousands of identical calculations at once.</td><td class="num">1, 12</td></tr>
+      <tr><td><b>H(p)</b></td><td>entropy</td><td>The average surprise (−ln p).</td><td class="num">7</td></tr>
+      <tr><td><b>ln</b></td><td>natural logarithm</td><td>What power of e gives x. The reverse of exp.</td><td class="num">6</td></tr>
+      <tr><td><b>logit</b></td><td>–</td><td>A score before softmax.</td><td class="num">5</td></tr>
+      <tr><td><b>nat, bit</b></td><td>natural unit, binary digit</td><td>Units of information: ln gives nats, log₂ gives bits. 1 bit = 0.693 nat.</td><td class="num">7</td></tr>
+      <tr><td><b>NumPy</b></td><td>Numerical Python</td><td>A library for arithmetic on arrays.</td><td class="num">12</td></tr>
+      <tr><td><b>one-hot</b></td><td>–</td><td>A vector with one 1 and 0 everywhere else.</td><td class="num">1</td></tr>
+      <tr><td><b>pixel</b></td><td>picture element</td><td>One dot of a picture.</td><td class="num">1</td></tr>
+      <tr><td><b>p-value</b></td><td>probability value</td><td>The chance of a t this large by luck if the true difference were 0.</td><td class="num">11</td></tr>
+      <tr><td><b>SD, σ</b></td><td>standard deviation</td><td>The square root of the variance; the typical spread.</td><td class="num">9</td></tr>
+      <tr><td><b>SE</b></td><td>standard error</td><td>How much a mean wobbles = σ/√n.</td><td class="num">10, 11</td></tr>
+      <tr><td><b>seed</b></td><td>random seed</td><td>The starting value of a random generator. Same seed, same result.</td><td class="num">10</td></tr>
+      <tr><td><b>shape</b></td><td>–</td><td>The number of entries along each axis.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>softmax</b></td><td>–</td><td>Turns scores into probabilities that add to 1.</td><td class="num">5</td></tr>
+      <tr><td><b>T</b></td><td>temperature</td><td>The number scores are divided by before softmax.</td><td class="num">5</td></tr>
+      <tr><td><b>t</b></td><td>t statistic</td><td>The difference in means ÷ its wobble.</td><td class="num">11</td></tr>
+      <tr><td><b>tensor</b></td><td>–</td><td>A bundle of numbers laid out along several axes.</td><td class="num">1</td></tr>
+      <tr><td><b>w, b</b></td><td>weight, bias</td><td>The numbers a neuron multiplies by, and the number it adds.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>Welch</b></td><td>after Bernard L. Welch</td><td>A t-test that allows the two groups to have different spreads.</td><td class="num">11</td></tr>
+      <tr><td><b>x̄, μ, σ²</b></td><td>sample mean, population mean, variance</td><td>Symbols for center and spread.</td><td class="num">9</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="ch01.js"></script>
+</body>
+</html>

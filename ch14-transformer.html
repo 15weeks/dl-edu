@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 14 · Transformer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="14" data-base="ch14-transformer">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 14</p>
+  <h1>Transformer</h1>
+  <p class="topic">Attention, ViT, LLMs</p>
+  <p class="lead">Instead of passing memory along one step at a time (chapter 13), every position looks at every position directly. Starting from attention, where query, key and value decide "where to look", on to the Transformer block, the ViT that reads pictures as patches, and LLMs that predict the next token. With the real attention and probabilities of GPT-2 small.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: attention, Q K V, multi-head, position, block, mask, ViT, LLM" style="font-family: var(--sans);">
+      <defs><marker id="m14-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="var(--surface)" stroke="var(--line)"><rect x="18" y="74" width="20" height="14"/><rect x="42" y="74" width="20" height="14"/><rect x="66" y="74" width="20" height="14"/><rect x="90" y="74" width="20" height="14"/></g><path d="M100 72Q64 36 28 72" fill="none" stroke="var(--miss)" stroke-width="3"/><path d="M100 72Q76 52 52 72" fill="none" stroke="var(--miss)" stroke-width="1.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Where to look</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="68" y="64" font-size="13" text-anchor="middle" fill="var(--ink)" font-family="var(--mono)">softmax(QKᵀ)V</text><g fill="var(--miss)"><rect x="40" y="72" width="12" height="12" opacity="0.8"/><rect x="54" y="72" width="12" height="12" opacity="0.25"/><rect x="68" y="72" width="12" height="12" opacity="0.4"/><rect x="82" y="72" width="12" height="12" opacity="0.1"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Q, K, V</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 2–3</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M20 66Q28 50 36 66T52 66T68 66T84 66T100 66T116 66" fill="none" stroke="var(--sig)" stroke-width="1.8"/><path d="M20 76Q44 60 68 76T116 76" fill="none" stroke="var(--fa)" stroke-width="1.8"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Position encoding</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><rect x="34" y="46" width="68" height="16" rx="3" fill="var(--surface)" stroke="var(--miss)"/><text x="68" y="58" font-size="9.5" text-anchor="middle" fill="var(--miss)">attention</text><rect x="34" y="68" width="68" height="16" rx="3" fill="var(--surface)" stroke="var(--sig)"/><text x="68" y="80" font-size="9.5" text-anchor="middle" fill="var(--sig)">FFN</text><path d="M28 90V44M28 44H32M28 66H32" stroke="var(--ok)" stroke-width="1.6" fill="none"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Transformer block</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 5–6</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sigwash)" stroke="var(--sig)"><rect x="38" y="46" width="14" height="14"/><rect x="54" y="46" width="14" height="14"/><rect x="70" y="46" width="14" height="14"/><rect x="38" y="62" width="14" height="14"/><rect x="54" y="62" width="14" height="14" fill="var(--wash)" stroke="var(--miss)"/><rect x="70" y="62" width="14" height="14"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ ViT: patches</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">section 7</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m14-arrow)"/><path d="M304 85H318" marker-end="url(#m14-arrow)"/><path d="M456 85H470" marker-end="url(#m14-arrow)"/><path d="M608 85H622" marker-end="url(#m14-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">LLMs: stack blocks and train on "guess the next token" at enormous scale (real probabilities from GPT-2 small)</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 8</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Where to look"><span class="no">1</span>The idea of attention: where to look</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>To know what "it" refers to, which word of the sentence should be looked at? Can it be looked at directly, without passing step by step as in chapter 13?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <label>layer <input type="range" id="i1l" min="1" max="12" step="1" value="5"><output id="o1l"></output></label>
+      <label>head <input type="range" id="i1h" min="1" max="12" step="1" value="4"><output id="o1h"></output></label>
+    </div>
+    <canvas id="cv1" aria-label="Click a word to see how much it attends to the words before it"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULT: the head in GPT-2 small (12 layers × 12 heads) where "it" looks at "animal" the most</p>
+    <div class="eq" data-tex="\text{layer 5, head 4}: \; a(\text{it} \to \text{animal}) = \Cg{0.846}"></div>
+    <div class="mean"><b>→ Meaning.</b> Each word sets a share of "how much to look" at every earlier word (summing to 1) and mixes in information by those shares. However far away, it looks in one go. Other heads look at entirely different things (layer and head sliders).</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Attention = each word decides how much to look at the other words and mixes their information. In one go, regardless of distance.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Q, K, V"><span class="no">2</span>Query, key, value and scaled dot-product attention</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How are the "how much to look" shares calculated?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>Q (query)</dt><dd>What I am looking for (the "question").</dd>
+    <dt>K (key)</dt><dd>Each token's label. A large dot product with Q means a good match.</dd>
+    <dt>V (value)</dt><dd>The content actually taken.</dd>
+    <dt>d_k</dt><dd>Length of the Q and K vectors.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{Attention}(\Cb{Q}, \Cv{K}, \Cg{V}) = \Co{\operatorname{softmax}}\!\left( \frac{\Cb{Q} \Cv{K}^{\top}}{\sqrt{d_k}} \right) \Cg{V}"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 3 tokens, d_k = 2</p>
+    <div class="eq" data-tex="\Cb{Q} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \end{bmatrix}, \; \Cv{K} = \begin{bmatrix} 2 & 0 \\ 0 & 2 \\ 1 & 1 \end{bmatrix}, \; \Cg{V} = \begin{bmatrix} 10 & 0 \\ 0 & 10 \\ 5 & 5 \end{bmatrix}"></div>
+    <p>Row 1 only: scores → divide by √2 → softmax → mix the values.</p>
+    <div class="eq" data-tex="\begin{aligned} q_1 K^{\top} &= (2,\ 0,\ 1) \;\to\; \div\sqrt{2} = (1.414,\ 0,\ 0.707) \;\to\; \operatorname{softmax} = (\Co{0.576},\ 0.140,\ 0.284) \\ o_1 &= 0.576 \cdot (10, 0) + 0.140 \cdot (0, 10) + 0.284 \cdot (5, 5) = (\Cg{7.18},\ \Cg{2.82}) \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> Token 1's question (1, 0) matches key (2, 0) best, so it takes the most (57.6%) of token 1's value. The output is a weighted average of the values.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b2step">Next step</button></div>
+    <canvas id="cv2" aria-label="Q Kᵀ, division by √d, softmax and multiplication by V, with shapes"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> softmax(QKᵀ/√d_k)V: dot products of questions and labels → shares → a weighted average of contents.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Self, multi-head"><span class="no">3</span>Self-attention and multi-head attention</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Where do Q, K and V come from? How can several kinds of relation (grammar, reference, the previous word) be seen at once?</p></div>
+  <div class="eq" data-tex="\Cb{Q} = X W^{Q}, \; \Cv{K} = X W^{K}, \; \Cg{V} = X W^{V} \qquad \text{MultiHead}(X) = [\text{head}_1, \dots, \text{head}_h] \, W^{O}"></div>
+  <p class="say">In words: Q, K and V are made from the same sentence X with three sets of weights (self). Split d into h pieces, run attention separately in each head, and join the results. GPT-2 small: d = 768 and 12 heads → 64 per head.</p>
+  <div class="stage">
+    <div class="ctl">
+      <label>layer <input type="range" id="i3l" min="1" max="12" step="1" value="5"><output id="o3l"></output></label>
+      <label>head <input type="range" id="i3h" min="1" max="12" step="1" value="12"><output id="o3h"></output></label>
+      <button type="button" id="b3prev">Previous-token head</button>
+      <button type="button" id="b3it">"it" head</button>
+      <button type="button" id="b3first">First-token head</button>
+    </div>
+    <canvas id="cv3" aria-label="The attention table of one head"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULTS: GPT-2 small, the same sentence, out of 144 heads</p>
+    <div class="eq" data-tex="\text{layer 5, head 12}: \text{the previous token gets } \Cg{99.9\%} \qquad \text{mean of all 144}: \Co{64.4\%} \text{ on the first token}"></div>
+    <div class="mean"><b>→ Meaning.</b> Each head has its own job: one looks only at the previous word, another finds what a word refers to. Many heads park their attention on the first token when there is nothing relevant to look at (attention sink): not a rule anyone set, but a habit that emerged in training.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Self-attention = Q, K and V from the same X. Multi-head = several viewpoints seen separately and joined.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Position encoding"><span class="no">4</span>Positional encoding</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Attention does not know order (shuffle the words and the shares are the same). How is position given to it?</p></div>
+  <div class="eq" data-tex="PE(\Cb{pos}, 2i) = \sin\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad PE(\Cb{pos}, 2i{+}1) = \cos\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad x_{\text{in}} = e_{\text{token}} + PE(pos)"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: position 1, the first two dimensions (i = 0)</p>
+    <div class="eq" data-tex="PE(1, 0) = \sin(1) = 0.8415, \qquad PE(1, 1) = \cos(1) = 0.5403"></div>
+    <div class="mean"><b>→ Meaning.</b> Waves of different speeds in different dimensions add up to a unique pattern for every position (like a clock's second, minute and hour hands). GPT-2 learns a vector per position instead of using this formula, yet nearby positions still end up similar (positions 10 and 11: 0.998; 10 and 40: 0.64).</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>position pos <input type="range" id="i4p" min="0" max="63" step="1" value="10"><output id="o4p"></output></label></div>
+    <canvas id="cv4" aria-label="Positional-encoding waves"></canvas>
+    <canvas id="cv4b" aria-label="Similarity of the chosen position with others: sinusoidal and GPT-2's learned positions"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Positional encoding = add a position pattern to each token vector. Formula or learned, nearby positions are similar.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Transformer block"><span class="no">5</span>The Transformer block: attention + FFN + residual + layer norm</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Is attention alone the whole story? What is inside one layer of a real Transformer?</p></div>
+  <div class="stage">
+    <svg viewBox="0 0 680 210" role="img" aria-label="Transformer block: layer norm, attention, add, layer norm, FFN, add" style="font-family: var(--sans); width: 100%; height: auto;">
+      <defs><marker id="m14-a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="20" y="108" font-size="13" font-weight="700" fill="var(--ink)">x</text>
+      <path d="M34 104H70" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="72" y="88" width="70" height="32" rx="6" fill="var(--surface)" stroke="var(--line)"/><text x="107" y="108" font-size="11.5" text-anchor="middle" fill="var(--ink)">LayerNorm</text>
+      <path d="M142 104H162" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="164" y="84" width="110" height="40" rx="6" fill="var(--wash)" stroke="var(--miss)"/><text x="219" y="102" font-size="12" text-anchor="middle" fill="var(--miss)" font-weight="700">multi-head</text><text x="219" y="117" font-size="12" text-anchor="middle" fill="var(--miss)" font-weight="700">attention</text>
+      <path d="M274 104H296" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <circle cx="306" cy="104" r="10" fill="var(--surface)" stroke="var(--ok)" stroke-width="1.6"/><text x="306" y="109" font-size="15" text-anchor="middle" fill="var(--ok)">+</text>
+      <path d="M52 104V50H306V92" fill="none" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#m14-a5)"/><text x="180" y="44" font-size="11" text-anchor="middle" fill="var(--ok)">residual (chapter 12)</text>
+      <path d="M316 104H344" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="346" y="88" width="70" height="32" rx="6" fill="var(--surface)" stroke="var(--line)"/><text x="381" y="108" font-size="11.5" text-anchor="middle" fill="var(--ink)">LayerNorm</text>
+      <path d="M416 104H436" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <rect x="438" y="84" width="110" height="40" rx="6" fill="var(--sigwash)" stroke="var(--sig)"/><text x="493" y="102" font-size="12" text-anchor="middle" fill="var(--sig)" font-weight="700">FFN</text><text x="493" y="117" font-size="10.5" text-anchor="middle" fill="var(--sig)">d → 4d → d (ch. 8)</text>
+      <path d="M548 104H570" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/>
+      <circle cx="580" cy="104" r="10" fill="var(--surface)" stroke="var(--ok)" stroke-width="1.6"/><text x="580" y="109" font-size="15" text-anchor="middle" fill="var(--ok)">+</text>
+      <path d="M330 104V160H580V116" fill="none" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#m14-a5)"/>
+      <path d="M590 104H630" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#m14-a5)"/><text x="640" y="108" font-size="13" font-weight="700" fill="var(--ink)">x′</text>
+      <text x="340" y="196" font-size="11.5" text-anchor="middle" fill="var(--muted)">attention = mix information between tokens, FFN = process each token on its own. Stack this block N times</text>
+    </svg>
+  </div>
+  <div class="eq" data-tex="x \leftarrow x + \Co{\text{MHA}}(\text{LN}(x)), \qquad x \leftarrow x + \Cb{\text{FFN}}(\text{LN}(x))"></div>
+  <div class="tbl"><table>
+    <caption>Parameters of one block (d 64, 4 heads, FFN 256; counted with <code>nn.TransformerEncoderLayer</code>)</caption>
+    <thead><tr><th>Part</th><th>Calculation</th><th class="num">Parameters</th></tr></thead>
+    <tbody>
+      <tr><td>attention (W^Q, W^K, W^V, W^O)</td><td>4 · 64 · 64 + 4 · 64</td><td class="num">16,640</td></tr>
+      <tr><td>FFN (64 → 256 → 64)</td><td>64 · 256 + 256 + 256 · 64 + 64</td><td class="num">33,088</td></tr>
+      <tr><td>2 LayerNorms</td><td>2 · (64 + 64)</td><td class="num">256</td></tr>
+      <tr><td><b>Total</b></td><td></td><td class="num"><b>49,984</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> Transformer block = (LN → attention → add) + (LN → FFN → add). Two thirds of the parameters are in the FFN.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Encoder, decoder, mask"><span class="no">6</span>Encoder, decoder and masking</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When writing text, the model must not see words it has not written yet. How is that prevented?</p></div>
+  <div class="eq" data-tex="\text{mask}_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases} \qquad A = \operatorname{softmax}\!\left( \frac{QK^{\top}}{\sqrt{d_k}} + \text{mask} \right) \quad (e^{-\infty} = 0)"></div>
+  <div class="stage">
+    <div class="ctl"><div class="seg" id="g6m"><span>causal mask</span><button type="button" data-v="on" aria-pressed="true">on</button><button type="button" data-v="off" aria-pressed="false">off</button></div></div>
+    <canvas id="cv6" aria-label="Scores and softmax with the mask on and off"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Structure</th><th>Mask</th><th>Examples</th><th>Good at</th></tr></thead>
+    <tbody>
+      <tr><td>encoder only</td><td>none (everyone sees everyone)</td><td>BERT, ViT</td><td>understanding, classifying</td></tr>
+      <tr><td>decoder only</td><td>causal (only the past)</td><td>GPT, most LLMs</td><td>writing text</td></tr>
+      <tr><td>encoder + decoder</td><td>causal in the decoder + cross-attention to the encoder output</td><td>the original Transformer (2017, translation), T5</td><td>translation, summarising</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>One line to remember.</b> Causal mask = set future cells to −∞ → 0 after softmax. Encoders see everything; decoders see only the past.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="ViT"><span class="no">7</span>Vision Transformer (ViT): images as patches</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can a picture also be cut into tokens like a sentence and fed to a Transformer?</p></div>
+  <div class="eq" data-tex="\underbrace{28 \times 28}_{\text{picture}} \;\to\; \underbrace{16 \times 49}_{16 \text{ patches of } 7\times7} \;\xrightarrow{\text{Linear}}\; 16 \times 64 \;\to\; [\text{CLS}; \dots] + \text{pos} = 17 \times 64 \;\to\; \text{block} \times 2 \;\to\; \text{CLS} \to 10"></div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b7next">Other digit</button>
+      <div class="seg" id="g7l"><span>layer</span><button type="button" data-v="0" aria-pressed="false">1</button><button type="button" data-v="1" aria-pressed="true">2</button></div>
+      <div class="seg" id="g7h"><span>head</span><button type="button" data-v="0" aria-pressed="true">mean</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">2</button><button type="button" data-v="3" aria-pressed="false">3</button><button type="button" data-v="4" aria-pressed="false">4</button></div>
+    </div>
+    <canvas id="cv7" aria-label="A digit cut into patches and the attention of the CLS token"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULTS: MNIST, 4 epochs, 10,000 test images (PyTorch)</p>
+    <div class="eq" data-tex="\text{ViT (d 64, 2 layers)}: 96.7\%\ (105{,}098 \text{ parameters}) \qquad \text{chapter 11 CNN}: \Cg{98.6\%}\ (11{,}274)"></div>
+    <div class="mean"><b>→ Meaning.</b> On small data the CNN wins: it starts with the assumption "nearby cells, same pattern anywhere", which the ViT has to learn from data as well. With very large data (hundreds of millions of images) ViTs pull ahead of CNNs.</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> ViT = cut a picture into patch tokens and feed them to a Transformer. Classify from the CLS token's output.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="LLM"><span class="no">8</span>LLMs: predicting the next token</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What, in the end, has an LLM like ChatGPT learned?</p></div>
+  <div class="eq" data-tex="p(\Co{x_{t+1}} \mid x_1, \dots, x_t) = \operatorname{softmax}\!\left( \frac{W h_t}{\Cr{T}} \right), \qquad L = -\log p(\text{the true next token})"></div>
+  <ul class="legend"><li class="c-miss"><b>x_{t+1}</b> next token</li><li class="c-fa"><b>T</b> temperature (as in chapter 13, section 5)</li></ul>
+  <div class="stage">
+    <canvas id="cv8b" aria-label="An English and a Korean sentence split into GPT-2 tokens"></canvas>
+  </div>
+  <p class="say">A token is a piece between a character and a word (BPE). GPT-2's token table is mostly English, so each Korean character breaks into 2–3 byte pieces (▢): 11 characters become 24 tokens. LLMs built for Korean use other token tables.</p>
+  <div class="stage">
+    <div class="ctl">
+      <div class="seg" id="g8p"><span>prompt</span><button type="button" data-v="0" aria-pressed="false">France</button><button type="button" data-v="1" aria-pressed="true">cup of</button><button type="button" data-v="2" aria-pressed="false">cat sat</button><button type="button" data-v="3" aria-pressed="false">1, 2, 3, 4,</button></div>
+      <label>temperature T <input type="range" id="i8t" min="0.3" max="2" step="0.05" value="1"><output id="o8t"></output></label>
+    </div>
+    <canvas id="cv8" aria-label="Top 10 next-token probabilities of GPT-2 small"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULTS: GPT-2 small (OpenAI 2019, 124,439,808 parameters, 12 layers × 12 heads, d 768, 50,257 tokens, context 1,024)</p>
+    <div class="eq" data-tex="\text{I drank a cup of} \to \text{coffee } \Cg{27.4\%},\ \text{tea } 15.6\% \qquad \text{The capital of France is} \to \text{the } 8.5\%,\ \text{Paris } \Cr{3.2\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> Small GPT-2 knows grammar but little about the world ("Paris" is 5th). Today's LLMs are the same structure grown thousands of times larger, trained on far more data and polished with human feedback. Appending only the most likely token (greedy) gives: "Deep learning is a very powerful tool for learning about the world around us. It's a tool that can help us".</div>
+  </div>
+  <p class="key"><b>One line to remember.</b> LLM = a causal Transformer trained on "guess the next token" at very large scale. Its output is probabilities; the temperature sets how to pick.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Summary, dictionary"><span class="no">9</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Attention</td><td>decide where to look, then mix</td><td>it → animal 0.846</td></tr>
+      <tr><td>2 Q, K, V</td><td>softmax(QKᵀ/√d)V</td><td>(0.576, 0.140, 0.284)</td></tr>
+      <tr><td>3 Multi-head</td><td>a different relation per head</td><td>previous token 99.9%</td></tr>
+      <tr><td>4 Position</td><td>token + position pattern</td><td>sin 1 = 0.8415</td></tr>
+      <tr><td>5 Block</td><td>attention + FFN, residual, LN</td><td>49,984 (d 64)</td></tr>
+      <tr><td>6 Mask</td><td>the future to −∞</td><td>(0.196, 0.804)</td></tr>
+      <tr><td>7 ViT</td><td>patches as tokens</td><td>96.7% vs CNN 98.6%</td></tr>
+      <tr><td>8 LLM</td><td>guess the next token</td><td>coffee 27.4%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 15, GAN & Diffusion) looks at generative models that make pictures. The numbers were computed with <code>tools/ch14_numbers.py</code> (PyTorch) and <code>tools/ch14_gpt2.py</code> (Hugging Face transformers, GPT-2 small, MIT license). For a longer walkthrough see the "Attention and Transformer walkthrough" artifact in the left menu.</p>
+  <h3 id="s9b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>BERT</b></td><td>Bidirectional Encoder Representations from Transformers</td><td>An encoder-only Transformer (sees both sides).</td><td class="num">6</td></tr>
+      <tr><td><b>BPE</b></td><td>byte-pair encoding</td><td>Building a token table by merging pieces that often appear together.</td><td class="num">8</td></tr>
+      <tr><td><b>CLS</b></td><td>classification token</td><td>A token put in front to gather a summary of everything.</td><td class="num">7</td></tr>
+      <tr><td><b>FFN</b></td><td>feed-forward network</td><td>A small MLP applied to each token separately (chapter 8).</td><td class="num">5</td></tr>
+      <tr><td><b>GPT</b></td><td>generative pre-trained transformer</td><td>A decoder-only Transformer that predicts the next token.</td><td class="num">8</td></tr>
+      <tr><td><b>LLM</b></td><td>large language model</td><td>A very large GPT-style model.</td><td class="num">8</td></tr>
+      <tr><td><b>LN</b></td><td>layer normalization</td><td>Scaling each token's vector to mean 0, variance 1 (chapter 6).</td><td class="num">5</td></tr>
+      <tr><td><b>MHA</b></td><td>multi-head attention</td><td>The attention of several heads joined together.</td><td class="num">3, 5</td></tr>
+      <tr><td><b>PE</b></td><td>positional encoding</td><td>A vector that tells the position.</td><td class="num">4</td></tr>
+      <tr><td><b>Q, K, V</b></td><td>query, key, value</td><td>The three ingredients of attention.</td><td class="num">2</td></tr>
+      <tr><td><b>token</b></td><td>token</td><td>The piece a model reads as one step.</td><td class="num">8</td></tr>
+      <tr><td><b>ViT</b></td><td>Vision Transformer</td><td>A Transformer that reads a picture as patch tokens.</td><td class="num">7</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch14_data.js"></script>
+<script src="ch14.js"></script>
+</body>
+</html>

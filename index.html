@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu · Contents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="0" data-base="index">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CONTENTS</p>
+  <h1>Deep learning, step by step in pictures</h1>
+  <p class="lead">Fifteen study pages on deep learning, written so a first-year university student can follow them. Every chapter runs the same way: a question → the terms you need → the idea → a worked example by hand → a figure you can move yourself → one line to remember. Chapters 1–13 and the GAN part of chapter 15 follow the lecture list of a Udemy deep-learning course; the Transformer chapter (14) and the diffusion part of chapter 15 are written new. Click 한국어 at the top of the left menu for the Korean version.</p>
+  <div class="stage mapstage" id="homeMap"></div>
+</header>
+
+<section id="plan">
+  <h2 data-short="The 15-chapter plan"><span class="no">§</span>The 15-chapter plan</h2>
+  <p class="note">Click a chapter name to see what it covers, its goal, its sections and its interactive figures.</p>
+  <div class="ctl"><button id="toggleAll" type="button">Expand all</button></div>
+  <div class="plan" id="planList"></div>
+</section>
+
+<section id="howto">
+  <h2 data-short="How to use these pages"><span class="no">§</span>How to use these pages</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>To do this</th><th>Do this</th></tr></thead>
+    <tbody>
+      <tr><td>Open a page</td><td>English pages have plain names (<code>index.html</code>, <code>ch01-intro.html</code>); Korean pages end in <code>-KR.html</code>. Double-click to open in Chrome. Formulas and figures work offline; only the font falls back to the system font.</td></tr>
+      <tr><td>Switch language</td><td>The 한국어 / English button at the top of the left menu opens the same page in the other language.</td></tr>
+      <tr><td>Move between chapters and sections</td><td>Use the left menu. The current chapter's sections are listed, and the section you are reading is highlighted. The ☰ button at the top left folds the menu away and remembers that choice.</td></tr>
+      <tr><td>Go to other pages</td><td>The "Other pages" list at the bottom of the left menu. Add one line to <code>DLEDU_LINKS</code> in <code>assets/dl.js</code> and it appears in every chapter.</td></tr>
+      <tr><td>Edit the plan or add a chapter</td><td>Chapter names, topics, sections and figure plans all live in <code>assets/plan.js</code>. For a new chapter, create <code>chNN-name.html</code> (English), <code>chNN-name-KR.html</code> (Korean) and <code>chNN.js</code> (figures, shared by both), then set <code>ready: true</code> in plan.js. Run <code>node tools/plan_to_md.js</code> to regenerate PLAN_KR.md and PLAN_EN.md.</td></tr>
+      <tr><td>Check the example numbers</td><td>Run <code>tools/ch01_numbers.py</code> and <code>tools/ch01_sims.py</code> to recompute every number on the page with NumPy, SciPy and PyTorch.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/home.js"></script>
+</body>
+</html>

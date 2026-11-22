@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 4 · ANN - II</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="4" data-base="ch04-ann-practice">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 4</p>
+  <h1>ANN - II</h1>
+  <p class="topic">Regression, classification, depth and breadth</p>
+  <p class="lead">Chapter 3's network meets real problems: predicting a number (regression), splitting two groups, and telling three kinds of flower apart. Then we use experiments to decide how many layers and how many neurons to use.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: regression, classification and learning rate, why nonlinearity is needed, several classes, depth and breadth" style="font-family: var(--sans);">
+      <defs><marker id="m4-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M28 90L108 48" stroke="var(--sig)" stroke-width="2"/><g fill="var(--miss)"><circle cx="38" cy="80" r="3.2"/><circle cx="50" cy="82" r="3.2"/><circle cx="62" cy="68" r="3.2"/><circle cx="76" cy="66" r="3.2"/><circle cx="88" cy="52" r="3.2"/><circle cx="100" cy="56" r="3.2"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Regression</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">predict a number · section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--sig)"><circle cx="36" cy="60" r="3.5"/><circle cx="46" cy="76" r="3.5"/><circle cx="32" cy="82" r="3.5"/><circle cx="50" cy="56" r="3.5"/></g><g fill="var(--miss)"><rect x="84" y="56" width="7" height="7"/><rect x="94" y="72" width="7" height="7"/><rect x="100" y="54" width="7" height="7"/><rect x="86" y="80" width="7" height="7"/></g><path d="M68 46V94" stroke="var(--ink)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Classes, η</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">sections 2–3</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g stroke="var(--sig)" stroke-width="1.4" fill="none"><path d="M26 50L56 50M26 66L56 66M26 82L56 82"/><path d="M80 50L96 66L112 50M80 66L96 82L112 66M80 82L96 92L112 82"/></g><path d="M60 66H74" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m4-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Why nonlinear?</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">activation · section 4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 46H62V94H26Z" fill="var(--sigwash)"/><path d="M62 46H110V70H62Z" fill="var(--wash)"/><path d="M62 70H110V94H62Z" fill="var(--okwash)"/><path d="M62 46V94M62 70H110" stroke="var(--ink)" stroke-width="1.6"/><circle cx="44" cy="70" r="4" fill="var(--sig)"/><rect x="82" y="54" width="7" height="7" fill="var(--miss)"/><path d="M86 76L91 85H81Z" fill="var(--ok)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Several classes</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">iris, softmax · section 5</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><g fill="var(--surface)" stroke="var(--ink)"><circle cx="24" cy="70" r="4"/><circle cx="44" cy="48" r="4"/><circle cx="44" cy="59" r="4"/><circle cx="44" cy="70" r="4"/><circle cx="44" cy="81" r="4"/><circle cx="44" cy="92" r="4"/><circle cx="64" cy="70" r="4"/><circle cx="78" cy="70" r="4"/><circle cx="90" cy="60" r="4"/><circle cx="90" cy="80" r="4"/><circle cx="102" cy="60" r="4"/><circle cx="102" cy="80" r="4"/><circle cx="114" cy="70" r="4"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Wide vs deep</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">parameter count · section 6</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m4-arrow)"/><path d="M304 85H318" marker-end="url(#m4-arrow)"/><path d="M456 85H470" marker-end="url(#m4-arrow)"/><path d="M608 85H622" marker-end="url(#m4-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="440" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="236" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">PyTorch: Sequential or a class, two ways to write one model</text><text x="236" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 7</text></a>
+      <a href="#s8"><rect x="472" y="150" width="288" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="616" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">Can we understand a trained model?</text><text x="616" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">looking at the weights · section 8</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Regression"><span class="no">1</span>Regression with an ANN: predicting a number</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do we predict a number (a height, a price) instead of a class? Does a small loss mean a good model?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>regression</dt><dd>Predicting a continuous number.</dd>
+    <dt>MSE</dt><dd><b>mean squared error</b>. The mean of (ŷ − y)²; the loss for regression.</dd>
+    <dt>r</dt><dd><b>correlation</b>. How closely ŷ and y move together, from −1 to 1.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Co{\hat y} = \Cb{w}\,x + \Cv{b}, \qquad \text{MSE} = \frac1N\sum_i (\Co{\hat y_i} - y_i)^2, \qquad r = \text{corr}(\Co{\hat y},\, y)"></div>
+  <ul class="legend"><li>no activation on the output (linear), so it can produce any number</li><li><b>MSE</b> size of the errors</li><li><b>r</b> how well the shape matches</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: same x, same noise (0.5), only the slope differs: m = 1 and m = 0</p>
+    <div class="eq" data-tex="m = 1:\ \text{MSE} = 0.247,\ r = 0.88 \qquad\qquad m = 0:\ \text{MSE} = 0.247,\ r = 0.27"></div>
+    <div class="mean"><b>→ Meaning.</b> The MSE is the same, yet with m = 0, x barely explains y. Do not look at the loss alone; look at r (or the picture) too.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li><b>Train</b>: the blue line moves onto the dashed line (the true slope).</li>
+        <li>Set m = 0 and train: the MSE is about the same but r is small.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>true slope m <input type="range" id="i1m" min="-2" max="2" step="0.1" value="1"><output id="o1m"></output></label>
+      <label>noise <input type="range" id="i1s" min="0.1" max="2" step="0.1" value="0.5"><output id="o1s"></output></label>
+      <button type="button" id="b1run">Train</button>
+      <button type="button" id="b1reset">Reset</button>
+    </div>
+    <canvas id="cv1" aria-label="Sixty points, a line being trained, and the MSE at each epoch"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Regression = output a number with no activation and train with MSE. Even when the loss is small, check with r whether the model explains the data.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Two-class classification"><span class="no">2</span>Classifying two groups (qwerties)</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What happens to the accuracy as the two groups move closer together?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>qwerties</dt><dd>The name of a practice dataset in the Udemy course: two clouds of points with different centres.</dd>
+    <dt>accuracy</dt><dd>Number correct ÷ total.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{class} = \begin{cases}1 & \sigma(z) > 0.5\\ 0 & \text{otherwise}\end{cases}, \qquad \text{accuracy} = \frac{\text{number correct}}{\text{total}}"></div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>Lower d: the groups overlap and the orange dot on the right-hand curve drops. Every move of the slider retrains a 2-8-1 network.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>distance d <input type="range" id="i2d" min="0.5" max="6" step="0.5" value="4"><output id="o2d"></output></label>
+    </div>
+    <canvas id="cv2" aria-label="Two groups with the learned boundary, and accuracy against distance"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> When the data overlap, no network reaches 100%. The data set the ceiling on accuracy.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Comparing learning rates"><span class="no">3</span>An experiment comparing learning rates</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What happens when only the learning rate changes? Is one run enough to judge?</p></div>
+  <p class="say">A 2-16-1 network (ReLU) trained for 1000 epochs on the data from section 2 (d = 4). 28 learning rates × 5 seeds were run in advance in PyTorch. Grey dot = one seed, blue line = the mean.</p>
+  <div class="calc">
+    <p class="h">RESULTS</p>
+    <div class="eq" data-tex="\Co{\eta} = 0.001:\ 65\% \qquad \Co{\eta} = 0.01:\ 95\% \qquad \Co{\eta} = 0.1 \sim 2:\ 98\% \qquad \Co{\eta} = 3:\ 96\%"></div>
+    <div class="mean"><b>→ Meaning.</b> Too small and 1000 epochs are not enough to learn. A wide range works well, and very large rates get slightly worse again. Results vary from seed to seed, so run an experiment several times and look at the mean.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>learning rate <input type="range" id="i3lr" min="0" max="27" step="1" value="14"><output id="o3lr"></output></label>
+    </div>
+    <canvas id="cv3" aria-label="Accuracy against learning rate, and the loss curve for the chosen rate"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Sweep the learning rate over a wide range on a log scale, run several seeds, and choose by the mean.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Why nonlinear"><span class="no">4</span>Stacking layers needs a nonlinearity</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If we stack layers without activations, does the network get any smarter?</p></div>
+  <div class="eq" data-tex="\Cb{W_2}\big(\Cg{W_1}\mathbf x + \mathbf b_1\big) + \mathbf b_2 \;=\; \underbrace{(\Cb{W_2}\Cg{W_1})}_{\Co{W}}\,\mathbf x + \underbrace{(\Cb{W_2}\mathbf b_1 + \mathbf b_2)}_{\Co{\mathbf b}}"></div>
+  <p class="say">In words: two linear layers equal one matrix (W = W₂W₁). Stack ten and it is still one. Activations between the layers prevent this.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE</p>
+    <div class="eq" data-tex="\Cb{\begin{bmatrix}0.8 & -0.6\\0.6 & 0.8\end{bmatrix}}\Cg{\begin{bmatrix}1 & 0.5\\-0.5 & 1\end{bmatrix}} = \Co{\begin{bmatrix}1.1 & -0.2\\0.2 & 1.1\end{bmatrix}}, \qquad \mathbf x = (1, 2):\ \text{two layers} = \text{one layer} = (0.86,\ 2.62)"></div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b4play">Multiply them together</button></div>
+    <canvas id="cv4a" aria-label="W2 times W1 computed cell by cell into one matrix"></canvas>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>A grid and three points go through two layers. Left = input, middle = after layer 1, right = after layer 2.</li></ul>
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try"><li>None → ReLU → tanh: with no activation the grid stays straight parallel lines all the way. ReLU folds it, tanh bends it.</li></ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g4act"><span>activation between layers</span><button type="button" data-v="none" aria-pressed="true">None</button><button type="button" data-v="relu" aria-pressed="false">ReLU</button><button type="button" data-v="tanh" aria-pressed="false">tanh</button></div>
+    </div>
+    <canvas id="cv4b" aria-label="A grid changing as it passes through two layers"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Without activations even a deep network is one straight line. A nonlinear activation must fold and bend space for stacking layers to mean anything.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Three classes: iris"><span class="no">5</span>Several classes: three kinds of iris</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With three or more classes, how is the output built?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>iris</dt><dd>Petal and sepal sizes of 150 irises (3 species × 50). A famous practice dataset, in use since 1936.</dd>
+    <dt>softmax</dt><dd>Turns several scores into probabilities that add up to 1 (chapter 1, section 5).</dd>
+    <dt>CE</dt><dd><b>cross-entropy</b>. −ln(probability of the correct class).</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{3 outputs } z_1, z_2, z_3 \;\xrightarrow{\text{softmax}}\; \Co{p_k} = \frac{e^{z_k}}{e^{z_1} + e^{z_2} + e^{z_3}}, \qquad L = -\ln \Co{p_{\text{correct}}}"></div>
+  <ul class="legend"><li>output neurons = number of classes</li><li><b class="c-miss">p</b> one probability per class, sum = 1</li><li>answer = the largest p (argmax)</li></ul>
+  <div class="calc">
+    <p class="h">THE DATA AT A GLANCE (mean petal length and width, cm)</p>
+    <div class="eq" data-tex="\Cb{\text{setosa}}\ (1.46,\ 0.25), \qquad \Co{\text{versicolor}}\ (4.26,\ 1.33), \qquad \Cg{\text{virginica}}\ (5.55,\ 2.03)"></div>
+    <div class="mean"><b>→ Meaning.</b> Setosa sits far away and is easy; versicolor and virginica overlap a little. A 2-8-3 network gets about 96% right.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li><b>Train</b>: the three coloured regions grow.</li>
+        <li>Click the figure to move the +: near a boundary two bars come out similar (the network is unsure).</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b5run">Train</button>
+      <button type="button" id="b5reset">Reset</button>
+    </div>
+    <canvas id="cv5" aria-label="Iris petal length and width, the three class regions, and the softmax probabilities at a chosen point"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> K classes → K outputs + softmax + cross-entropy. The answer is the class with the largest probability.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Depth, breadth, parameters"><span class="no">6</span>Depth and breadth, and counting parameters</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Should we add neurons sideways or stack more layers? How many parameters does that make?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>breadth, width</dt><dd>The number of neurons in one layer.</dd>
+    <dt>depth</dt><dd>The number of hidden layers.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\text{parameters in one layer} = \underbrace{n_{\text{in}} \times n_{\text{out}}}_{\Cb{W}} + \underbrace{n_{\text{out}}}_{\Cv{\mathbf b}}"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 2-16-16-3</p>
+    <div class="eq" data-tex="(2 \times 16 + 16) + (16 \times 16 + 16) + (16 \times 3 + 3) = 48 + 272 + 51 = 371"></div>
+    <div class="mean"><b>→ Meaning.</b> Parameters grow with the square of the width (16×16). Width 32 gives about 4 times as many at the same depth.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>depth <input type="range" id="i6d" min="1" max="5" step="1" value="2"><output id="o6d"></output></label>
+      <label>width <input type="range" id="i6w" min="1" max="32" step="1" value="16"><output id="o6w"></output></label>
+      <div class="seg" id="g6o"><span>outputs</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="3" aria-pressed="true">3</button><button type="button" data-v="10" aria-pressed="false">10</button></div>
+    </div>
+    <canvas id="cv6a" aria-label="Layer sizes and the parameter count of each layer"></canvas>
+    <div class="read" id="r6a" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">HOW TO READ THE FIGURE</p>
+      <ul><li>Spiral data trained with networks of depth 1–5 × width 2–32 (Adam, 1500 epochs, mean of 3 seeds, precomputed in PyTorch). Cell = test accuracy, small number = parameter count. Click a cell to load that network into the counter above.</li></ul>
+    </div>
+    <canvas id="cv6b" aria-label="Grid of test accuracy by depth and width"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> Too narrow (width 2–4) and no depth helps. Once wide enough, depth helps a little. Not "more is better": choose by experiment.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Sequential vs class"><span class="no">7</span>PyTorch: Sequential or a class</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What are the two ways to write the same model (2-16-16-3) in PyTorch?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch.nn as nn
+# 1) Sequential: list the layers in order
+net = nn.Sequential(
+    nn.Linear(2, 16), nn.ReLU(),
+    nn.Linear(16, 16), nn.ReLU(),
+    nn.Linear(16, 3))</code></pre></div>
+    <div class="codebox"><pre><code>import torch, torch.nn as nn
+# 2) a class: write forward yourself
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(2, 16)
+        self.fc2 = nn.Linear(16, 16)
+        self.out = nn.Linear(16, 3)
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.out(x)</code></pre></div>
+  </div>
+  <p class="say">Parameter counts of the two models: 371 and 371 (the same). Sequential is shorter; a class lets you add branches, conditions and several inputs.</p>
+  <p class="key"><b>One line to remember.</b> Straight-line models: Sequential. Branching paths or special calculations: a class.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Can we understand it"><span class="no">8</span>Can we understand a trained model?</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Can we tell "why" section 5's iris network answers as it does by looking at its weights?</p></div>
+  <div class="stage">
+    <canvas id="cv8" aria-label="Diagram and matrices of the trained iris network's weights"></canvas>
+    <div class="read" id="r8" aria-live="polite"></div>
+  </div>
+  <p class="say">Even a small network has 51 weights tangled together; large models have millions to billions. So "what does it look at" is studied separately: looking at a layer's feature maps (chapter 11), latent space (chapter 10), attention maps (chapter 14).</p>
+  <p class="key"><b>One line to remember.</b> Every number is visible, but its meaning cannot be read off directly. Understanding needs its own pictures and experiments.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Summary, dictionary"><span class="no">9</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 Regression</td><td>linear output + MSE; check r too</td><td>MSE 0.247, r 0.88 vs 0.27</td></tr>
+      <tr><td>2 Classification</td><td>overlapping data cap the accuracy</td><td>d = 4: about 98%</td></tr>
+      <tr><td>3 Learning rate</td><td>sweep on a log scale, average seeds</td><td>0.001: 65%, 0.1–2: 98%</td></tr>
+      <tr><td>4 Nonlinearity</td><td>several linear layers = one matrix</td><td>W₂W₁ = [[1.1, −0.2], [0.2, 1.1]]</td></tr>
+      <tr><td>5 Several classes</td><td>K outputs + softmax + CE</td><td>iris about 96%</td></tr>
+      <tr><td>6 Depth, breadth</td><td>per layer n_in × n_out + n_out</td><td>2-16-16-3 = 371</td></tr>
+      <tr><td>7 PyTorch</td><td>Sequential or a class</td><td>371 = 371</td></tr>
+      <tr><td>8 Understanding</td><td>the numbers are visible, the meaning is not</td><td>51 weights</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 5, Overfitting) looks at models that do well on the training data but poorly on new data, and at the fixes. The numbers and precomputed experiments come from <code>tools/ch04_numbers.py</code> (PyTorch).</p>
+  <h3 id="s9b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>accuracy</b></td><td>–</td><td>Number correct ÷ total.</td><td class="num">2</td></tr>
+      <tr><td><b>argmax</b></td><td>argument of the maximum</td><td>The class with the largest probability.</td><td class="num">5</td></tr>
+      <tr><td><b>CE</b></td><td>cross-entropy</td><td>−ln(probability of the correct class).</td><td class="num">5</td></tr>
+      <tr><td><b>depth, width</b></td><td>–</td><td>Number of hidden layers; neurons in one layer.</td><td class="num">6</td></tr>
+      <tr><td><b>iris</b></td><td>Fisher's iris data set</td><td>Sizes of 150 irises from three species.</td><td class="num">5</td></tr>
+      <tr><td><b>MSE</b></td><td>mean squared error</td><td>The loss for regression.</td><td class="num">1</td></tr>
+      <tr><td><b>nn.Module</b></td><td>–</td><td>The base of a PyTorch model class.</td><td class="num">7</td></tr>
+      <tr><td><b>r</b></td><td>Pearson correlation</td><td>How closely two things move together, −1 to 1.</td><td class="num">1</td></tr>
+      <tr><td><b>ReLU</b></td><td>rectified linear unit</td><td>max(0, z): negatives become 0.</td><td class="num">3, 4</td></tr>
+      <tr><td><b>seed</b></td><td>random seed</td><td>The random starting value; vary it and run several times.</td><td class="num">3</td></tr>
+      <tr><td><b>Sequential</b></td><td>nn.Sequential</td><td>A model built by listing layers in order.</td><td class="num">7</td></tr>
+      <tr><td><b>softmax</b></td><td>–</td><td>Scores → probabilities that add up to 1.</td><td class="num">5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch04_data.js"></script>
+<script src="ch04.js"></script>
+</body>
+</html>

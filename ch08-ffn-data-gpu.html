@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Ch. 8 · FFN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="8" data-base="ch08-ffn-data-gpu">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · CHAPTER 8</p>
+  <h1>FFN</h1>
+  <p class="topic">MNIST, handling data, GPUs</p>
+  <p class="lead">We build one FFN end to end on handwritten digits (MNIST). A network actually trained on MNIST lives inside this page, so it answers as soon as you draw a digit. Then we look at what FFNs cannot do, practical data problems (size, imbalance, augmentation), saving models and GPUs.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="Map of this chapter: unrolling a picture, digit classification, scrambling and shifting, universal approximation, handling data" style="font-family: var(--sans);">
+      <defs><marker id="m8-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">Map of this chapter (click a box to jump there)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><rect x="24" y="48" width="36" height="36" fill="var(--wash)" stroke="var(--ink)"/><path d="M34 54V78M48 54C40 54 40 66 48 66S56 78 46 78" fill="none" stroke="var(--ink)" stroke-width="2"/><path d="M64 66H74" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#m8-arrow)"/><rect x="78" y="62" width="36" height="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① Unrolling</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">28×28 → 784 · section 1</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M30 80C32 50 56 50 52 64S30 82 56 82" fill="none" stroke="var(--ink)" stroke-width="2.4"/><g fill="var(--sig)" opacity="0.6"><rect x="70" y="76" width="5" height="8"/><rect x="77" y="80" width="5" height="4"/><rect x="84" y="50" width="5" height="34"/><rect x="91" y="78" width="5" height="6"/><rect x="98" y="80" width="5" height="4"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② Draw a digit</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">MNIST · sections 2–3</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><g fill="var(--ink)"><rect x="26" y="50" width="6" height="6"/><rect x="40" y="64" width="6" height="6"/><rect x="30" y="76" width="6" height="6"/><rect x="48" y="52" width="6" height="6"/><rect x="44" y="80" width="6" height="6"/></g><path d="M74 48V88" stroke="var(--line)"/><path d="M86 52V84M98 52C88 52 88 66 98 66S106 84 92 84" fill="none" stroke="var(--fa)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ Scramble, shift</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">FFN limits · section 4</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M26 80C40 80 42 56 56 56S70 86 84 86S100 52 110 52" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3"/><path d="M26 80H40V58H56V70H70V86H86V60H110" fill="none" stroke="var(--miss)" stroke-width="2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ Imitate anything</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">universal approx. · 5</text></g></a>
+      <a href="#s7"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><circle cx="50" cy="68" r="20" fill="var(--sigwash)" stroke="var(--sig)"/><path d="M50 68L50 48A20 20 0 0 1 58 50Z" fill="var(--miss)"/><g fill="var(--ink)" opacity="0.7"><rect x="80" y="50" width="12" height="12"/><rect x="96" y="56" width="12" height="12" transform="rotate(12 102 62)"/><rect x="84" y="70" width="12" height="12" transform="rotate(-10 90 76)"/></g><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ Handling data</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">size, imbalance · 6–7</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m8-arrow)"/><path d="M304 85H318" marker-end="url(#m8-arrow)"/><path d="M456 85H470" marker-end="url(#m8-arrow)"/><path d="M608 85H622" marker-end="url(#m8-arrow)"/></g>
+      <a href="#s8"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑥ Saving the best model, loading it, moving to a GPU</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 8</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="FFN"><span class="no">1</span>Fully-connected, feedforward networks</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do we feed a picture into chapter 3's network? Lay its 784 numbers out in one line.</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>FFN</dt><dd><b>feedforward network</b>. A network where everything flows forwards. All the networks of chapters 3–7 are FFNs.</dd>
+    <dt>fully-connected</dt><dd>Every value in one layer connects to every neuron in the next. PyTorch's nn.Linear.</dd>
+    <dt>MNIST</dt><dd><b>Modified National Institute of Standards and Technology</b> handwritten digits: 60,000 training and 10,000 test images, 28 × 28.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\underbrace{28 \times 28}_{\text{picture}} \;\to\; \underbrace{\mathbf x \in \mathbb R^{784}}_{\text{one line}}, \qquad \text{layer-1 parameters} = 784 \times n_1 + n_1"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: this chapter's network (2×2 averages give 14 × 14 = 196 inputs)</p>
+    <div class="eq" data-tex="196\text{-}64\text{-}10:\quad (196 \times 64 + 64) + (64 \times 10 + 10) = 12{,}608 + 650 = 13{,}258"></div>
+    <div class="mean"><b>→ Meaning.</b> Once unrolled, the network is no longer told which cell sits next to which. Section 4 shows what that means.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b1play">Unroll / fold</button>
+      <button type="button" id="b1next">Another digit</button>
+    </div>
+    <canvas id="cv1" aria-label="Animation unrolling a 28 × 28 digit picture into a line of 784 cells"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> To feed a picture to an FFN, unroll its pixels into one line. Every input connects to every neuron.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="MNIST classification"><span class="no">2</span>Classifying MNIST digits</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Will the trained network read a digit I draw myself?</p></div>
+  <div class="eq" data-tex="x' = \frac{x}{255}\;(0 \text{ to } 1), \qquad \mathbf h = \text{ReLU}(W_1 \mathbf x + \mathbf b_1), \qquad \Co{\mathbf p} = \text{softmax}(W_2 \mathbf h + \mathbf b_2)"></div>
+  <ul class="legend"><li>pixels 0–255 → 0–1 (normalization, chapter 6)</li><li><b class="c-miss">p</b> probabilities of the 10 digits</li></ul>
+  <div class="calc">
+    <p class="h">RESULT (PyTorch, Adam, 5 epochs)</p>
+    <div class="eq" data-tex="\text{accuracy on 10,000 test images} = \Cg{95.8\%} \quad (\text{unchanged with the 8-bit weights stored in this page})"></div>
+    <div class="mean"><b>→ Meaning.</b> Even a small network (13 thousand parameters) reads handwriting quite well. A drawn digit is resized and centred by its centre of mass, as in MNIST, before it goes in.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li><b>Clear</b>, then draw a digit in the left grid: the middle picture is what the network actually sees, the right is its answer.</li>
+        <li>Draw something halfway between 4 and 9, or 3 and 8: two bars come out similar.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b2clear">Clear</button>
+      <button type="button" id="b2sample">Load a test digit</button>
+    </div>
+    <canvas id="cv2" aria-label="A grid to draw a digit in, the network input, and probability bars"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> MNIST FFN = pixels to 0–1, unroll, 196-64-10, softmax. About 96%.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Weights before, after"><span class="no">3</span>Weights before and after training</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do the weights change with training? What do the hidden neurons look at?</p></div>
+  <div class="calc">
+    <p class="h">STANDARD DEVIATION OF THE LAYER-1 WEIGHTS</p>
+    <div class="eq" data-tex="\text{before training}: 0.041 \;\Rightarrow\; \text{after training}: 0.20"></div>
+    <div class="mean"><b>→ Meaning.</b> They start as small, even random values and spread out as training goes on. Fold one neuron's 196 weights back into 14 × 14 and a pattern appears: "+ where ink should be, − where it should not".</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv3" aria-label="Weight distributions before and after training, and hidden neurons' weight patterns"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> Training turns small random weights into patterns shaped like the digits.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Scrambled, shifted"><span class="no">4</span>Scrambled and shifted MNIST: what an FFN cannot see</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Does an FFN know the "shape" of a digit, or only "which cell"?</p></div>
+  <div class="calc">
+    <p class="h">RESULTS (PyTorch, same network)</p>
+    <div class="eq" data-tex="\text{trained on scrambled pixels}: 95.7\% \;(\text{original } 95.8\%) \qquad \text{shift 1 px}: 92.2\%,\ \ 2\text{ px}: 73.8\%,\ \ 3\text{ px}: 49.1\%"></div>
+    <div class="mean"><b>→ Meaning.</b> People cannot read the scrambled picture, but an FFN learns it just as well, because it never uses which cells are neighbours. That is also why shifting a digit by 2–3 pixels breaks it. CNNs (chapter 11) fix both.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b4next">Another digit</button></div>
+    <canvas id="cv4a" aria-label="An original digit and the same digit with its pixels scrambled"></canvas>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>shift right by <input type="range" id="i4s" min="0" max="6" step="1" value="0"><output id="o4s"></output></label>
+      <button type="button" id="b4bnext">Another digit</button>
+    </div>
+    <canvas id="cv4b" aria-label="A shifted digit, the network's answer, and accuracy against shift"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> An FFN reads "which cell has ink". It knows nothing of neighbours, nor that a shifted shape is the same shape.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Universal approximation"><span class="no">5</span>The universal approximation theorem</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Which functions can an FFN with a single hidden layer imitate?</p></div>
+  <div class="eq" data-tex="f(x) \;\approx\; b + \sum_{i=1}^{\Co{N}} \Cb{v_i}\,\sigma\big(w_i x + c_i\big) \qquad (\text{as close as you like if } \Co{N} \text{ is large enough})"></div>
+  <ul class="legend"><li>one sigmoid = one step</li><li><b class="c-sig">v</b> step height</li><li><b class="c-miss">N</b> number of steps = hidden neurons</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the target curve with N steps (largest error)</p>
+    <div class="eq" data-tex="\Co{N} = 2: 0.49 \qquad \Co{N} = 6: 0.12 \qquad \Co{N} = 12: 0.072 \qquad \Co{N} = 25: 0.010"></div>
+    <div class="mean"><b>→ Meaning.</b> "Can imitate" is only a guarantee that such weights exist, not that training will find them or that they generalise from little data. That is why real networks are deep and structured.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><label>hidden neurons N <input type="range" id="i5n" min="1" max="30" step="1" value="6"><output id="o5n"></output></label></div>
+    <canvas id="cv5" aria-label="Imitating a curve with a sum of N sigmoid steps"></canvas>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> One hidden layer can imitate any continuous function (with enough neurons). That does not make it easy to find.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Dataset, data size"><span class="no">6</span>Dataset and DataLoader; data size and network size</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What frame puts my own data into PyTorch? Do we need more data or a bigger network?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>import torch
+from torch.utils.data import Dataset, DataLoader
+class Digits(Dataset):                       # a frame for my data: only three functions
+    def __init__(self, X, y): self.X, self.y = X, y
+    def __len__(self): return len(self.X)    # how many?
+    def __getitem__(self, i): return self.X[i], self.y[i]   # item number i
+ds = Digits(torch.rand(1000, 196), torch.randint(0, 10, (1000,)))
+dl = DataLoader(ds, batch_size=64, shuffle=True)
+xb, yb = next(iter(dl))
+print(len(ds), len(dl), xb.shape, yb.shape)</code></pre></div>
+    <div class="codebox"><pre><code>1000 16 torch.Size([64, 196]) torch.Size([64])</code></pre></div>
+  </div>
+  <div class="calc">
+    <p class="h">RESULTS: training images × hidden neurons (PyTorch, 3000 steps each)</p>
+    <div class="eq" data-tex="\text{8 hidden}: 78.8\% \to 90.8\% \qquad \text{256 hidden}: 81.6\% \to 96.7\% \qquad (300 \to 60{,}000\text{ images})"></div>
+    <div class="mean"><b>→ Meaning.</b> With little data a bigger network helps little (81.6% vs 78.8%). With lots of data the bigger network makes use of it (96.7% vs 90.8%). Grow them together.</div>
+  </div>
+  <div class="stage">
+    <canvas id="cv6" aria-label="Test accuracy by number of training images and network width"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> Dataset = __len__ + __getitem__. Performance is set by the amount of data and the size of the network together.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Imbalance, augmentation"><span class="no">7</span>Unbalanced data, oversampling and augmentation</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if the data are 95% "normal" and 5% "faulty"? If data are scarce, can we make more?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>recall</dt><dd>The share of the rare class that is found (more in chapter 9).</dd>
+    <dt>oversampling</dt><dd>Repeat the rare class to even out the numbers.</dd>
+    <dt>augmentation</dt><dd>Make new training examples by small shifts, rotations and noise.</dd>
+  </dl></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: 400 points, 5% (20) in the rare class</p>
+    <div class="eq" data-tex="\text{as is}: \text{accuracy } 94.8\%,\ \text{recall } \Cr{0\%} \qquad \text{oversampled}: \text{accuracy } 80.2\%,\ \text{recall } \Cg{95\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> Trained as is, it answers "common" every time and still scores 95%. To catch the rare class, even out the numbers (oversampling) or weight the loss, and look at recall rather than accuracy.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>rare-class share <input type="range" id="i7m" min="5" max="50" step="5" value="5"><output id="o7m"></output></label>
+      <div class="seg" id="g7o"><span>oversampling</span><button type="button" data-v="off" aria-pressed="true">Off</button><button type="button" data-v="on" aria-pressed="false">On</button></div>
+    </div>
+    <canvas id="cv7a" aria-label="Unbalanced data and the learned boundary"></canvas>
+    <div class="read" id="r7" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><button type="button" id="b7aug">Make new ones</button></div>
+    <canvas id="cv7b" aria-label="New training pictures made by altering one digit slightly"></canvas>
+  </div>
+  <p class="key"><b>One line to remember.</b> With unbalanced data accuracy fools you: even out the numbers and watch recall. Short of data, add variations that keep the meaning.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="Saving, GPU"><span class="no">8</span>Saving models, keeping the best one, GPUs</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What do we keep when training ends, and from which epoch? How do we move to a GPU?</p></div>
+  <div class="stage">
+    <canvas id="cv8" aria-label="Training and dev accuracy per epoch and the best epoch"></canvas>
+  </div>
+  <div class="calc">
+    <p class="h">RESULT (1000 training images, deliberately overfitting)</p>
+    <div class="eq" data-tex="\text{epoch 25}: \text{dev } \Cg{88.3\%} \;(\text{best}) \qquad \text{epoch 40}: \text{train } 99.3\%,\ \text{dev } 88.1\%"></div>
+    <div class="mean"><b>→ Meaning.</b> The last epoch is not the best. Save the weights from the moment the dev score peaked (the idea behind early stopping).</div>
+  </div>
+  <div class="codebox"><pre><code>import copy, torch
+best_acc, best_state = 0.0, None
+for epoch in range(40):
+    train_one_epoch(net, opt)                       # train
+    dev_acc = evaluate(net, dev_loader)             # measure on dev (eval mode, chapter 5)
+    if dev_acc > best_acc:
+        best_acc, best_state = dev_acc, copy.deepcopy(net.state_dict())
+torch.save(best_state, "best.pt")                   # save: the weights only (state_dict)
+net.load_state_dict(torch.load("best.pt"))          # load
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+net = net.to(device)                                # model onto the GPU
+xb, yb = xb.to(device), yb.to(device)               # data onto the same device</code></pre></div>
+  <p class="say">A GPU runs thousands of the same calculation (matrix products) at once. The model and the data must sit on the same device, and the only change is two .to(device) lines. Apple chips use "mps".</p>
+  <p class="key"><b>One line to remember.</b> Save the state_dict, keep the one with the best dev score, and put the model and data on the same device.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <h2 data-short="Summary, dictionary"><span class="no">9</span>Summary and dictionary</h2>
+  <div class="tbl"><table>
+    <caption>One line per section</caption>
+    <thead><tr><th>Section</th><th>One line</th><th>Example numbers</th></tr></thead>
+    <tbody>
+      <tr><td>1 FFN</td><td>pixels in one line, all connected</td><td>196-64-10 = 13,258</td></tr>
+      <tr><td>2 MNIST</td><td>0–1 inputs, 10 softmax outputs</td><td>95.8%</td></tr>
+      <tr><td>3 Weights</td><td>random → digit-shaped patterns</td><td>SD 0.041 → 0.20</td></tr>
+      <tr><td>4 Scramble, shift</td><td>an FFN knows neither neighbours nor shifts</td><td>scrambled 95.7%, 3 px shift 49.1%</td></tr>
+      <tr><td>5 UAT</td><td>one hidden layer can imitate anything</td><td>N = 25: error 0.010</td></tr>
+      <tr><td>6 Data size</td><td>grow data and network together</td><td>256 hidden: 81.6% → 96.7%</td></tr>
+      <tr><td>7 Imbalance</td><td>do not trust accuracy; check recall</td><td>5%: recall 0% → 95%</td></tr>
+      <tr><td>8 Saving, GPU</td><td>state_dict of the best dev epoch, .to(device)</td><td>epoch 25: 88.3%</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The next chapter (chapter 9, Metrics & Init) covers what to measure besides accuracy and how to set the starting weights. The MNIST network and experiments were made with <code>tools/ch08_numbers.py</code> (PyTorch). Data: MNIST (LeCun, Cortes, Burges).</p>
+  <h3 id="s9b" data-short="Dictionary">Dictionary of terms</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>augmentation</b></td><td>data augmentation</td><td>Make more training examples by altering them.</td><td class="num">7</td></tr>
+      <tr><td><b>Dataset</b></td><td>torch.utils.data.Dataset</td><td>A frame for data with __len__ and __getitem__.</td><td class="num">6</td></tr>
+      <tr><td><b>device</b></td><td>–</td><td>Where computing happens: cpu, cuda (NVIDIA GPU), mps (Apple).</td><td class="num">8</td></tr>
+      <tr><td><b>early stopping</b></td><td>–</td><td>Stop, or keep the weights, when the dev score peaks.</td><td class="num">8</td></tr>
+      <tr><td><b>FFN</b></td><td>feedforward network</td><td>A fully connected network that flows forwards only.</td><td class="num">1</td></tr>
+      <tr><td><b>GPU</b></td><td>graphics processing unit</td><td>Runs thousands of the same calculation at once.</td><td class="num">8</td></tr>
+      <tr><td><b>MNIST</b></td><td>Modified National Institute of Standards and Technology</td><td>Handwritten digit data, 28 × 28.</td><td class="num">1, 2</td></tr>
+      <tr><td><b>oversampling</b></td><td>–</td><td>Repeat the rare class.</td><td class="num">7</td></tr>
+      <tr><td><b>recall</b></td><td>–</td><td>The share of the rare class that is found.</td><td class="num">7</td></tr>
+      <tr><td><b>state_dict</b></td><td>state dictionary</td><td>A model's set of weights; the unit you save.</td><td class="num">8</td></tr>
+      <tr><td><b>UAT</b></td><td>universal approximation theorem</td><td>One hidden layer can imitate a continuous function.</td><td class="num">5</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch08_data.js"></script>
+<script src="ch08.js"></script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu 13장 · RNN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="13" data-base="ch13-rnn">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · 13장</p>
+  <h1>RNN</h1>
+  <p class="topic">sequence, GRU, LSTM</p>
+  <p class="lead">순서가 있는 data(시계열, 글, 소리)를 한 칸씩 읽으며 "지금까지의 요약" hidden state를 넘겨 가는 network. gate로 기억을 조절하는 GRU·LSTM, 그리고 먼 과거를 잊는 한계까지 (14장 attention의 출발점).</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 214" role="img" aria-label="이 장의 지도: 순서, hidden state, shape, 예측, embedding, gate, 한계" style="font-family: var(--sans);">
+      <defs><marker id="m13-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">이 장의 지도 (상자를 누르면 그 절로)</text>
+      <a href="#s1"><g transform="translate(16,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M24 76Q38 48 52 70T80 66T108 56" fill="none" stroke="var(--sig)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">① 순서가 정보</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">1절</text></g></a>
+      <a href="#s2"><g transform="translate(168,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><g fill="var(--surface)" stroke="var(--sig)"><rect x="22" y="56" width="22" height="22"/><rect x="58" y="56" width="22" height="22"/><rect x="94" y="56" width="22" height="22"/></g><path d="M44 67H58M80 67H94" stroke="var(--ok)" stroke-width="1.6" marker-end="url(#m13-arrow)"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">② hidden state</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">2~3절</text></g></a>
+      <a href="#s4"><g transform="translate(320,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><path d="M22 68Q34 46 46 68T70 68" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="4 3"/><path d="M70 68Q82 46 94 68T116 68" fill="none" stroke="var(--miss)" stroke-width="2.2"/><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">③ 다음 값 예측</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">4절</text></g></a>
+      <a href="#s5"><g transform="translate(472,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="40" y="62" font-size="14" font-weight="700" fill="var(--sig)" font-family="var(--mono)">a e</text><text x="72" y="84" font-size="14" font-weight="700" fill="var(--muted)" font-family="var(--mono)">t s</text><text x="100" y="60" font-size="14" font-weight="700" fill="var(--miss)" font-family="var(--mono)">␣</text><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">④ 글자 embedding</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">5절</text></g></a>
+      <a href="#s6"><g transform="translate(624,0)"><rect y="36" width="136" height="98" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><path d="M24 54H112" stroke="var(--ok)" stroke-width="2.4"/><g fill="var(--surface)" stroke="var(--ok)"><circle cx="46" cy="54" r="7"/><circle cx="68" cy="54" r="7"/><circle cx="90" cy="54" r="7"/></g><text x="46" y="58" font-size="9" text-anchor="middle" fill="var(--ok)">f</text><text x="68" y="58" font-size="9" text-anchor="middle" fill="var(--ok)">i</text><text x="90" y="58" font-size="9" text-anchor="middle" fill="var(--ok)">o</text><text x="68" y="106" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">⑤ GRU, LSTM gate</text><text x="68" y="124" font-size="10.5" text-anchor="middle" fill="var(--sig)">6절</text></g></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M152 85H166" marker-end="url(#m13-arrow)"/><path d="M304 85H318" marker-end="url(#m13-arrow)"/><path d="M456 85H470" marker-end="url(#m13-arrow)"/><path d="M608 85H622" marker-end="url(#m13-arrow)"/></g>
+      <a href="#s7"><rect x="16" y="150" width="744" height="52" rx="8" fill="var(--surface)" stroke="var(--line)"/><text x="388" y="172" font-size="12.5" font-weight="600" text-anchor="middle" fill="var(--ink)">한계: 멀수록 gradient가 사라지고, 한 칸씩이라 느리다 → 14장 attention은 어느 칸이든 바로 본다</text><text x="388" y="190" font-size="10.5" text-anchor="middle" fill="var(--muted)">7절</text></a>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="순서가 정보"><span class="no">1</span>sequence data가 따로 필요한 이유</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>지금까지의 network는 입력의 순서를 신경 썼나? 순서가 바뀌면?</p></div>
+  <div class="stage">
+    <div class="ctl">
+      <button type="button" id="b1shuf">순서 섞기</button>
+      <button type="button" id="b1back">원래대로</button>
+    </div>
+    <canvas id="cv1" aria-label="시계열과 순서를 섞은 것, 값의 분포"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>sequence data</th><th>한 칸</th><th>순서가 하는 일</th></tr></thead>
+    <tbody>
+      <tr><td>시계열 (주가, 센서)</td><td>한 시점의 값</td><td>추세, 주기</td></tr>
+      <tr><td>글</td><td>글자 또는 단어</td><td>"개가 사람을 물었다" ≠ "사람이 개를 물었다"</td></tr>
+      <tr><td>소리, 영상</td><td>짧은 구간, frame</td><td>움직임, 말소리</td></tr>
+    </tbody>
+  </table></div>
+  <p class="say">FFN은 입력 칸 수가 정해져 있고 칸의 자리를 따로 배운다. 길이가 들쭉날쭉하고 "앞에 무엇이 있었나"가 중요한 data에는 한 칸씩 읽으며 기억을 넘기는 구조가 맞다.</p>
+  <p class="key"><b>기억할 한 줄.</b> sequence에서는 값보다 순서에 정보가 있다. 길이도 제각각이다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="hidden state"><span class="no">2</span>RNN의 작동: hidden state가 이어진다</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>"지금까지 읽은 것"을 숫자 몇 개로 들고 다니려면?</p></div>
+  <div class="abbr"><p class="tag">이 절에 나오는 약자</p><dl>
+    <dt>RNN</dt><dd><b>recurrent neural network</b>. 출력 일부(h)를 다음 칸의 입력으로 되돌려 넣는 network.</dd>
+    <dt>hidden state h_t</dt><dd>t번째 칸까지 읽은 것의 요약.</dd>
+  </dl></div>
+  <div class="eq" data-tex="\Co{h_t} = \tanh\!\big( W_x \Cb{x_t} + W_h \Cg{h_{t-1}} + b \big), \qquad y_t = W_y \Co{h_t}"></div>
+  <ul class="legend"><li class="c-sig"><b>x_t</b> 지금 칸의 입력</li><li class="c-ok"><b>h_{t−1}</b> 바로 앞의 요약</li><li class="c-miss"><b>h_t</b> 새 요약</li></ul>
+  <div class="calc">
+    <p class="h">예제: 숫자 하나짜리 RNN, w_x = 0.5, w_h = 0.8, b = 0, 입력 1, 0, 0, 1, h₀ = 0</p>
+    <div class="eq" data-tex="\begin{aligned} h_1 &= \tanh(0.5 \cdot 1 + 0.8 \cdot 0) = \tanh(0.5) = 0.4621 \\ h_2 &= \tanh(0.5 \cdot 0 + 0.8 \cdot 0.4621) = \tanh(0.3697) = 0.3537 \\ h_3 &= \tanh(0.8 \cdot 0.3537) = 0.2757 \\ h_4 &= \tanh(0.5 \cdot 1 + 0.8 \cdot 0.2757) = \tanh(0.7205) = \Co{0.6172} \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 입력이 0인 동안에도 h는 0.46 → 0.35 → 0.28로 첫 1을 조금씩 잊어 가며 들고 간다. 마지막 1이 들어오면 남은 기억 0.28 위에 더해진다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>w_x <input type="range" id="i2x" min="-2" max="2" step="0.05" value="0.5"><output id="o2x"></output></label>
+      <label>w_h <input type="range" id="i2h" min="-1.5" max="1.5" step="0.05" value="0.8"><output id="o2h"></output></label>
+      <button type="button" id="b2step">한 칸</button>
+      <button type="button" id="b2play">처음부터 재생</button>
+    </div>
+    <canvas id="cv2" aria-label="시간 방향으로 펼친 RNN과 칸마다의 hidden state"></canvas>
+    <div class="read" id="r2" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> RNN = 같은 weight로 한 칸씩: h_t = tanh(W_x x_t + W_h h_{t−1}). h가 기억이다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="PyTorch RNN shape"><span class="no">3</span>PyTorch의 RNN class와 shape</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>nn.RNN에 넣는 tensor와 나오는 tensor의 shape는?</p></div>
+  <div class="row2">
+    <div class="codebox"><pre><code>rnn = nn.RNN(input_size=8, hidden_size=16,
+             num_layers=2, batch_first=True)
+x = torch.zeros(3, 5, 8)      # (batch, 길이, 입력)
+y, h_n = rnn(x)
+print(y.shape, h_n.shape)
+for name, p in rnn.named_parameters():
+    print(name, tuple(p.shape))</code></pre></div>
+    <div class="codebox"><pre><code>torch.Size([3, 5, 16]) torch.Size([2, 3, 16])
+weight_ih_l0 (16, 8)
+weight_hh_l0 (16, 16)
+bias_ih_l0 (16,)
+bias_hh_l0 (16,)
+weight_ih_l1 (16, 16)
+weight_hh_l1 (16, 16)
+bias_ih_l1 (16,)
+bias_hh_l1 (16,)</code></pre></div>
+  </div>
+  <div class="stage">
+    <div class="ctl">
+      <label>batch N <input type="range" id="i3N" min="1" max="8" step="1" value="3"><output id="o3N"></output></label>
+      <label>길이 L <input type="range" id="i3L" min="1" max="10" step="1" value="5"><output id="o3L"></output></label>
+      <label>입력 H_in <input type="range" id="i3i" min="1" max="16" step="1" value="8"><output id="o3i"></output></label>
+      <label>hidden H <input type="range" id="i3H" min="1" max="32" step="1" value="16"><output id="o3H"></output></label>
+      <label>층 <input type="range" id="i3n" min="1" max="3" step="1" value="2"><output id="o3n"></output></label>
+    </div>
+    <canvas id="cv3" aria-label="입력, 출력, h_n tensor의 shape"></canvas>
+    <div class="read" id="r3" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> batch_first=True면 입력 (N, L, H_in) → 출력 (N, L, H), h_n (층, N, H).</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="다음 값 예측"><span class="no">4</span>교대 sequence 예측, sine wave 외삽</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>RNN이 무늬를 기억해 다음 값을 맞히고, 배운 적 없는 미래까지 이어 그릴 수 있나?</p></div>
+  <div class="calc">
+    <p class="h">결과 1: 주기 3 무늬 1, 0, 0, 1, 0, 0, … 의 다음 값 (PyTorch)</p>
+    <div class="eq" data-tex="\text{RNN (hidden 4)}: \Cg{100\%} \qquad \text{바로 앞 값만 보는 FFN}: \Cr{67.2\%}"></div>
+    <div class="mean"><b>→ 뜻.</b> 앞 값이 0이면 다음은 0일 수도 1일 수도 있다: 바로 앞만 보면 2/3밖에 못 맞힌다. RNN은 "0이 몇 번 나왔나"를 h에 들고 있어 다 맞힌다.</div>
+  </div>
+  <div class="stage">
+    <div class="ctl"><div class="seg" id="g4h"><span>hidden</span><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">2</button><button type="button" data-v="4" aria-pressed="true">4</button><button type="button" data-v="16" aria-pressed="false">16</button></div></div>
+    <canvas id="cv4" aria-label="sine wave와 RNN이 자기 예측으로 이어 그린 곡선"></canvas>
+    <div class="read" id="r4" aria-live="polite"></div>
+  </div>
+  <div class="calc">
+    <p class="h">결과 2: sin(0.3t)를 200칸으로 학습 → 이어서 150칸을 자기 예측만으로, RMSE</p>
+    <div class="eq" data-tex="\text{hidden } 1: \Cr{0.90} \qquad 2: 0.22 \qquad 4: \Cg{0.19} \qquad 16: 0.21"></div>
+    <div class="mean"><b>→ 뜻.</b> 2개 이상이면 물결을 이어 가지만, 작은 오차가 쌓여 시간이 갈수록 위상이 조금씩 밀린다. 자기 예측을 다시 넣는 생성은 오차가 쌓인다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> RNN은 기억(h)으로 무늬를 잇는다. 자기 예측으로 계속 생성하면 오차가 쌓인다.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="embedding, 글 생성"><span class="no">5</span>hidden state와 embedding</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>글자나 단어는 숫자가 아닌데 어떻게 넣나? 다음 글자를 맞히는 LSTM은 무엇을 배우나?</p></div>
+  <div class="eq" data-tex="\text{글자 } k \;\to\; \Cv{e_k} = E[k] \in \mathbb{R}^{8} \;\to\; \text{LSTM} \;\to\; h_t \;\to\; \operatorname{softmax}(W h_t / \Cr{T}) = \text{다음 글자 확률}"></div>
+  <ul class="legend"><li class="c-vio"><b>E</b> 글자마다 학습되는 8개짜리 벡터 표 (nn.Embedding)</li><li class="c-fa"><b>T</b> 온도: 크면 고르게, 작으면 가장 그럴듯한 것만</li></ul>
+  <div class="stage">
+    <canvas id="cv5" aria-label="글자 embedding의 2D 지도"></canvas>
+    <div class="ctl">
+      <label>온도 T <input type="range" id="i5t" min="0.2" max="1.5" step="0.05" value="0.8"><output id="o5t"></output></label>
+      <button type="button" id="b5gen">다시 만들기</button>
+    </div>
+    <div class="read" id="r5" aria-live="polite"></div>
+  </div>
+  <div class="tbl"><table>
+    <caption>학습하며 만든 글 (Lorem ipsum의 출처인 Cicero 원문 1,848글자로 학습, 온도 0.8)</caption>
+    <thead><tr><th class="num">학습 횟수</th><th class="num">loss</th><th>"l"로 시작해 만든 글</th></tr></thead>
+    <tbody id="t5"></tbody>
+  </table></div>
+  <p class="say">처음에는 아무 글자나, 100번이면 라틴어 같은 새 단어, 300번이면 단어 모양이 거의 맞고, 1,500번이면 원문을 그대로 외워 낸다 (글이 1,848글자뿐이라 overfitting, 5장). embedding 지도에서는 모음(a, e, i, o, u)이 한쪽에 모였다: 아무도 모음을 알려 주지 않았지만, 다음 글자를 맞힐 때 모음끼리 비슷한 자리에 쓰이기 때문이다.</p>
+  <p class="key"><b>기억할 한 줄.</b> embedding = 글자·단어를 학습되는 벡터로 바꾸는 표. 다음 글자 예측만으로 철자와 단어를 배운다.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="GRU, LSTM"><span class="no">6</span>GRU와 LSTM: gate로 기억 조절</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>무엇을 잊고 무엇을 남길지 network가 스스로 정하게 하려면?</p></div>
+  <div class="eq" data-tex="\begin{aligned} \Cr{f_t}, \Cb{i_t}, \Co{o_t} &= \sigma(W [h_{t-1}, x_t] + b) \;\;(\text{gate 셋, 0~1}), \qquad g_t = \tanh(W_g [h_{t-1}, x_t] + b_g) \\ \Cg{c_t} &= \Cr{f_t} \odot \Cg{c_{t-1}} + \Cb{i_t} \odot g_t, \qquad h_t = \Co{o_t} \odot \tanh(\Cg{c_t}) \end{aligned}"></div>
+  <ul class="legend"><li class="c-fa"><b>f</b> forget: 옛 기억을 얼마나 남길지</li><li class="c-sig"><b>i</b> input: 새것을 얼마나 넣을지</li><li class="c-miss"><b>o</b> output: 기억을 얼마나 내보일지</li><li class="c-ok"><b>c</b> cell 상태 (긴 기억)</li></ul>
+  <div class="stage">
+    <div class="ctl">
+      <label>forget f <input type="range" id="i6f" min="0" max="1" step="0.01" value="0.9"><output id="o6f"></output></label>
+      <label>input i <input type="range" id="i6i" min="0" max="1" step="0.01" value="1"><output id="o6i"></output></label>
+      <label>output o <input type="range" id="i6o" min="0" max="1" step="0.01" value="1"><output id="o6o"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="gate 값에 따른 cell 상태와 출력"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <div class="eq" data-tex="\text{GRU}: \; \Cr{z_t} = \sigma(\cdot), \; r_t = \sigma(\cdot), \; \tilde{h}_t = \tanh(W x_t + U (r_t \odot h_{t-1})), \; h_t = (1 - \Cr{z_t}) \odot h_{t-1} + \Cr{z_t} \odot \tilde{h}_t"></div>
+  <div class="tbl"><table>
+    <thead><tr><th>입력 8, hidden 64</th><th>gate 묶음</th><th class="num">parameter</th><th>특징</th></tr></thead>
+    <tbody>
+      <tr><td>RNN</td><td>1</td><td class="num">4,736</td><td>가장 단순, 오래 기억하기 어렵다</td></tr>
+      <tr><td>GRU</td><td>3 (z, r, h̃)</td><td class="num">14,208</td><td>c 없이 h 하나, z가 "남길지 바꿀지"</td></tr>
+      <tr><td>LSTM</td><td>4 (i, f, g, o)</td><td class="num">18,944</td><td>따로 있는 c가 긴 기억 통로</td></tr>
+    </tbody>
+  </table></div>
+  <p class="key"><b>기억할 한 줄.</b> LSTM의 c_t = f·c_{t−1} + i·g: forget이 1에 가까우면 기억과 gradient가 오래 간다. GRU는 더 가벼운 친척.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="한계 → attention"><span class="no">7</span>RNN의 한계 → attention으로</h2>
+  <div class="ask"><p class="tag">알고 싶은 것</p><p>100칸 앞의 입력이 마지막 출력에 얼마나 영향을 주나? 실제로 먼 것을 기억할 수 있나?</p></div>
+  <div class="stage"><canvas id="cv7" aria-label="거리에 따른 gradient 크기: RNN, LSTM, forget bias 3인 LSTM"></canvas></div>
+  <div class="calc">
+    <p class="h">결과 1: hidden 32, 100칸, 학습 전 (PyTorch autograd), 50칸 앞 입력의 gradient</p>
+    <div class="eq" data-tex="\text{RNN}: \Cr{10^{-13}} \qquad \text{LSTM (기본)}: \Cr{10^{-12}} \qquad \text{LSTM, forget bias 3}: \Cg{10^{-2}}"></div>
+    <div class="mean"><b>→ 뜻.</b> 칸마다 0.5배 남짓이 곱해져 멀수록 지수적으로 작아진다 (12장 3절과 같은 이유). forget gate를 1 가까이(bias 3 → σ(3) = 0.95)에서 시작하면 c를 통해 gradient가 거의 그대로 온다.</div>
+  </div>
+  <div class="stage"><canvas id="cv7b" aria-label="첫 글자 기억하기 실험: 거리별 정확도"></canvas></div>
+  <div class="calc">
+    <p class="h">결과 2: 0/1 무작위 sequence의 첫 글자를 T칸 뒤에 맞히기, hidden 16, 2,000번 학습, seed 3개 중 성공</p>
+    <div class="eq" data-tex="T = 40: \text{RNN } 2/3, \quad \text{LSTM (bias 1) } \Cr{0/3}, \quad \text{LSTM (bias 3) } \Cg{3/3} \qquad T = 80: \text{모두 } \Cr{0/3}"></div>
+    <div class="mean"><b>→ 뜻.</b> LSTM이라고 저절로 오래 기억하지는 않는다: 초기값과 학습 시간에 따라 다르다. 80칸이면 이 학습량으로는 셋 다 찍는 수준이다. 게다가 RNN은 한 칸씩 차례로 계산하므로 긴 글은 느리다. 14장의 attention은 모든 칸을 한 번에, 거리에 상관없이 바로 본다.</div>
+  </div>
+  <p class="key"><b>기억할 한 줄.</b> RNN의 기억은 칸마다 곱해지며 옅어진다. gate가 늦출 뿐 없애지는 못한다 → attention.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <h2 data-short="정리, 약자 사전"><span class="no">8</span>정리와 약자 사전</h2>
+  <div class="tbl"><table>
+    <caption>이 장의 한 줄들</caption>
+    <thead><tr><th>절</th><th>한 줄</th><th>예제 숫자</th></tr></thead>
+    <tbody>
+      <tr><td>1 sequence</td><td>순서에 정보가 있다</td><td>–</td></tr>
+      <tr><td>2 RNN</td><td>h_t = tanh(W_x x_t + W_h h_{t−1})</td><td>h₄ = 0.6172</td></tr>
+      <tr><td>3 shape</td><td>(N, L, H_in) → (N, L, H), h_n (층, N, H)</td><td>(3, 5, 16), (2, 3, 16)</td></tr>
+      <tr><td>4 예측</td><td>기억으로 무늬를 잇는다</td><td>주기 3: 100% vs 67%</td></tr>
+      <tr><td>5 embedding</td><td>글자 → 학습되는 벡터</td><td>loss 3.17 → 0.12</td></tr>
+      <tr><td>6 LSTM, GRU</td><td>gate가 기억을 조절</td><td>parameter 4×, 3×</td></tr>
+      <tr><td>7 한계</td><td>멀수록 gradient가 사라진다</td><td>50칸: 10⁻¹³</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">다음 장(14장 Transformer)에서는 attention으로 모든 칸을 한 번에 보는 방법을 다룬다. 숫자는 <code>tools/ch13_numbers.py</code> (PyTorch)로 계산했고, 글 만들기는 같은 LSTM weight(int8)로 browser에서 한다.</p>
+  <h3 id="s8b" data-short="약자 사전">약자 사전</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>약자</th><th>영어 전체 이름</th><th>한글</th><th>쉬운 뜻</th><th class="num">절</th></tr></thead>
+    <tbody>
+      <tr><td><b>BPTT</b></td><td>backpropagation through time</td><td>시간 역전파</td><td>펼친 RNN을 거꾸로 따라가는 backprop.</td><td class="num">7</td></tr>
+      <tr><td><b>embedding</b></td><td>embedding</td><td>임베딩</td><td>글자·단어 번호를 학습되는 벡터로 바꾸는 표.</td><td class="num">5</td></tr>
+      <tr><td><b>gate</b></td><td>gate</td><td>문</td><td>0~1 값으로 얼마나 통과시킬지 정하는 곱.</td><td class="num">6</td></tr>
+      <tr><td><b>GRU</b></td><td>gated recurrent unit</td><td>–</td><td>gate가 둘인 가벼운 RNN.</td><td class="num">6</td></tr>
+      <tr><td><b>h_t</b></td><td>hidden state</td><td>은닉 상태</td><td>지금까지 읽은 것의 요약.</td><td class="num">2</td></tr>
+      <tr><td><b>LSTM</b></td><td>long short-term memory</td><td>장단기 기억</td><td>cell 상태와 gate 셋을 가진 RNN.</td><td class="num">6</td></tr>
+      <tr><td><b>RMSE</b></td><td>root mean squared error</td><td>평균 제곱근 오차</td><td>오차 제곱 평균의 제곱근.</td><td class="num">4</td></tr>
+      <tr><td><b>RNN</b></td><td>recurrent neural network</td><td>순환 신경망</td><td>h를 다음 칸으로 넘기는 network.</td><td class="num">2</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="assets/data/ch13_data.js"></script>
+<script src="ch13.js"></script>
+</body>
+</html>
