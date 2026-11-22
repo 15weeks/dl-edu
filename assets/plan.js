@@ -419,6 +419,36 @@ const DLEDU_PLAN = [
     ],
     udemy: "",
     note: { ko: "diffusion 부분은 Udemy 강의에 없어 새로 쓴다.", en: "The diffusion part is not in the Udemy course and is written new." }
+  },
+  {
+    n: 16, label: "A", file: "appendix-ml-map", ready: true, appendix: true,
+    name: { ko: "ML 지도", en: "ML map" },
+    topic: { ko: "딥러닝 밖의 machine learning 키워드", en: "Machine-learning keywords outside deep learning" },
+    goal: { ko: "machine learning 전체 지도(classic ML, tree와 ensemble, clustering, 압축과 이상 탐지, 강화학습, genetic algorithm)에서 본문에 없는 키워드를 한 줄 뜻, 핵심 식, 숫자 예제, browser에서 학습하는 그림으로 정리한다.", en: "From the whole machine-learning map (classic ML, trees and ensembles, clustering, compression and anomaly detection, reinforcement learning, genetic algorithms), summarise the keywords the chapters do not cover, each with a one-line meaning, a key formula, a numeric example and a figure that trains in the browser." },
+    sections: [
+      ["Classic ML: SVM, k-NN, Naive Bayes, logistic regression", "Classic ML: SVM, k-NN, Naive Bayes, logistic regression"],
+      ["Trees & Ensembles: decision tree, random forest, AdaBoost, gradient boosting, XGBoost", "Trees & Ensembles: decision tree, random forest, AdaBoost, gradient boosting, XGBoost"],
+      ["Clustering: k-means, k-means++, hierarchical, DBSCAN", "Clustering: k-means, k-means++, hierarchical, DBSCAN"],
+      ["Compress & Detect: PCA, t-SNE, isolation forest", "Compress & Detect: PCA, t-SNE, isolation forest"],
+      ["Reinforcement learning: MDP, Q-learning, SARSA, DQN, policy gradient, actor-critic", "Reinforcement learning: MDP, Q-learning, SARSA, DQN, policy gradient, actor-critic"],
+      ["Genetic algorithm: selection, crossover, mutation", "Genetic algorithm: selection, crossover, mutation"],
+      ["한 장 정리와 약자 사전", "One-page summary and dictionary"]
+    ],
+    figures: [
+      ["같은 data에 logistic regression, k-NN, SVM, Naive Bayes의 경계", "Boundaries of logistic regression, k-NN, SVM and Naive Bayes on the same data"],
+      ["decision tree 깊이와 random forest tree 수", "Decision-tree depth and the number of random-forest trees"],
+      ["gradient boosting: round마다 stump를 더하는 model과 MSE", "Gradient boosting: the model after each added stump, and its MSE"],
+      ["k-means, k-means++ 한 step씩, DBSCAN의 ε", "k-means and k-means++ step by step, DBSCAN's ε"],
+      ["hierarchical clustering의 dendrogram과 자르는 높이", "Hierarchical clustering: the dendrogram and the cut height"],
+      ["PCA: 방향을 돌리며 남은 분산", "PCA: variance kept as the direction turns"],
+      ["10차원 data의 PCA와 t-SNE", "PCA and t-SNE of 10-D data"],
+      ["isolation forest: 고른 점을 혼자 남기는 무작위 자르기", "Isolation forest: random cuts that isolate a chosen point"],
+      ["절벽 걷기: Q-learning과 SARSA의 경로와 보상", "Cliff walking: paths and returns of Q-learning and SARSA"],
+      ["팔 3개 bandit의 policy gradient, critic 기준선 있음·없음", "Policy gradient on a 3-armed bandit, with and without a critic baseline"],
+      ["봉우리 셋인 지형의 genetic algorithm", "A genetic algorithm on a three-peak landscape"]
+    ],
+    udemy: "",
+    note: { ko: "machine learning 전체 지도에서 본문에 없는 키워드를 모은 부록.", en: "An appendix collecting the keywords of the whole machine-learning map that the chapters do not cover." }
   }
 ];
 

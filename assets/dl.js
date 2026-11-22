@@ -10,11 +10,9 @@ const pageFile = (base, lang = LANG) => base + (lang === "en" ? ".html" : "-KR.h
 
 /* 다른 사이트 (DLEDU_PLAN의 장 목록은 assets/plan.js에 있다)
    Other sites (the chapter list DLEDU_PLAN lives in assets/plan.js) */
-const DLEDU_LINKS = [
-  { href: "https://claude.ai/artifact/AE77hA5WiMADLaMDH1JR9X", ko: "CNN 따라가기 (artifact)", en: "CNN walkthrough (artifact, Korean)" },
-  { href: "https://claude.ai/artifact/BFo42Kgskf8A8iVjw8UxvF", ko: "Attention·Transformer 따라가기 (artifact)", en: "Attention and Transformer walkthrough (artifact, Korean)" },
-  { href: "https://claude.ai/artifact/1jP4Z11VE2184rdbt7D9cQ", ko: "통계와 노이즈 따라가기 (artifact)", en: "Statistics and noise walkthrough (artifact, Korean)" }
-];
+// 2026-11-22: 예전 claude.ai artifact 3개는 지워졌다 (Drive의 Y:/Teaching/Study-Pages로 옮김). 다른 사이트가 생기면 여기에 넣는다
+// 2026-11-22: the three old claude.ai artifacts were deleted (moved to Y:/Teaching/Study-Pages on Drive). Add other sites here when there are any
+const DLEDU_LINKS = [];
 
 function dleduStore(key, val) {
   try { if (val === undefined) return localStorage.getItem(key); localStorage.setItem(key, val); } catch (e) { return null; }
@@ -31,7 +29,7 @@ function buildSide() {
   h += `<a class="lang" href="${pageFile(base, LANG === "en" ? "ko" : "en")}" hreflang="${LANG === "en" ? "ko" : "en"}">${tr("English", "한국어")}</a>`;
   h += `<h4>${tr("장 (CHAPTERS)", "CHAPTERS")}</h4><ol>`;
   DLEDU_PLAN.forEach(c => {
-    const inner = `<span class="n">${c.n}</span><span>${c.name[LANG]}</span>`;
+    const inner = `<span class="n">${c.label || c.n}</span><span>${c.name[LANG]}</span>`;
     h += `<li${c.n === cur ? ' class="cur"' : ""}>` + (c.ready ? `<a class="ch" href="${pageFile(c.file)}" title="${c.topic[LANG]}">${inner}</a>` : `<span class="ch" title="${c.topic[LANG]} · ${tr("준비 중", "coming soon")}">${inner}</span>`);
     if (c.n === cur) {
       h += `<ul class="secs">`;
@@ -47,7 +45,7 @@ function buildSide() {
     }
     h += `</li>`;
   });
-  h += `</ol><h4>${tr("다른 페이지 (LINKS)", "OTHER PAGES")}</h4><ul class="ext">` + DLEDU_LINKS.map(l => `<li><a href="${l.href}" target="_blank" rel="noopener">${l[LANG]}</a></li>`).join("") + `</ul>`;
+  h += `</ol>` + (DLEDU_LINKS.length ? `<h4>${tr("다른 페이지 (LINKS)", "OTHER PAGES")}</h4><ul class="ext">` + DLEDU_LINKS.map(l => `<li><a href="${l.href}" target="_blank" rel="noopener">${l[LANG]}</a></li>`).join("") + `</ul>` : "");
   side.innerHTML = h;
   document.body.prepend(side);
   const btn = document.createElement("button"); btn.id = "sideToggle"; btn.type = "button"; btn.textContent = "☰";

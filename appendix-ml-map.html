@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DL-Edu Appendix A · ML map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/dl.css">
+</head>
+<body data-chapter="16" data-base="appendix-ml-map">
+<div class="page">
+<main>
+<header class="ch-head">
+  <p class="kicker">DL-EDU · APPENDIX A</p>
+  <h1>ML map</h1>
+  <p class="topic">Machine-learning keywords outside deep learning</p>
+  <p class="lead">A map splits machine learning into seven stages. This appendix collects the keywords from that map that the DL-Edu chapters (3–15) do not cover. Each keyword gets a one-line meaning, a key formula and a small numeric example, and each stage gets at least one figure that trains in the browser.</p>
+  <div class="stage mapstage">
+    <svg viewBox="0 0 780 318" role="img" aria-label="ML map: classic ML, trees and ensembles, clustering, compression and detection, deep learning, reinforcement learning, genetic algorithms. Click a box to jump to its section" style="font-family: var(--sans);">
+      <defs><marker id="ma-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <text x="16" y="22" font-size="13" font-weight="600" fill="var(--ink)">ML map (click a box to jump to its section)</text>
+      <a href="#s1"><rect x="16" y="36" width="176" height="104" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="104" y="58" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Classic ML</text><text x="104" y="80" font-size="11" text-anchor="middle" fill="var(--ink)">SVM · k-NN · Naive Bayes</text><text x="104" y="97" font-size="11" text-anchor="middle" fill="var(--ink)">supervised learning</text><text x="104" y="114" font-size="11" text-anchor="middle" fill="var(--ok)">logistic regression → ch. 3, 4</text><text x="104" y="132" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 1</text></a>
+      <a href="#s2"><rect x="208" y="36" width="176" height="104" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="296" y="58" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Trees &amp; Ensembles</text><text x="296" y="80" font-size="11" text-anchor="middle" fill="var(--ink)">decision tree · random forest</text><text x="296" y="97" font-size="11" text-anchor="middle" fill="var(--ink)">AdaBoost · gradient boosting</text><text x="296" y="114" font-size="11" text-anchor="middle" fill="var(--ink)">XGBoost</text><text x="296" y="132" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 2</text></a>
+      <a href="#s3"><rect x="400" y="36" width="176" height="104" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="488" y="58" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Clustering</text><text x="488" y="80" font-size="11" text-anchor="middle" fill="var(--ink)">k-means · k-means++</text><text x="488" y="97" font-size="11" text-anchor="middle" fill="var(--ink)">hierarchical · DBSCAN</text><text x="488" y="132" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 3</text></a>
+      <a href="#s4"><rect x="592" y="36" width="176" height="104" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="680" y="58" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Compress &amp; Detect</text><text x="680" y="80" font-size="11" text-anchor="middle" fill="var(--ink)">PCA · t-SNE</text><text x="680" y="97" font-size="11" text-anchor="middle" fill="var(--ink)">isolation forest</text><text x="680" y="114" font-size="11" text-anchor="middle" fill="var(--ok)">autoencoder → ch. 10</text><text x="680" y="132" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 4</text></a>
+      <a href="index.html"><rect x="16" y="170" width="368" height="104" rx="8" fill="var(--okwash)" stroke="var(--ok)"/><text x="200" y="192" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Deep Learning = the DL-Edu chapters</text><text x="200" y="214" font-size="11" text-anchor="middle" fill="var(--ink)">ANN ch. 3, 4 · Autoencoder ch. 10 · CNN ch. 11, 12</text><text x="200" y="231" font-size="11" text-anchor="middle" fill="var(--ink)">RNN and LSTM ch. 13 · Transformer ch. 14</text><text x="200" y="248" font-size="11" text-anchor="middle" fill="var(--ink)">GAN and diffusion ch. 15</text><text x="200" y="266" font-size="10.5" text-anchor="middle" fill="var(--muted)">click for the contents</text></a>
+      <a href="#s5"><rect x="400" y="170" width="176" height="104" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="488" y="192" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Reinforcement Learning</text><text x="488" y="214" font-size="11" text-anchor="middle" fill="var(--ink)">MDP · Q-learning · SARSA</text><text x="488" y="231" font-size="11" text-anchor="middle" fill="var(--ink)">DQN · policy gradient</text><text x="488" y="248" font-size="11" text-anchor="middle" fill="var(--ink)">actor-critic</text><text x="488" y="266" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 5</text></a>
+      <a href="#s6"><rect x="592" y="170" width="176" height="104" rx="8" fill="var(--sigwash)" stroke="var(--sig)"/><text x="680" y="192" font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">Genetic Algorithm</text><text x="680" y="214" font-size="11" text-anchor="middle" fill="var(--ink)">selection · crossover</text><text x="680" y="231" font-size="11" text-anchor="middle" fill="var(--ink)">mutation</text><text x="680" y="266" font-size="10.5" text-anchor="middle" fill="var(--muted)">section 6</text></a>
+      <g fill="none" stroke="var(--muted)" stroke-width="1.3"><path d="M192 88H206" marker-end="url(#ma-arrow)"/><path d="M384 88H398" marker-end="url(#ma-arrow)"/><path d="M576 88H590" marker-end="url(#ma-arrow)"/><path d="M680 140V155H200V168" marker-end="url(#ma-arrow)"/><path d="M384 222H398" marker-end="url(#ma-arrow)"/><path d="M576 222H590" marker-end="url(#ma-arrow)"/></g>
+      <text x="390" y="302" font-size="11.3" text-anchor="middle" fill="var(--muted)">Blue = covered in this appendix · green = in the DL-Edu chapters · arrows = a rough learning order</text>
+    </svg>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2 data-short="Classic ML"><span class="no">1</span>Classic ML: splitting with lines, neighbours and probabilities</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Points can be split into two groups without a neural network. What does each method use to draw its boundary?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>supervised learning</dt><dd>Learning x → y from data that carry the correct label y. Chapters 3–9 are all supervised learning.</dd>
+    <dt>SVM</dt><dd>Support vector machine. Picks the boundary with the widest gap (margin) between the two groups.</dd>
+    <dt>k-NN</dt><dd>k-nearest neighbours. A majority vote of the k closest points.</dd>
+    <dt>NB</dt><dd>Naive Bayes. Bayes' rule with the "naive" assumption that features are independent.</dd>
+  </dl></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>In one line</th><th>Key formula</th><th>Link to DL-Edu</th></tr></thead>
+    <tbody>
+      <tr><td><b>supervised learning</b></td><td>Learn x → y from examples with answers</td><td>min Σ L(f(xᵢ), yᵢ)</td><td>All of chapters 3–9</td></tr>
+      <tr><td><b>logistic regression</b></td><td>A linear score turned into a probability by a sigmoid</td><td>p = σ(w·x + b)</td><td>The same as one neuron in chapter 3</td></tr>
+      <tr><td><b>SVM</b></td><td>The widest road between the groups; only points near the boundary (support vectors) set it</td><td>max 2/‖w‖, yᵢ(w·xᵢ + b) ≥ 1</td><td>Hinge loss; kernels give curved boundaries</td></tr>
+      <tr><td><b>k-NN</b></td><td>Majority vote of the k nearest points; no training step</td><td>ŷ = majority(N_k(x))</td><td>Small k overfits (chapter 5)</td></tr>
+      <tr><td><b>Naive Bayes</b></td><td>Multiply each feature's probability per class and compare</td><td>P(y | x) ∝ P(y) Π P(xⱼ | y)</td><td>The classic spam filter</td></tr>
+    </tbody>
+  </table></div>
+  <div class="eq" data-tex="\text{SVM: } \max_{\Cb{w},\,b}\ \frac{2}{\|\Cb{w}\|} \quad \text{subject to}\quad y_i(\Cb{w}\cdot x_i + b) \ge 1 \qquad\qquad \text{NB: } P(\Co{y}\mid x) \propto P(\Co{y}) \prod_j P(x_j \mid \Co{y})"></div>
+  <ul class="legend"><li class="c-sig"><b>w</b> direction normal to the boundary (shorter = wider margin)</li><li class="c-miss"><b>y</b> class (spam / not spam)</li></ul>
+  <p class="say">In words: an SVM "lays the widest road between the two groups". Naive Bayes compares "how likely these words are in spam × how common spam is" with the same product for normal mail.</p>
+  <div class="calc">
+    <p class="h">Example: spam detection with Naive Bayes</p>
+    <p class="goal">40% of mail is spam. The word "free" appears in 50% of spam and 5% of normal mail. What is the chance that a mail containing "free" is spam?</p>
+    <div class="eq" data-tex="\Co{\text{spam}}: 0.4 \times 0.5 = 0.20, \qquad \Cb{\text{normal}}: 0.6 \times 0.05 = 0.03"></div>
+    <div class="eq" data-tex="P(\Co{\text{spam}} \mid \text{free}) = \frac{0.20}{0.20 + 0.03} = \Cg{0.870}"></div>
+    <div class="mean"><b>→ Meaning.</b> One word moves the chance from 40% to 87%. With more words, each word's probability is multiplied in (that is why independence is assumed).</div>
+    <p class="goal">SVM: with w = (1, 1) and b = −3, the point (2, 2) gives w·x + b = 1, so it sits on the margin: a support vector. The road width is 2/‖w‖ = 2/√2 = 1.414.</p>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li><b>Blobs</b>: all four methods reach similar test accuracy. One straight line is enough for this data.</li>
+        <li><b>Moons</b>: logistic regression and the SVM draw straight lines and Naive Bayes draws an ellipse, so they stop at 88–89% test accuracy. Only k-NN follows the curved boundary and reaches 100%.</li>
+        <li>k-NN on the blobs with k = 1: 100% on training but 84% on test, with a ragged boundary (overfitting). With k = 7 the test accuracy is 92%. For the SVM, the black rings are the support vectors.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g1m"><span>method</span><button type="button" data-v="logit" aria-pressed="true">logistic regression</button><button type="button" data-v="knn" aria-pressed="false">k-NN</button><button type="button" data-v="svm" aria-pressed="false">SVM</button><button type="button" data-v="nb" aria-pressed="false">Naive Bayes</button></div>
+      <div class="seg" id="g1d"><span>data</span><button type="button" data-v="blobs" aria-pressed="true">blobs</button><button type="button" data-v="moons" aria-pressed="false">moons</button></div>
+      <label>k (k-NN) <input type="range" id="i1k" min="1" max="31" step="2" value="7"><output id="o1k"></output></label>
+      <button type="button" id="b1new">New data</button>
+    </div>
+    <canvas id="cv1" aria-label="Two groups of points and the boundary drawn by the chosen method"></canvas>
+    <div class="read" id="r1" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Logistic regression = a probability, SVM = the widest road, k-NN = a neighbour vote, Naive Bayes = multiplied probabilities. The biggest difference is whether the boundary is straight or can bend.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2 data-short="Trees & Ensembles"><span class="no">2</span>Trees &amp; Ensembles: twenty questions, and crowds of them</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What if the data are split by asking one question at a time, such as "is x₁ &lt; 0.3?" And why does a collection of such trees do better?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>CART</dt><dd>Classification and regression tree. The most common way to build a decision tree.</dd>
+    <dt>Gini</dt><dd>Gini impurity. How mixed one node is; 0 when it holds a single class.</dd>
+    <dt>bagging</dt><dd>Bootstrap aggregating. Build many models on resampled data (with replacement) and average them.</dd>
+    <dt>boosting</dt><dd>Add weak models one after another; each fixes where the previous ones were wrong.</dd>
+    <dt>XGBoost</dt><dd>eXtreme Gradient Boosting. A fast gradient-boosting library that uses second derivatives and regularization.</dd>
+  </dl></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>In one line</th><th>Key formula</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>decision tree</b></td><td>Split one cell at a time with axis-parallel questions</td><td>the question that lowers Gini = 1 − Σ p_k² the most</td><td>Easy to read; deep trees overfit</td></tr>
+      <tr><td><b>random forest</b></td><td>Many trees on resampled data with random features, averaged</td><td>p = (1/B) Σ p_b</td><td>Bagging; reduces the wobble (variance)</td></tr>
+      <tr><td><b>AdaBoost</b></td><td>Raise the weight of misclassified points so the next model focuses there</td><td>α = ½ ln((1 − ε)/ε)</td><td>The first boosting method (1995)</td></tr>
+      <tr><td><b>gradient boosting</b></td><td>Keep adding small trees fitted to the remaining error (= −gradient)</td><td>F_m = F_{m−1} + η h_m</td><td>Gradient descent in function space (chapters 2, 7)</td></tr>
+      <tr><td><b>XGBoost</b></td><td>Gradient boosting + second derivatives + a penalty on tree size</td><td>Obj = Σ L + Σ (γT + ½λ‖w‖²)</td><td>The workhorse for tabular data</td></tr>
+    </tbody>
+  </table></div>
+  <div class="eq" data-tex="\text{Gini} = 1 - \sum_k \Cb{p_k}^2 \qquad\qquad F_m(x) = F_{m-1}(x) + \Cg{\eta}\, \Co{h_m}(x), \quad \Co{h_m} \approx y - F_{m-1}(x)"></div>
+  <ul class="legend"><li class="c-sig"><b>p_k</b> share of class k in a node</li><li class="c-ok"><b>η</b> how much is added each round (learning rate)</li><li class="c-miss"><b>h_m</b> the m-th small tree (learns the remaining error)</li></ul>
+  <p class="say">In words: a tree picks the question that lowers the mixing (Gini) the most. Boosting lets the next tree learn "how wrong the current model is" and adds a little of it.</p>
+  <div class="calc">
+    <p class="h">Example ①: the score of one question (Gini)</p>
+    <div class="eq" data-tex="\text{before: } 5/5 \Rightarrow 1 - 0.5^2 - 0.5^2 = 0.50 \qquad \text{after: } (4,1) \text{ and } (1,4) \Rightarrow 1 - 0.8^2 - 0.2^2 = 0.32 \qquad \text{drop } 0.50 - 0.32 = \Cg{0.18}"></div>
+    <div class="mean"><b>→ Meaning.</b> The tree computes this drop for every possible question (axis and cut position) and takes the largest. Then it repeats inside each new cell.</div>
+    <p class="h">Example ②: AdaBoost weights</p>
+    <div class="eq" data-tex="\varepsilon = 0.2 \Rightarrow \alpha = \tfrac12 \ln\frac{0.8}{0.2} = 0.693, \qquad e^{\alpha} = 2 \text{ (wrong points)}, \quad e^{-\alpha} = 0.5 \text{ (correct points)}"></div>
+    <div class="mean"><b>→ Meaning.</b> The 20% that were wrong get twice the weight and the 80% that were right get half. After rescaling to a total of 1, the wrong points hold exactly 50% of the weight, so the next model must pay attention to them.</div>
+    <p class="h">Example ③: one round of gradient boosting</p>
+    <div class="eq" data-tex="y = (3, 5, 10),\ F_0 = 6 \Rightarrow \text{remaining error } (-3, -1, 4),\ \text{MSE } 8.67 \qquad h_1 = (-2, -2, 4),\ \eta = 0.5 \Rightarrow F_1 = (5, 5, 8),\ \text{MSE } \Cg{2.67}"></div>
+    <div class="mean"><b>→ Meaning.</b> The first model is a single mean. The next tree (a stump) learns "lower for the first two, higher for the third", and only η = 0.5 of it is added. This is repeated hundreds of times.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (a) one tree and a forest</p>
+      <ol class="try">
+        <li>Decision tree, depth 1 → 3 → 10: the boundary splits into finer steps. On the starting data the training accuracy climbs from 87.5% to 100%, but the test accuracy stops at 87.5% from depth 5 on.</li>
+        <li>Random forest, depth 10 (20 trees): the boundary becomes smoother and the test accuracy rises to 90%. Change the number of trees from 1 to 60.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g2m"><span>model</span><button type="button" data-v="tree" aria-pressed="true">decision tree</button><button type="button" data-v="forest" aria-pressed="false">random forest</button></div>
+      <label>depth <input type="range" id="i2d" min="1" max="10" step="1" value="3"><output id="o2d"></output></label>
+      <label>trees <input type="range" id="i2n" min="1" max="60" step="1" value="20"><output id="o2n"></output></label>
+      <button type="button" id="b2new">New data</button>
+    </div>
+    <canvas id="cv2a" aria-label="Boundary drawn by a tree or a forest on the moons data"></canvas>
+    <div class="read" id="r2a" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (b) gradient boosting</p>
+      <ol class="try">
+        <li>Round 0 → 1 → 5: steps appear one by one on top of the single mean. The red lines (remaining error) get shorter.</li>
+        <li>η 1.0: fits within a few rounds but also follows the noise. η 0.1: comes down slowly. That is why a small η with many rounds is used in practice.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>round <input type="range" id="i2r" min="0" max="100" step="1" value="10"><output id="o2r"></output></label>
+      <div class="seg" id="g2e"><span>η</span><button type="button" data-v="0.1" aria-pressed="false">0.1</button><button type="button" data-v="0.3" aria-pressed="true">0.3</button><button type="button" data-v="1" aria-pressed="false">1.0</button></div>
+    </div>
+    <canvas id="cv2b" aria-label="A model built by adding stumps to 40 points, and the training MSE per round"></canvas>
+    <div class="read" id="r2b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> Tree = a chain of questions that lower the mixing most. Forest = the average of many trees (less wobble). Boosting = the next tree learns the remaining error and a little of it is added.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2 data-short="Clustering"><span class="no">3</span>Clustering: grouping without answers</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Given points without labels, how do we group nearby points together? And who decides how many groups there are?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>unsupervised learning</dt><dd>Finding structure in data without labels. The chapter 10 autoencoder belongs here too.</dd>
+    <dt>DBSCAN</dt><dd>Density-based spatial clustering of applications with noise. Grows groups along dense regions.</dd>
+    <dt>ε, minPts</dt><dd>DBSCAN's neighbourhood radius, and the number of neighbours a core point needs.</dd>
+    <dt>linkage</dt><dd>How the distance between two groups is measured: single (closest pair), complete (farthest pair), average (mean).</dd>
+  </dl></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>In one line</th><th>Key formula</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>k-means</b></td><td>Repeat "assign to the nearest centre" ↔ "move each centre to its mean"</td><td>J = Σ ‖x − μ_c(x)‖²</td><td>k is fixed in advance; suits round groups</td></tr>
+      <tr><td><b>k-means++</b></td><td>Pick starting centres spread far apart</td><td>P(x) ∝ D(x)²</td><td>Fewer bad starts</td></tr>
+      <tr><td><b>hierarchical</b></td><td>Keep merging the two closest groups into a tree (dendrogram)</td><td>single / complete / average linkage</td><td>The cut height picks the number of groups</td></tr>
+      <tr><td><b>DBSCAN</b></td><td>Groups spread from core points that have at least minPts neighbours within ε</td><td>|N_ε(x)| ≥ minPts</td><td>Any shape; marks noise separately</td></tr>
+    </tbody>
+  </table></div>
+  <div class="eq" data-tex="J = \sum_i \big\| x_i - \Cb{\mu}_{c(i)} \big\|^2 \qquad \text{(1) } c(i) = \arg\min_k \|x_i - \Cb{\mu_k}\| \qquad \text{(2) } \Cb{\mu_k} = \text{mean}\{x_i : c(i) = k\}"></div>
+  <ul class="legend"><li class="c-sig"><b>μ_k</b> centre of group k</li><li><b>c(i)</b> the group of point i</li><li><b>J</b> sum of squared distances from points to their centres</li></ul>
+  <p class="say">In words: both (1) assigning and (2) moving lower J or leave it unchanged, so the loop always stops. There is no guarantee that where it stops is the best answer; it depends on the start.</p>
+  <div class="calc">
+    <p class="h">Example: k-means in 1-D (points 1, 2, 3, 9, 10, 11, starting centres 1 and 4)</p>
+    <div class="eq" data-tex="\text{step 1: } \{1, 2\} \mid \{3, 9, 10, 11\} \Rightarrow \mu = (1.5,\ 8.25),\ J: 112 \to 39.25"></div>
+    <div class="eq" data-tex="\text{step 2: } |3 - 1.5| = 1.5 < |3 - 8.25| = 5.25 \Rightarrow \{1, 2, 3\} \mid \{9, 10, 11\},\ \mu = (2,\ 10),\ J = \Cg{4}"></div>
+    <div class="mean"><b>→ Meaning.</b> The point 3 first joins the starting centre 4, then returns to the left group once the centres move. In step 3 no assignment changes, so the loop ends.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (a) k-means and DBSCAN</p>
+      <ol class="try">
+        <li>Blobs + k-means: press "One step" several times and watch J fall. Restart with "New data" a few times: sometimes one centre swallows two blobs. With k-means++ this is rare.</li>
+        <li>Moons + k-means (k = 2): the two moons are cut in half by a straight line. DBSCAN (ε 0.35–0.5) finds the two moons as they are.</li>
+        <li>DBSCAN with a small ε (0.2): many small groups and lots of noise (grey). From 0.6 up: the two moons join into one group.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <div class="seg" id="g3m"><span>method</span><button type="button" data-v="kmeans" aria-pressed="true">k-means</button><button type="button" data-v="kmpp" aria-pressed="false">k-means++</button><button type="button" data-v="dbscan" aria-pressed="false">DBSCAN</button></div>
+      <div class="seg" id="g3d"><span>data</span><button type="button" data-v="blobs" aria-pressed="true">4 blobs</button><button type="button" data-v="moons" aria-pressed="false">moons</button></div>
+      <label>k <input type="range" id="i3k" min="2" max="6" step="1" value="4"><output id="o3k"></output></label>
+      <label>ε <input type="range" id="i3e" min="0.1" max="0.8" step="0.01" value="0.35"><output id="o3e"></output></label>
+      <button type="button" id="b3step">One step</button><button type="button" id="b3run">Run to the end</button><button type="button" id="b3reset">New data</button>
+    </div>
+    <canvas id="cv3a" aria-label="Points with k-means centres (crosses) or DBSCAN groups"></canvas>
+    <div class="read" id="r3a" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (b) hierarchical clustering</p>
+      <ol class="try">
+        <li>Lower the cut height (red dashed line) and the number of groups grows: one group when cut at the top, one per point at the bottom.</li>
+        <li>Single linkage only looks at the closest pair, so its merge heights are low. Complete linkage looks at the farthest pair, so they are high.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>cut height <input type="range" id="i3h" min="0" max="4" step="0.05" value="1.2"><output id="o3h"></output></label>
+      <div class="seg" id="g3l"><span>linkage</span><button type="button" data-v="single" aria-pressed="true">single</button><button type="button" data-v="complete" aria-pressed="false">complete</button><button type="button" data-v="average" aria-pressed="false">average</button></div>
+    </div>
+    <canvas id="cv3b" aria-label="12 points, their dendrogram and the cut height"></canvas>
+    <div class="read" id="r3b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> k-means = k centres and repeated mean moves (k-means++ = a good start). Hierarchical = a tree of merges cut at the height you want. DBSCAN = spreads along dense regions, and loners are noise.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2 data-short="Compress & Detect"><span class="no">4</span>Compress &amp; Detect: shrinking to see, finding odd points</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>To look at 10-dimensional data we must shrink it to 2 dimensions. What do we keep? And how do we find points that are "not like the rest" without labels?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>PCA</dt><dd>Principal component analysis. Projects onto the directions of largest variance (principal components, PCs).</dd>
+    <dt>t-SNE</dt><dd>t-distributed stochastic neighbour embedding. Lays data out in 2-D while keeping close neighbours close.</dd>
+    <dt>KL</dt><dd>Kullback–Leibler divergence. How different two probability distributions are (the partner of cross-entropy in chapter 1).</dd>
+    <dt>perplexity</dt><dd>In t-SNE, the rough number of points treated as neighbours.</dd>
+  </dl></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>In one line</th><th>Key formula</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>PCA</b></td><td>Project onto the direction of largest variance (linear)</td><td>Σv = λv, share kept λ₁ / Σλ</td><td>Fast and reversible; the linear version of the autoencoder (chapter 10)</td></tr>
+      <tr><td><b>t-SNE</b></td><td>A 2-D picture that keeps neighbours (non-linear)</td><td>min KL(P ‖ Q), q ∝ (1 + ‖yᵢ − yⱼ‖²)⁻¹</td><td>For looking only; do not trust distances between groups or group sizes</td></tr>
+      <tr><td><b>isolation forest</b></td><td>Random cuts isolate odd points quickly</td><td>s = 2^(−E[h] / c(n))</td><td>Anomaly detection without labels</td></tr>
+      <tr><td><b>autoencoder</b></td><td>Shrink and rebuild; a large rebuild error means an anomaly</td><td>chapter 10</td><td>DL-Edu chapter 10</td></tr>
+    </tbody>
+  </table></div>
+  <div class="eq" data-tex="\text{PCA: } \Sigma \Cb{v} = \lambda \Cb{v},\ \ \frac{\lambda_1}{\sum_k \lambda_k} \qquad \text{t-SNE: } q_{ij} \propto \frac{1}{1 + \|\Co{y_i} - \Co{y_j}\|^2} \qquad \text{isolation: } s = 2^{-\Cr{E[h]}/c(n)}"></div>
+  <ul class="legend"><li class="c-sig"><b>v</b> principal-component direction (PC)</li><li class="c-miss"><b>y</b> position in the 2-D picture</li><li class="c-fa"><b>E[h]</b> mean number of cuts until a point is alone</li></ul>
+  <p class="say">In words: PCA picks "the direction that casts the longest shadow". t-SNE keeps "points that were close stay close in 2-D". An isolation forest measures "how many cuts until a point stands alone".</p>
+  <div class="calc">
+    <p class="h">Example ①: PCA of a 2×2 covariance</p>
+    <div class="eq" data-tex="\Sigma = \begin{bmatrix} 2 &amp; 1 \\ 1 &amp; 2 \end{bmatrix} \Rightarrow \lambda = 3,\ 1, \qquad \Cb{v_1} = \tfrac{1}{\sqrt2}(1, 1), \qquad \frac{3}{3 + 1} = \Cg{75\%}"></div>
+    <div class="mean"><b>→ Meaning.</b> Pressed onto one line at 45°, 75% of the variance is kept. Going from 2-D to 1-D keeps three quarters of the information. Figure (a) below uses this data.</div>
+    <p class="h">Example ②: isolation-forest score (256 samples)</p>
+    <div class="eq" data-tex="c(256) = 10.24, \qquad E[h] = 3 \Rightarrow s = 2^{-3/10.24} = \Cr{0.816}, \qquad E[h] = 10 \Rightarrow s = 0.508"></div>
+    <div class="mean"><b>→ Meaning.</b> A point alone after 3 cuts on average scores 0.82 (anomalous); a point that takes 10 cuts, like an ordinary one, scores 0.51 (ordinary). c(n) is the mean number of cuts an ordinary point needs among n.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (a) PCA</p>
+      <ol class="try">
+        <li>Direction 0° → 45°: the shadows on the blue line (blue dots) spread the most. The variance kept peaks at about 75%.</li>
+        <li>135°: the narrowest (about 25%). That is the second PC. "Find PC1" shows the exact angle.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <label>direction <input type="range" id="i4a" min="0" max="179" step="1" value="0"><output id="o4a"></output></label>
+      <button type="button" id="b4best">Find PC1</button>
+    </div>
+    <canvas id="cv4a" aria-label="150 points, a line in the chosen direction and the points projected onto it"></canvas>
+    <div class="read" id="r4a" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (b) PCA and t-SNE</p>
+      <ol class="try">
+        <li>"Run t-SNE": the points start bunched together and then split into groups. Groups that overlap in the PCA panel come apart in t-SNE.</li>
+        <li>Perplexity 5 → 30: a small value breaks the data into small clumps; a large one looks more at the overall shape.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b4run">Run t-SNE (500 iterations)</button><button type="button" id="b4reset">Start over</button>
+      <div class="seg" id="g4p"><span>perplexity</span><button type="button" data-v="5" aria-pressed="false">5</button><button type="button" data-v="15" aria-pressed="true">15</button><button type="button" data-v="30" aria-pressed="false">30</button></div>
+    </div>
+    <canvas id="cv4b" aria-label="The same 10-D data drawn in 2-D by PCA and by t-SNE"></canvas>
+    <div class="read" id="r4b" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (c) isolation forest</p>
+      <ol class="try">
+        <li>Click a point on the outside: a few black lines (random cuts) leave it alone. A point in the middle needs many more. "Outside ↔ middle" switches between the two.</li>
+        <li>Background colour = score; the more orange, the more anomalous. "Another tree" changes the cut lines, but the mean score barely changes.</li>
+      </ol>
+    </div>
+    <div class="ctl"><button type="button" id="b4tree">Another tree</button><button type="button" id="b4pick">Outside ↔ middle</button></div>
+    <canvas id="cv4c" aria-label="104 points, random cuts until the chosen point is alone, background = anomaly score"></canvas>
+    <div class="read" id="r4c" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> PCA = a linear projection onto large-variance directions. t-SNE = a non-linear picture that keeps neighbours (for looking). Isolation forest = points that are alone quickly are anomalies.</p>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2 data-short="Reinforcement learning"><span class="no">5</span>Reinforcement Learning: learning from rewards</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With no right answers, only a reward saying "good (+)" or "bad (−)", can we learn what to do in each situation?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>RL</dt><dd>Reinforcement learning. An agent acts in an environment, receives rewards and learns from them.</dd>
+    <dt>MDP</dt><dd>Markov decision process. A problem defined by states s, actions a, rewards r and next-state probabilities.</dd>
+    <dt>Q(s, a)</dt><dd>Action value. The expected total reward after taking a in state s and acting well afterwards.</dd>
+    <dt>SARSA</dt><dd>State, Action, Reward, next State, next Action: the five values used in the update.</dd>
+    <dt>DQN</dt><dd>Deep Q-network. A neural network computes Q instead of a table (Atari, 2015).</dd>
+    <dt>ε-greedy</dt><dd>With probability ε take a random action (explore), otherwise the best one.</dd>
+  </dl></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>In one line</th><th>Key formula</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><b>MDP</b></td><td>The frame for writing down an RL problem</td><td>(S, A, P, R, γ)</td><td>γ = discount on future rewards</td></tr>
+      <tr><td><b>Q-learning</b></td><td>Update Q with the <b>best</b> value of the next state (off-policy)</td><td>Q ← Q + α[r + γ max Q(s′, ·) − Q]</td><td>Learns the optimal path regardless of exploration</td></tr>
+      <tr><td><b>SARSA</b></td><td>Update with the value of the next action actually taken (on-policy)</td><td>Q ← Q + α[r + γ Q(s′, a′) − Q]</td><td>Accounts for the risk of exploring, so it is cautious</td></tr>
+      <tr><td><b>DQN</b></td><td>Q as a neural network + replay buffer + target network</td><td>L = (r + γ max Q_target − Q_θ)²</td><td>The networks of chapters 8 and 11 used for Q</td></tr>
+      <tr><td><b>policy gradient</b></td><td>Push the policy π(a | s) directly uphill on reward</td><td>∇J = E[∇ log π(a | s) · G]</td><td>Continuous actions, stochastic policies</td></tr>
+      <tr><td><b>actor-critic</b></td><td>Actor = policy, critic = value V; subtracting a baseline cuts the wobble</td><td>A = r + γV(s′) − V(s)</td><td>A2C, PPO; RLHF for LLMs belongs to this family</td></tr>
+    </tbody>
+  </table></div>
+  <div class="eq" data-tex="Q(s, a) \leftarrow Q(s, a) + \Cg{\alpha}\big[\, \Co{r} + \Cv{\gamma} \max_{a'} Q(s', a') - Q(s, a) \,\big] \qquad\qquad \nabla J = \mathbb{E}\big[\nabla \log \pi(a \mid s)\, \Cb{A}\big]"></div>
+  <ul class="legend"><li class="c-ok"><b>α</b> update size</li><li class="c-miss"><b>r</b> this reward</li><li class="c-vio"><b>γ</b> discount on future rewards (0–1)</li><li class="c-sig"><b>A</b> advantage: how much better than expected</li></ul>
+  <p class="say">In words: inside the brackets is "what just happened (r + value of the next state) − what I expected". Q is corrected by α times that miss (the TD error). Policy gradient raises the probability of actions that went better than expected.</p>
+  <div class="calc">
+    <p class="h">Example ①: one Q update</p>
+    <div class="eq" data-tex="Q = 0,\ \alpha = 0.5,\ r = -1,\ \gamma = 0.9: \quad \text{Q-learning } (\max Q' = 10):\ 0 + 0.5(-1 + 9 - 0) = \Cg{4.0} \qquad \text{SARSA } (Q'(a') = 2):\ 0.5(-1 + 1.8) = 0.4"></div>
+    <div class="mean"><b>→ Meaning.</b> From the same experience, Q-learning assumes "next time I will act best" and moves Q to 4.0; SARSA uses the next action it actually chose (possibly an exploring one) and moves Q to 0.4. This difference makes the two paths differ in the cliff figure below.</div>
+    <p class="h">Example ②: one policy-gradient step (three arms, all at 1/3 at first)</p>
+    <div class="eq" data-tex="\text{pull arm 1, } G = 1,\ \eta = 0.1: \ \theta = (0.067,\ -0.033,\ -0.033) \Rightarrow \pi = (\Cg{0.356},\ 0.322,\ 0.322)"></div>
+    <div class="mean"><b>→ Meaning.</b> The rewarded arm's probability rises from 0.333 to 0.356. With a critic, the advantage replaces G: with r = 1, V(s) = 4, V(s′) = 5 and γ = 0.9, A = 1 + 4.5 − 4 = 1.5.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (a) cliff walking</p>
+      <ol class="try">
+        <li>Press "Train 50 episodes" 6–10 times. The Q-learning path (blue line) is the shortest route right along the cliff edge (13 steps). Switch to SARSA: its path detours one or two rows higher.</li>
+        <li>Lower chart: during training SARSA (orange) usually collects more reward. Q-learning walks next to the cliff and sometimes falls off (−100) because of the random ε actions.</li>
+        <li>Lower ε to 0.01 and "Start over": with almost no exploration SARSA's path also moves close to the short route.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b5train">Train 50 episodes</button><button type="button" id="b5reset">Start over</button>
+      <div class="seg" id="g5m"><span>show</span><button type="button" data-v="q" aria-pressed="true">Q-learning</button><button type="button" data-v="s" aria-pressed="false">SARSA</button></div>
+      <label>ε <input type="range" id="i5e" min="0.01" max="0.3" step="0.01" value="0.1"><output id="o5e"></output></label>
+    </div>
+    <canvas id="cv5a" aria-label="A 4×12 grid with the cliff, the best-action arrow per cell and the current policy's path; below, the return per episode"></canvas>
+    <div class="read" id="r5a" aria-live="polite"></div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY: (b) policy gradient and a critic</p>
+      <ol class="try">
+        <li>Press "Pull 100 times" a few times: the share of arm 3 (green), which has the highest mean reward, keeps growing.</li>
+        <li>Switch to "critic baseline" and repeat "Start over" + 200 pulls several times: the average speed is similar, but unlucky runs become rarer. Over 20 repeats, the lowest arm-3 probability after 200 pulls rises from 0.61 to 0.69 (the means are 0.85 vs 0.84).</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b5pull">Pull 100 times</button><button type="button" id="b5breset">Start over</button>
+      <div class="seg" id="g5b"><span>baseline</span><button type="button" data-v="none" aria-pressed="true">none (REINFORCE)</button><button type="button" data-v="critic" aria-pressed="false">critic baseline</button></div>
+    </div>
+    <canvas id="cv5b" aria-label="Stacked chart of the probability of choosing each of three arms as the number of pulls grows"></canvas>
+    <div class="read" id="r5b" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> RL = learning from rewards. Q-learning updates with the best value (bold), SARSA with the action actually taken next (careful). Policy gradient raises the policy directly, and a critic's baseline reduces the wobble.</p>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <h2 data-short="Genetic algorithm"><span class="no">6</span>Genetic Algorithm: finding answers by evolution</h2>
+  <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When we cannot take derivatives, or there are several peaks, can imitating evolution find a good answer?</p></div>
+  <div class="abbr"><p class="tag">TERMS IN THIS SECTION</p><dl>
+    <dt>GA</dt><dd>Genetic algorithm. Each generation, a population of candidate answers is selected, mixed and slightly changed.</dd>
+    <dt>fitness</dt><dd>The score of one answer.</dd>
+    <dt>elitism</dt><dd>The best few are copied unchanged into the next generation.</dd>
+  </dl></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>In one line</th><th>Key formula or rule</th></tr></thead>
+    <tbody>
+      <tr><td><b>population</b></td><td>Many candidate answers (20 points in the figure)</td><td>Rebuilt every generation</td></tr>
+      <tr><td><b>selection</b></td><td>Answers with high scores become parents</td><td>roulette: Pᵢ = fᵢ / Σf; tournament: the best of a few</td></tr>
+      <tr><td><b>crossover</b></td><td>Mix parts of two parents into a child</td><td>one-point crossover, mixing ratio u</td></tr>
+      <tr><td><b>mutation</b></td><td>Change the child a little at random; lets the search escape traps</td><td>bit-flip probability p_m, or + σ·noise</td></tr>
+    </tbody>
+  </table></div>
+  <div class="eq" data-tex="P_i = \frac{\Cg{f_i}}{\sum_j \Cg{f_j}} \qquad \text{child} = \Cb{a} + u\,(\Co{b} - \Cb{a}) + \Cr{\sigma}\, \epsilon"></div>
+  <ul class="legend"><li class="c-ok"><b>f</b> score (fitness)</li><li class="c-sig"><b>a</b>, <b class="c-miss">b</b> two parents</li><li class="c-fa"><b>σ</b> mutation size</li></ul>
+  <p class="say">In words: pick parents in proportion to score (selection), mix two of them (crossover) and shake the result a little (mutation). No gradient is needed.</p>
+  <div class="calc">
+    <p class="h">Example: making as many 1s as possible (OneMax, 8 bits)</p>
+    <div class="eq" data-tex="\text{parents } 110\,|\,10010\ (4),\ \ 011\,|\,01101\ (5) \Rightarrow \text{children } 110\,01101\ (\Cg{5}),\ \ 011\,10010\ (4)"></div>
+    <div class="eq" data-tex="\text{scores } (4, 5, 3, 6) \Rightarrow P = (0.222,\ 0.278,\ 0.167,\ 0.333), \qquad p_m = 1/8: \ \text{1 bit flips on average},\ P(\text{no flip}) = 0.344"></div>
+    <div class="mean"><b>→ Meaning.</b> Cutting after the third bit and swapping the tails can produce a child that collects the good parts of both parents. An answer with score 6 becomes a parent twice as often as one with score 3.</div>
+  </div>
+  <div class="stage">
+    <div class="guide">
+      <p class="tag">THINGS TO TRY</p>
+      <ol class="try">
+        <li>The first 20 candidates (violet dots) are scattered over the whole landscape. Press "One generation" a few times: the dots gather towards the peaks.</li>
+        <li>"30 generations" (mutation 0.25): most runs reach the top of the highest peak (1.0, black ring), 19 times out of 20. Occasionally the population stays on the 0.7 peak at the lower left.</li>
+        <li>Set mutation to 0, then "Start over" → "30 generations" several times: with mixing alone the population shrinks to one spot quickly and either misses the summit or gets stuck on a lower peak (8 times out of 20). Mutation does the exploring and the fine-tuning.</li>
+      </ol>
+    </div>
+    <div class="ctl">
+      <button type="button" id="b6step">One generation</button><button type="button" id="b6run">30 generations</button><button type="button" id="b6reset">Start over</button>
+      <label>mutation σ <input type="range" id="i6m" min="0" max="0.8" step="0.05" value="0.25"><output id="o6m"></output></label>
+    </div>
+    <canvas id="cv6" aria-label="20 points on a three-peak landscape and the best and mean fitness per generation"></canvas>
+    <div class="read" id="r6" aria-live="polite"></div>
+  </div>
+  <p class="key"><b>One line to remember.</b> GA = repeated selection (good ones become parents), crossover (mixing) and mutation (shaking). No derivatives needed, and mutation lets the search escape local optima.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <h2 data-short="Summary"><span class="no">7</span>One-page summary</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Stage</th><th>Keywords</th><th>In one line</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>Classic ML</td><td>supervised learning, logistic regression</td><td>learning from answers, a sigmoid probability</td><td>ch. 3, 4; section 1</td></tr>
+      <tr><td></td><td>SVM, k-NN, Naive Bayes</td><td>widest road, neighbour vote, multiplied probabilities</td><td>section 1</td></tr>
+      <tr><td>Trees &amp; Ensembles</td><td>decision tree, random forest</td><td>a chain of Gini questions, an average of trees</td><td>section 2</td></tr>
+      <tr><td></td><td>AdaBoost, gradient boosting, XGBoost</td><td>focus on mistakes, add the remaining error</td><td>section 2</td></tr>
+      <tr><td>Clustering</td><td>k-means, k-means++, hierarchical, DBSCAN</td><td>centres and means, a good start, a merge tree, density</td><td>section 3</td></tr>
+      <tr><td>Compress &amp; Detect</td><td>PCA, t-SNE, isolation forest</td><td>variance directions, keeping neighbours, quickly alone</td><td>section 4</td></tr>
+      <tr><td></td><td>autoencoder</td><td>shrink and rebuild</td><td>ch. 10</td></tr>
+      <tr><td>Deep Learning</td><td>ANN, CNN, RNN, LSTM, Transformer</td><td>the DL-Edu chapters</td><td>ch. 3–15</td></tr>
+      <tr><td>Reinforcement Learning</td><td>MDP, Q-learning, SARSA, DQN</td><td>correcting Q from rewards (best value / action taken)</td><td>section 5</td></tr>
+      <tr><td></td><td>policy gradient, actor-critic</td><td>raising the policy directly, a baseline</td><td>section 5</td></tr>
+      <tr><td>Genetic Algorithm</td><td>selection, crossover, mutation</td><td>search that imitates evolution</td><td>section 6</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">The example numbers were checked with <code>tools/appA_numbers.py</code> (NumPy). Every model in the figures trains right here in the page (logistic regression 600 steps, SVM 3,000 steps, t-SNE 500 iterations, and so on).</p>
+  <h3 id="s7b" data-short="Dictionary">Dictionary</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Abbreviation</th><th>Full name</th><th>Plain meaning</th><th class="num">Section</th></tr></thead>
+    <tbody>
+      <tr><td><b>CART</b></td><td>classification and regression tree</td><td>The standard way to build a decision tree.</td><td class="num">2</td></tr>
+      <tr><td><b>DBSCAN</b></td><td>density-based spatial clustering of applications with noise</td><td>Grows groups along dense regions.</td><td class="num">3</td></tr>
+      <tr><td><b>DQN</b></td><td>deep Q-network</td><td>A neural network instead of a Q table.</td><td class="num">5</td></tr>
+      <tr><td><b>GA</b></td><td>genetic algorithm</td><td>Repeated selection, crossover and mutation.</td><td class="num">6</td></tr>
+      <tr><td><b>KL</b></td><td>Kullback–Leibler divergence</td><td>The difference between two distributions.</td><td class="num">4</td></tr>
+      <tr><td><b>k-NN</b></td><td>k-nearest neighbours</td><td>A vote of the k closest points.</td><td class="num">1</td></tr>
+      <tr><td><b>MDP</b></td><td>Markov decision process</td><td>States, actions, rewards, transition probabilities.</td><td class="num">5</td></tr>
+      <tr><td><b>NB</b></td><td>Naive Bayes</td><td>Bayes' rule assuming independent features.</td><td class="num">1</td></tr>
+      <tr><td><b>PCA</b></td><td>principal component analysis</td><td>Projection onto large-variance directions.</td><td class="num">4</td></tr>
+      <tr><td><b>RL</b></td><td>reinforcement learning</td><td>Learning from rewards.</td><td class="num">5</td></tr>
+      <tr><td><b>SARSA</b></td><td>state, action, reward, state, action</td><td>Updates Q with the next action actually taken.</td><td class="num">5</td></tr>
+      <tr><td><b>SVM</b></td><td>support vector machine</td><td>The boundary with the widest margin.</td><td class="num">1</td></tr>
+      <tr><td><b>t-SNE</b></td><td>t-distributed stochastic neighbour embedding</td><td>A 2-D picture that keeps neighbours.</td><td class="num">4</td></tr>
+      <tr><td><b>XGBoost</b></td><td>eXtreme Gradient Boosting</td><td>Fast, regularized gradient boosting.</td><td class="num">2</td></tr>
+    </tbody>
+  </table></div>
+</section>
+</main>
+</div>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/plan.js"></script>
+<script src="assets/dl.js"></script>
+<script src="assets/dlfig.js"></script>
+<script src="appA.js"></script>
+</body>
+</html>

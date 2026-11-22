@@ -20,7 +20,7 @@ function build(lang) {
   }));
   out.push("");
   DLEDU_PLAN.forEach(c => {
-    out.push(`## ${c.n}. ${c.name[lang]}`, "");
+    out.push(`## ${c.label ? (lang === "ko" ? "부록 " : "Appendix ") + c.label : c.n + "."} ${c.name[lang]}`, "");
     out.push(`${T("**다루는 것**", "**Covers**")}: ${c.topic[lang]}`, "");
     out.push(`${T("**목표**", "**Goal**")}: ${c.goal[lang]}`, "");
     if (c.ready) out.push(`${T("**파일**", "**File**")}: \`${file(c)}\``, "");

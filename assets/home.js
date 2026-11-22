@@ -8,7 +8,7 @@
   // 지도: 단계마다 한 열, 장마다 상자 하나
   // Map: one column per stage, one box per chapter
   const colW = 119, gapX = 8, x0 = 12, boxH = 32, stepY = 40, top = 40;
-  let svg = `<svg viewBox="0 0 780 206" role="img" aria-label="${esc(tr("15장의 지도", "Map of the 15 chapters"))}" style="font-family: var(--sans);">`;
+  let svg = `<svg viewBox="0 0 780 246" role="img" aria-label="${esc(tr("15장의 지도", "Map of the 15 chapters"))}" style="font-family: var(--sans);">`;
   svg += `<defs><marker id="mh-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>`;
   DLEDU_STAGES.forEach((st, i) => {
     const x = x0 + i * (colW + gapX), lines = st[LANG].split("|");
@@ -20,8 +20,14 @@
     });
     if (i < DLEDU_STAGES.length - 1) svg += `<path d="M${x + colW} ${top + boxH / 2}H${x + colW + gapX - 1}" fill="none" stroke="var(--muted)" stroke-width="1.3" marker-end="url(#mh-arrow)"/>`;
   });
-  svg += `<rect x="12" y="166" width="756" height="30" rx="6" fill="var(--wash)"/>`;
-  svg += `<text x="390" y="186" font-size="11.3" text-anchor="middle" fill="var(--muted)">${esc(tr("파란 상자 = 만든 장 (누르면 열린다) · 회색 = 준비 중 (누르면 아래 계획으로)", "Blue = written (click to open) · grey = planned (click for the plan below)"))}</text></svg>`;
+  // 부록: 지도 아래 한 줄 / appendices: one row under the map
+  DLEDU_PLAN.filter(c => c.appendix).forEach((c, k) => {
+    const x = 12 + k * (colW + gapX) * 4, href = c.ready ? pageFile(c.file) : `#ch-${c.n}`;
+    svg += `<a href="${href}"><rect x="${x}" y="166" width="${4 * colW + 3 * gapX}" height="${boxH}" rx="6" fill="var(--sigwash)" stroke="var(--sig)" stroke-width="1.5"/>`;
+    svg += `<text x="${x + 7}" y="186" font-size="10.8" font-weight="600" fill="var(--ink)">${esc(tr("부록", "Appendix"))} ${c.label} ${esc(c.name[LANG])} · ${esc(c.topic[LANG])}</text><title>${esc(c.topic[LANG])}</title></a>`;
+  });
+  svg += `<rect x="12" y="206" width="756" height="30" rx="6" fill="var(--wash)"/>`;
+  svg += `<text x="390" y="226" font-size="11.3" text-anchor="middle" fill="var(--muted)">${esc(tr("파란 상자 = 만든 장 (누르면 열린다) · 회색 = 준비 중 (누르면 아래 계획으로)", "Blue = written (click to open) · grey = planned (click for the plan below)"))}</text></svg>`;
   document.getElementById("homeMap").innerHTML = svg;
 
   // 장 계획: 장마다 접히는 상자 하나
@@ -29,7 +35,7 @@
   const list = document.getElementById("planList");
   DLEDU_PLAN.forEach(c => {
     const d = document.createElement("details"); d.id = `ch-${c.n}`; if (c.ready) d.open = true;
-    let h = `<summary><span class="n">${c.n}</span><span class="t">${esc(c.name[LANG])} <span class="badge ${c.ready ? "ready" : "todo"}">${c.ready ? tr("완성", "ready") : tr("계획", "planned")}</span></span></summary><div class="body">`;
+    let h = `<summary><span class="n">${c.label || c.n}</span><span class="t">${esc(c.name[LANG])} <span class="badge ${c.ready ? "ready" : "todo"}">${c.ready ? tr("완성", "ready") : tr("계획", "planned")}</span></span></summary><div class="body">`;
     h += `<p class="lab">${tr("다루는 것", "COVERS")}</p><p>${esc(c.topic[LANG])}</p><p class="lab">${tr("목표", "GOAL")}</p><p>${esc(c.goal[LANG])}</p>`;
     if (c.ready) h += `<p><a class="open-link" href="${pageFile(c.file)}">${tr("이 장 열기 →", "Open this chapter →")}</a></p>`;
     h += `<p class="lab">${tr("절", "SECTIONS")}</p><ol>` + c.sections.map(s => `<li>${esc(s[LANG === "en" ? 1 : 0])}</li>`).join("") + `</ol>`;
