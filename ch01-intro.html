@@ -329,7 +329,12 @@
     <p class="h">Example ①: the entropy of a coin</p>
     <div class="eq" data-tex="H(0.5) = -(0.5 \ln 0.5 + 0.5 \ln 0.5) = 0.693\ \text{nat} = 1\ \text{bit}, \qquad H(0.9) = 0.325, \qquad H(0.99) = 0.056"></div>
     <div class="mean"><b>→ Meaning.</b> A fair coin is the hardest to predict (maximum entropy). A coin that lands heads 99% of the time is almost never surprising (0.056).</div>
-    <p class="h">Example ②: two models' cross-entropy when the answer is "dog"</p>
+    <p class="h">Example ②: three or more outcomes</p>
+    <p class="goal">Goal: Σ adds over every possible outcome, so n outcomes give n terms. Writing one number, as in H(0.9), is shorthand that works only for two outcomes (knowing one fixes the other as 1 − p). With three or more, list every probability, as in H(0.5, 0.3, 0.2).</p>
+    <div class="eq" data-tex="H(0.5,\ 0.3,\ 0.2) = -(0.5 \ln 0.5 + 0.3 \ln 0.3 + 0.2 \ln 0.2) = 0.347 + 0.361 + 0.322 = 1.030"></div>
+    <div class="eq" data-tex="H\!\left(\tfrac{1}{n}, \ldots, \tfrac{1}{n}\right) = \ln n"></div>
+    <div class="mean"><b>→ Meaning.</b> With n outcomes, entropy is largest when all are equally likely (1/n), and that maximum is ln n: a coin ln 2 = 0.693, rock-paper-scissors ln 3 = 1.099, a die ln 6 = 1.792, ImageNet's 1000 classes ln 1000 = 6.908. (0.5, 0.3, 0.2) leans toward 0.5, so it is a little easier to predict and its entropy, 1.030, is below ln 3. In a classifier, softmax gives K class probabilities, so Σ has K terms (10 for MNIST). Cross-entropy's Σ also has K terms; with a one-hot answer only the right answer's term is left (example ③).</div>
+    <p class="h">Example ③: two models' cross-entropy when the answer is "dog"</p>
     <p class="goal">Goal: the answer is y = (0, 1, 0) (cat, dog, bird). Because it is one-hot, only −ln of the right answer's entry is left.</p>
     <div class="eq" data-tex="\hat{\mathbf{y}}_A = (0.2,\ 0.7,\ 0.1): \ \mathrm{CE} = -\ln 0.7 = 0.357, \qquad \hat{\mathbf{y}}_B = (0.6,\ 0.3,\ 0.1): \ \mathrm{CE} = -\ln 0.3 = 1.204"></div>
     <div class="mean"><b>→ Meaning.</b> Model A gives the right answer 0.7, so its loss is small; model B gives it only 0.3, so its loss is more than three times larger. Probability 1 on the right answer gives a loss of 0. Training adjusts the weights to push this number down. PyTorch's nn.CrossEntropyLoss does exactly this calculation (softmax + −ln).</div>

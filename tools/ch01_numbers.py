@@ -46,6 +46,10 @@ for p in (0.5, 0.9, 0.99):
     print(f"H({p}) = {H(p):.3f} nats = {H(p) / math.log(2):.3f} bits")
 for pred in ([0.2, 0.7, 0.1], [0.6, 0.3, 0.1]):
     print("pred", pred, "CE = -ln", pred[1], "=", round(-math.log(pred[1]), 3))
+Hn = lambda ps: -sum(q * math.log(q) for q in ps)
+print("H(0.5, 0.3, 0.2) terms", [round(-q * math.log(q), 3) for q in (0.5, 0.3, 0.2)], "sum", round(Hn([0.5, 0.3, 0.2]), 3))
+for n in (2, 3, 6, 10, 1000):
+    print(f"uniform over {n}: H = {Hn([1 / n] * n):.3f} = ln {n} = {math.log(n):.3f}")
 print("torch CE check:", float(torch.nn.functional.nll_loss(torch.log(torch.tensor([[0.2, 0.7, 0.1]])), torch.tensor([1]))))
 
 print("== 1.8 argmax ==")

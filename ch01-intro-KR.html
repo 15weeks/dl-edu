@@ -329,7 +329,12 @@
     <p class="h">예제 ①: 동전의 entropy</p>
     <div class="eq" data-tex="H(0.5) = -(0.5 \ln 0.5 + 0.5 \ln 0.5) = 0.693\ \text{nat} = 1\ \text{bit}, \qquad H(0.9) = 0.325, \qquad H(0.99) = 0.056"></div>
     <div class="mean"><b>→ 뜻.</b> 반반 동전은 결과를 가장 예측하기 어렵다(entropy 최대). 앞면이 99% 나오는 동전은 거의 놀랄 일이 없다(0.056).</div>
-    <p class="h">예제 ②: 정답이 "개"일 때 두 model의 cross-entropy</p>
+    <p class="h">예제 ②: 결과가 셋 이상일 때</p>
+    <p class="goal">하려는 것: Σ는 일어날 수 있는 모든 결과를 더한다. 결과가 n개면 n개 항이다. H(0.9)처럼 숫자 하나만 쓰는 것은 결과가 두 개일 때의 줄임 표기다(하나를 알면 나머지가 1 − p로 정해진다). 셋 이상이면 H(0.5, 0.3, 0.2)처럼 확률을 모두 적는다.</p>
+    <div class="eq" data-tex="H(0.5,\ 0.3,\ 0.2) = -(0.5 \ln 0.5 + 0.3 \ln 0.3 + 0.2 \ln 0.2) = 0.347 + 0.361 + 0.322 = 1.030"></div>
+    <div class="eq" data-tex="H\!\left(\tfrac{1}{n}, \ldots, \tfrac{1}{n}\right) = \ln n"></div>
+    <div class="mean"><b>→ 뜻.</b> 결과가 n개일 때 entropy는 모두 같은 확률(1/n)일 때 가장 크고, 그 값이 ln n이다: 동전 ln 2 = 0.693, 가위바위보 ln 3 = 1.099, 주사위 ln 6 = 1.792, ImageNet 1000 class ln 1000 = 6.908. (0.5, 0.3, 0.2)는 0.5 쪽으로 쏠려 있어 예측이 조금 쉽고, 그래서 1.030으로 ln 3보다 작다. 분류 model에서는 softmax가 class K개의 확률을 내므로 Σ도 K개 항이다(MNIST는 10개). cross-entropy의 Σ도 K개 항인데, 정답이 one-hot이면 정답 칸 하나만 남는다(예제 ③).</div>
+    <p class="h">예제 ③: 정답이 "개"일 때 두 model의 cross-entropy</p>
     <p class="goal">하려는 것: 정답 y = (0, 1, 0)(고양이, 개, 새). one-hot이라 정답 칸의 −ln만 남는다.</p>
     <div class="eq" data-tex="\hat{\mathbf{y}}_A = (0.2,\ 0.7,\ 0.1): \ \mathrm{CE} = -\ln 0.7 = 0.357, \qquad \hat{\mathbf{y}}_B = (0.6,\ 0.3,\ 0.1): \ \mathrm{CE} = -\ln 0.3 = 1.204"></div>
     <div class="mean"><b>→ 뜻.</b> model A는 정답에 0.7을 줘서 loss가 작고, model B는 정답에 0.3만 줘서 loss가 3배 이상 크다. 정답에 확률 1을 주면 loss는 0이다. 학습은 이 숫자를 줄이는 방향으로 weight를 고친다. PyTorch의 nn.CrossEntropyLoss가 이 계산(softmax + −ln)을 한다.</div>
