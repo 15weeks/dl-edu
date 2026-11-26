@@ -115,7 +115,14 @@
   <h2 data-short="diffusion 아이디어"><span class="no">4</span>diffusion의 아이디어: noise를 더하고 되돌리기</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>그림을 noise로 바꾸기는 쉽다. 거꾸로 noise를 그림으로 바꾸는 법을 배울 수 있다면?</p></div>
   <div class="eq" data-tex="\Co{x_t} = \Cb{\sqrt{\bar\alpha_t}} \, x_0 + \Cr{\sqrt{1 - \bar\alpha_t}} \, \varepsilon, \qquad \varepsilon \sim \mathcal{N}(0, I)"></div>
-  <ul class="legend"><li class="c-sig"><b>√ᾱ_t</b> 원래 그림의 몫 (1 → 0)</li><li class="c-fa"><b>√(1−ᾱ_t)</b> noise의 몫 (0 → 1)</li></ul>
+  <ul class="legend"><li class="c-sig"><b>√ᾱ_t</b> 원래 그림의 몫 (1 → 0)</li><li class="c-fa"><b>√(1−ᾱ_t)</b> noise의 몫 (0 → 1)</li><li><b>ᾱ_t</b> 5절에서 β_t로 계산하는 숫자. 여기서는 5절의 값을 빌린다</li><li><b>ε</b> 표준 정규분포에서 뽑은 noise, 그림과 같은 크기</li></ul>
+  <div class="calc">
+    <p class="h">예제: 흰 pixel 하나 x₀ = 1, 뽑은 noise ε = −0.5</p>
+    <p>5절의 값 ᾱ₁₀₀ = 0.897, ᾱ₅₀₀ = 0.0786을 빌려 t = 100과 t = 500에서 계산한다.</p>
+    <div class="eq" data-tex="\begin{aligned} t = 100: \; x_{100} &= \sqrt{0.897} \times 1 + \sqrt{1 - 0.897} \times (-0.5) \\ &= 0.947 - 0.321 \times 0.5 = \Co{0.787} \end{aligned}"></div>
+    <div class="eq" data-tex="\begin{aligned} t = 500: \; x_{500} &= \sqrt{0.0786} \times 1 + \sqrt{1 - 0.0786} \times (-0.5) \\ &= 0.280 - 0.960 \times 0.5 = \Co{-0.200} \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> t = 100에서는 원래 값 1이 아직 0.79로 남아 있지만, t = 500이면 −0.20으로 noise 쪽이 더 크다. 두 몫을 제곱해 더하면 언제나 1이다 (0.947² + 0.321² = 1): 섞는 비율만 바뀐다.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>t <input type="range" id="i4t" min="0" max="1000" step="10" value="250"><output id="o4t"></output></label>
@@ -156,6 +163,14 @@
   <div class="ask"><p class="tag">알고 싶은 것</p><p>network는 무엇을 맞히도록 배우나?</p></div>
   <div class="eq" data-tex="L = \mathbb{E}_{x_0,\, t,\, \varepsilon} \Big\| \, \Cr{\varepsilon} - \Cb{\varepsilon_\theta}\big( \sqrt{\bar\alpha_t}\, x_0 + \sqrt{1 - \bar\alpha_t}\, \Cr{\varepsilon},\; t \big) \Big\|^2"></div>
   <p class="say">말로: 그림 x₀와 시간 t를 아무거나 고르고 noise ε를 섞어 x_t를 만든다. network ε_θ는 x_t와 t를 보고 "섞인 noise가 무엇이었나"를 맞힌다. 10장의 denoising autoencoder와 같은 생각을 모든 noise 크기에 대해 한 것.</p>
+  <div class="calc">
+    <p class="h">예제: pixel 2개짜리 그림 x₀ = (1, −1), t = 500 (√ᾱ = 0.280, √(1−ᾱ) = 0.960)</p>
+    <p>noise ε = (0.3, −1.2)를 뽑아 섞는다.</p>
+    <div class="eq" data-tex="\begin{aligned} x_{500} &= 0.280 \times (1,\ -1) + 0.960 \times (\Cr{0.3},\ \Cr{-1.2}) \\ &= (0.280 + 0.288,\ -0.280 - 1.152) = (0.568,\ -1.432) \end{aligned}"></div>
+    <p>network가 x₅₀₀과 t = 500을 보고 noise를 ε_θ = (0.5, −1.0)으로 짐작했다고 하자. 칸마다 차이를 제곱한다.</p>
+    <div class="eq" data-tex="\begin{aligned} \big\| \Cr{\varepsilon} - \Cb{\varepsilon_\theta} \big\|^2 &= (0.3 - 0.5)^2 + \big(-1.2 - (-1.0)\big)^2 = 0.04 + 0.04 = 0.08 \\ \text{mse\_loss} &= 0.08 \div 2 = 0.04 \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> network는 x₀가 아니라 섞인 noise를 맞힌다. 식의 ‖·‖²는 칸의 합이고 아래 code의 F.mse_loss는 칸의 평균이라 2칸이면 반이다: 크기만 다르고 같은 것을 줄인다.</div>
+  </div>
   <div class="stage">
     <svg viewBox="0 0 700 200" role="img" aria-label="이 장의 U-Net: 28에서 14, 7로 줄었다가 다시 28로, 같은 크기끼리 이어 붙인다" style="font-family: var(--sans); width: 100%; height: auto;">
       <defs><marker id="m15-a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
@@ -189,7 +204,16 @@ loss.backward(); opt.step()</code></pre></div>
   <h2 data-short="sampling"><span class="no">7</span>sampling: noise에서 그림으로</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>학습한 ε_θ로 새 그림은 어떻게 만드나?</p></div>
   <div class="eq" data-tex="x_T \sim \mathcal{N}(0, I), \qquad \Co{x_{t-1}} = \frac{1}{\sqrt{\alpha_t}} \left( x_t - \frac{\beta_t}{\sqrt{1 - \bar\alpha_t}} \, \Cb{\varepsilon_\theta(x_t, t)} \right) + \sqrt{\beta_t}\, z, \quad t = T, \dots, 1"></div>
+  <ul class="legend"><li><b>α_t</b> = 1 − β_t, 한 걸음에서 남는 몫 (막대 없는 α. ᾱ_t는 α를 1부터 t까지 곱한 것)</li><li class="c-sig"><b>ε_θ(x_t, t)</b> network가 짐작한 noise</li><li><b>z</b> 걸음마다 새로 뽑는 noise, 𝒩(0, I)</li></ul>
   <p class="say">말로: 순수한 noise에서 시작해, network가 짐작한 noise를 조금 빼고 약간의 새 noise(z)를 더하기를 1000번. 마지막 걸음에는 z를 더하지 않는다.</p>
+  <div class="calc">
+    <p class="h">예제: 4절의 pixel을 t = 500에서 한 걸음 되돌리기</p>
+    <p>x₅₀₀ = −0.1996 (4절의 −0.200), β₅₀₀ = 0.01004, α₅₀₀ = 1 − 0.01004 = 0.98996, √(1 − ᾱ₅₀₀) = 0.9599다. network가 noise를 정확히 ε_θ = −0.5로 맞혔고, 새 noise z = 0.1을 뽑았다고 하자. 먼저 빼는 noise의 배율:</p>
+    <div class="eq" data-tex="\frac{\beta_{500}}{\sqrt{1 - \bar\alpha_{500}}} = \frac{0.01004}{0.9599} = 0.01046"></div>
+    <p>식에 넣는다.</p>
+    <div class="eq" data-tex="\begin{aligned} x_{499} &= \frac{-0.1996 - 0.01046 \times (\Cb{-0.5})}{\sqrt{0.98996}} + \sqrt{0.01004} \times 0.1 \\[4pt] &= \frac{-0.1996 + 0.0052}{0.9950} + 0.1002 \times 0.1 = -0.1954 + 0.0100 = \Co{-0.1854} \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 한 걸음에 바뀌는 양은 0.01 정도뿐이다. 이런 작은 걸음을 t = 500부터 1까지 되풀이해야 noise가 조금씩 빠져 그림 쪽으로 돌아온다. network의 짐작이 틀리면 그 오차도 걸음마다 조금씩 쌓인다.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>단계 <input type="range" id="i7k" min="0" max="8" step="1" value="8"><output id="o7k"></output></label>
@@ -207,6 +231,11 @@ loss.backward(); opt.step()</code></pre></div>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>"7을 그려 줘", "고양이 사진"처럼 원하는 것을 그리게 하려면?</p></div>
   <div class="eq" data-tex="\tilde\varepsilon = (1 + \Co{w})\, \varepsilon_\theta(x_t, t, \Cb{c}) - \Co{w}\, \varepsilon_\theta(x_t, t, \varnothing)"></div>
   <ul class="legend"><li class="c-sig"><b>c</b> 조건 (숫자, 글)</li><li class="c-miss"><b>w</b> guidance 세기: 조건이 있을 때와 없을 때의 차이를 w배 더 민다</li><li><b>∅</b> 조건 없음 (학습 때 10%는 class를 지웠다)</li></ul>
+  <div class="calc">
+    <p class="h">예제: pixel 하나, 조건 c = "7"일 때 짐작 0.6, 조건 없을 때 0.2</p>
+    <div class="eq" data-tex="\begin{aligned} w = 0&: \; 0.6 \\ w = 1&: \; 2 \times 0.6 - 1 \times 0.2 = 1.0 \\ w = 3&: \; 4 \times 0.6 - 3 \times 0.2 = \Co{1.8} \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 조건이 바꾼 몫(0.6 − 0.2 = 0.4)을 w배 더 보탠다: 0.6 + w × 0.4. w가 클수록 "7다움"을 과장해서 민다. 아래 결과처럼 정확해지지만 그림끼리 비슷해진다.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><div class="seg" id="g8w"><span>guidance w</span><button type="button" data-v="0" aria-pressed="true">0</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">3</button></div></div>
     <canvas id="cv8" aria-label="guidance 세기별로 만든 숫자 0~9"></canvas>
@@ -268,10 +297,10 @@ loss.backward(); opt.step()</code></pre></div>
       <tr><td>1 생성 model</td><td>분포를 배워 새로 뽑기</td><td>키 N(170, 7²)</td></tr>
       <tr><td>2 GAN</td><td>G는 속이고 D는 가린다</td><td>D(x) → 0.5</td></tr>
       <tr><td>3 그림 GAN</td><td>transpose conv G, conv D</td><td>MNIST, FMNIST, CIFAR10</td></tr>
-      <tr><td>4 diffusion</td><td>noise 더하기를 거꾸로</td><td>x_t = √ᾱ x₀ + √(1−ᾱ) ε</td></tr>
+      <tr><td>4 diffusion</td><td>noise 더하기를 거꾸로</td><td>x₀ = 1 → x₅₀₀ = −0.200</td></tr>
       <tr><td>5 schedule</td><td>ᾱ_t: 1 → 0</td><td>ᾱ₅₀₀ = 0.0786</td></tr>
-      <tr><td>6 DDPM loss</td><td>섞은 noise 맞히기</td><td>U-Net</td></tr>
-      <tr><td>7 sampling</td><td>1000걸음 되돌리기</td><td>t = 1000 → 0</td></tr>
+      <tr><td>6 DDPM loss</td><td>섞은 noise 맞히기</td><td>‖ε − ε_θ‖² = 0.08</td></tr>
+      <tr><td>7 sampling</td><td>1000걸음 되돌리기</td><td>x₅₀₀ −0.200 → x₄₉₉ −0.185</td></tr>
       <tr><td>8 guidance</td><td>조건을 w배 더 세게</td><td>w 0 → 3: 90% → 100%</td></tr>
       <tr><td>9 윤리, 공부</td><td>출처, group별 성능, 다시 만들기</td><td>세 번 읽기</td></tr>
     </tbody>

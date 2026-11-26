@@ -78,6 +78,16 @@
     <dt>accuracy</dt><dd>Number correct ÷ total.</dd>
   </dl></div>
   <div class="eq" data-tex="\text{class} = \begin{cases}1 & \sigma(z) > 0.5\\ 0 & \text{otherwise}\end{cases}, \qquad \text{accuracy} = \frac{\text{number correct}}{\text{total}}"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the best accuracy the overlap allows (this figure's data: centres 1 and 1 + d along x₁, spread = SD 1)</p>
+    <p>The best boundary sits halfway between the centres, at x₁ = 1 + d/2. A point is still wrong when noise pushes it more than d/2 towards the other side. So the best accuracy is the probability that noise with SD 1 stays below d/2, Φ(d/2) (Φ = the probability that a standard normal value is below the given value).</p>
+    <div class="eq" data-tex="\text{best accuracy} = P(\text{noise} \lt d/2) = \Phi(d/2)"></div>
+    <p>With d = 2, the points are wrong as often as the noise exceeds one SD (1), which is 15.9% of the time.</p>
+    <div class="eq" data-tex="\Phi(2/2) = \Phi(1) = 1 - 0.159 = \Cg{0.841}"></div>
+    <p>Do the same for d = 1 and 4 and compare with the accuracy the figure's network (2-8-1, Adam, 150 epochs) actually reaches.</p>
+    <div class="eq" data-tex="\begin{aligned} d = 1&: \; \Phi(0.5) = 0.691 \;\; (\text{network } 0.690) \\ d = 2&: \; \Phi(1) = 0.841 \;\; (\text{network } 0.835) \\ d = 4&: \; \Phi(2) = 0.977 \;\; (\text{network } 0.980) \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> The network almost reaches this ceiling. If a bigger network or longer training passed 84% at d = 2, it would have memorised the noise of these 200 points, not found a rule that works on new data (chapter 5, overfitting). The 0.980 at d = 4, slightly above the ceiling, is also chance from having only 200 points.</div>
+  </div>
   <div class="stage">
     <div class="guide">
       <p class="tag">THINGS TO TRY</p>

@@ -82,8 +82,17 @@
 <section id="s3">
   <h2 data-short="self, multi-head"><span class="no">3</span>self-attention과 multi-head attention</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>Q, K, V는 어디서 오나? 여러 종류의 관계(문법, 가리킴, 바로 앞)를 동시에 보려면?</p></div>
-  <div class="eq" data-tex="\Cb{Q} = X W^{Q}, \; \Cv{K} = X W^{K}, \; \Cg{V} = X W^{V} \qquad \text{MultiHead}(X) = [\text{head}_1, \dots, \text{head}_h] \, W^{O}"></div>
+  <div class="eq" data-tex="\begin{aligned} &\Cb{Q} = X W^{Q},\ \ \Cv{K} = X W^{K},\ \ \Cg{V} = X W^{V} \quad (\text{head 하나}) \\ &\text{head}_i = \text{Attention}(X W^{Q}_i,\ X W^{K}_i,\ X W^{V}_i) \\ &\text{MultiHead}(X) = [\text{head}_1, \dots, \text{head}_h] \, W^{O} \quad (\text{head } h\text{개}) \end{aligned}"></div>
+  <ul class="legend"><li><b>X</b> token마다 한 행 (token 수 × d)</li><li><b>W^Q_i, W^K_i, W^V_i</b> head i의 weight, 크기 d × d/h</li><li><b>W^O</b> 이어 붙인 결과를 섞는 weight, d × d</li></ul>
   <p class="say">말로: 같은 문장 X에서 세 가지 weight로 Q, K, V를 만든다 (self). d를 h조각으로 나눠 head마다 따로 attention을 하고 이어 붙인다. GPT-2 small: d = 768, head 12개 → head마다 64.</p>
+  <div class="calc">
+    <p class="h">예제: GPT-2 small 한 층, 문장이 token 10개일 때</p>
+    <p>d = 768, h = 12이면 head 하나의 폭은 768 ÷ 12 = 64다. shape를 따라간다.</p>
+    <div class="eq" data-tex="\begin{aligned} &\underbrace{X}_{10 \times 768} \underbrace{W^{Q}_i}_{768 \times 64} = \underbrace{Q_i}_{10 \times 64} \;\to\; \text{head}_i: 10 \times 64 \\ &\xrightarrow{\text{12개 이어 붙이기}}\; 10 \times 768 \;\xrightarrow{\times W^{O}\ (768 \times 768)}\; 10 \times 768 \end{aligned}"></div>
+    <p>weight 수를 센다 (bias 빼고).</p>
+    <div class="eq" data-tex="Q, K, V: 3 \times 12 \times (768 \times 64) = 1{,}769{,}472, \qquad W^{O}: 768 \times 768 = 589{,}824"></div>
+    <div class="mean"><b>→ 뜻.</b> 3 × 12 × 768 × 64는 3 × 768 × 768과 같다: head를 12개로 나눠도 weight 수와 계산량은 head 하나일 때와 같다. 대신 12개 head가 서로 다른 관계를 따로 본다. 입력과 출력의 shape(10 × 768)도 같아서 층을 계속 쌓을 수 있다.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>층 <input type="range" id="i3l" min="1" max="12" step="1" value="5"><output id="o3l"></output></label>
@@ -107,11 +116,22 @@
 <section id="s4">
   <h2 data-short="위치 encoding"><span class="no">4</span>positional encoding</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>attention은 순서를 모른다 (단어를 섞어도 같은 비율). 자리를 어떻게 알려 주나?</p></div>
-  <div class="eq" data-tex="PE(\Cb{pos}, 2i) = \sin\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad PE(\Cb{pos}, 2i{+}1) = \cos\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad x_{\text{입력}} = e_{\text{token}} + PE(pos)"></div>
+  <div class="eq" data-tex="\begin{gathered} PE(\Cb{pos}) = \big[\, PE(\Cb{pos}, 0),\ PE(\Cb{pos}, 1),\ \dots,\ PE(\Cb{pos}, d-1) \,\big] \\[6pt] x_{\text{입력}} = e_{\text{token}} + PE(\Cb{pos}) \end{gathered}"></div>
+  <div class="eq" data-tex="PE(\Cb{pos}, 2i) = \sin\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad PE(\Cb{pos}, 2i{+}1) = \cos\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right)"></div>
+  <ul class="legend"><li class="c-sig"><b>pos</b> token의 자리 (0부터 센다)</li><li><b>PE(pos)</b> 그 자리에 더하는 벡터 전체 (칸 d개)</li><li><b>PE(pos, k)</b> 그 벡터의 k번 칸, 숫자 하나 (k = 0 ~ d − 1)</li><li><b>i</b> 칸을 둘씩 묶은 번호: 칸 2i는 sin, 칸 2i + 1은 cos</li></ul>
   <div class="calc">
-    <p class="h">예제: 자리 1, 첫 두 차원 (i = 0)</p>
-    <div class="eq" data-tex="PE(1, 0) = \sin(1) = 0.8415, \qquad PE(1, 1) = \cos(1) = 0.5403"></div>
-    <div class="mean"><b>→ 뜻.</b> 차원마다 빠르기가 다른 물결을 겹쳐 자리마다 고유한 무늬를 만든다 (시계의 초침·분침·시침처럼). GPT-2는 이 식 대신 자리마다 벡터를 학습한다: 그래도 가까운 자리끼리 비슷해진다 (자리 10과 11: 0.998, 10과 40: 0.64).</div>
+    <p class="h">예제: d = 4일 때 자리 0, 1, 2의 PE</p>
+    <p>d = 4이면 칸은 k = 0, 1, 2, 3이고 묶음은 i = 0(칸 0, 1)과 i = 1(칸 2, 3)이다. 분모는 i = 0일 때 10000⁰ = 1, i = 1일 때 10000^(2/4) = 100이다.</p>
+    <p>칸 하나 먼저: 자리 1의 칸 2는 묶음 i = 1의 sin이다.</p>
+    <div class="eq" data-tex="PE(1, 2) = \sin\!\left(\frac{1}{10000^{2 \cdot 1/4}}\right) = \sin\frac{1}{100} = \sin 0.01 = 0.010"></div>
+    <p>네 칸을 모두 채우면 자리마다 벡터 하나다 (각도는 radian).</p>
+    <div class="eq" data-tex="PE(0) = [\sin 0,\ \cos 0,\ \sin 0,\ \cos 0] = [0,\ 1,\ 0,\ 1]"></div>
+    <div class="eq" data-tex="PE(1) = [\sin 1,\ \cos 1,\ \sin 0.01,\ \cos 0.01] = [0.841,\ 0.540,\ 0.010,\ 1.000]"></div>
+    <div class="eq" data-tex="PE(2) = [\sin 2,\ \cos 2,\ \sin 0.02,\ \cos 0.02] = [0.909,\ -0.416,\ 0.020,\ 1.000]"></div>
+    <p>거리가 1인 두 쌍(0과 1, 1과 2)의 내적을 비교한다.</p>
+    <div class="eq" data-tex="PE(0) \cdot PE(1) = 0 \times 0.841 + 1 \times 0.540 + 0 \times 0.010 + 1 \times 1.000 = \Cg{1.540}"></div>
+    <div class="eq" data-tex="\begin{aligned} PE(1) \cdot PE(2) &= 0.841 \times 0.909 + 0.540 \times (-0.416) + 0.010 \times 0.020 + 1.000 \times 1.000 \\[4pt] &= 0.7645 - 0.2246 + 0.0002 + 1.0000 = \Cg{1.540} \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 앞 묶음(칸 0, 1)은 자리가 하나 늘 때 1 radian씩 빨리 돌고(초침), 뒤 묶음(칸 2, 3)은 0.01 radian씩 천천히 돈다(시침). 두 내적이 모두 cos 1 + cos 0.01 = 1.540인 것처럼, PE끼리의 내적은 자리가 아니라 거리에만 따른다. 거리가 2이면 cos 2 + cos 0.02 = 0.584로 작아진다. GPT-2는 이 식 대신 자리마다 벡터를 학습한다: 그래도 가까운 자리끼리 비슷해진다 (cosine 유사도: 자리 10과 11은 0.998, 10과 40은 0.64).</div>
   </div>
   <div class="stage">
     <div class="ctl"><label>자리 pos <input type="range" id="i4p" min="0" max="63" step="1" value="10"><output id="o4p"></output></label></div>
@@ -167,6 +187,14 @@
   <h2 data-short="encoder, decoder, mask"><span class="no">6</span>encoder, decoder, masking</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>글을 만들 때는 아직 쓰지 않은 뒷말을 보면 안 된다. 어떻게 막나?</p></div>
   <div class="eq" data-tex="\text{mask}_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases} \qquad A = \operatorname{softmax}\!\left( \frac{QK^{\top}}{\sqrt{d_k}} + \text{mask} \right) \quad (e^{-\infty} = 0)"></div>
+  <div class="calc">
+    <p class="h">예제: 2절의 Q, K, V로 2행 (token 2는 token 1, 2만 볼 수 있다)</p>
+    <p>q₂ = (0, 1)과 세 key의 내적을 √2로 나누면 (0, 1.414, 0.707)이다. mask를 더하면 token 3 칸만 −∞가 된다.</p>
+    <div class="eq" data-tex="(0,\ 1.414,\ 0.707) + (0,\ 0,\ -\infty) = (0,\ 1.414,\ -\infty)"></div>
+    <div class="eq" data-tex="\operatorname{softmax}: \frac{(e^{0},\ e^{1.414},\ e^{-\infty})}{e^{0} + e^{1.414} + 0} = \frac{(1,\ 4.113,\ 0)}{5.113} = (\Co{0.196},\ \Co{0.804},\ 0)"></div>
+    <div class="eq" data-tex="o_2 = 0.196 \cdot (10, 0) + 0.804 \cdot (0, 10) + 0 \cdot (5, 5) = (1.96,\ 8.04)"></div>
+    <div class="mean"><b>→ 뜻.</b> mask가 없으면 2행은 (0.140, 0.576, 0.284)로 아직 오지 않은 token 3도 28% 본다. mask를 켜면 token 3의 몫이 정확히 0이 되고, 앞의 둘이 합 1을 나눠 가진다. 글을 만들 때 뒷말을 미리 보는 반칙이 막힌다.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><div class="seg" id="g6m"><span>causal mask</span><button type="button" data-v="on" aria-pressed="true">켬</button><button type="button" data-v="off" aria-pressed="false">끔</button></div></div>
     <canvas id="cv6" aria-label="mask를 켜고 끈 점수와 softmax"></canvas>
@@ -210,7 +238,7 @@
   <h2 data-short="LLM"><span class="no">8</span>LLM: 다음 token 예측</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>ChatGPT 같은 LLM은 결국 무엇을 학습한 것인가?</p></div>
   <div class="eq" data-tex="p(\Co{x_{t+1}} \mid x_1, \dots, x_t) = \operatorname{softmax}\!\left( \frac{W h_t}{\Cr{T}} \right), \qquad L = -\log p(\text{진짜 다음 token})"></div>
-  <ul class="legend"><li class="c-miss"><b>x_{t+1}</b> 다음 token</li><li class="c-fa"><b>T</b> 온도 (13장 5절과 같다)</li></ul>
+  <ul class="legend"><li class="c-miss"><b>x_{t+1}</b> 다음 token</li><li><b>h_t</b> 마지막 층이 t번째 token 자리에서 낸 벡터 (GPT-2: 768개)</li><li><b>W</b> h_t를 token 종류마다 점수 하나로 바꾸는 matrix (GPT-2: 50,257 × 768)</li><li class="c-fa"><b>T</b> 온도 (13장 5절과 같다)</li></ul>
   <div class="stage">
     <canvas id="cv8b" aria-label="영어 문장과 한국어 문장을 GPT-2 token으로 나눈 것"></canvas>
   </div>
@@ -226,6 +254,8 @@
   <div class="calc">
     <p class="h">결과: GPT-2 small (OpenAI 2019, parameter 124,439,808개, 12층 × head 12, d 768, token 50,257종, 문맥 1,024)</p>
     <div class="eq" data-tex="\text{I drank a cup of} \to \text{coffee } \Cg{27.4\%},\ \text{tea } 15.6\% \qquad \text{The capital of France is} \to \text{the } 8.5\%,\ \text{Paris } \Cr{3.2\%}"></div>
+    <p>학습할 때의 loss는 진짜 다음 token에 준 확률로 정해진다. 진짜 다음 token이 "coffee"였다면, 또 "Paris"였다면:</p>
+    <div class="eq" data-tex="L = -\ln 0.274 = \Cg{1.295}, \qquad L = -\ln 0.032 = \Cr{3.442}"></div>
     <div class="mean"><b>→ 뜻.</b> 작은 GPT-2는 문법은 알지만 지식은 약하다 ("Paris"가 5등). 같은 구조를 수천 배 키우고 data를 늘리고, 사람의 피드백으로 다듬은 것이 오늘의 LLM이다. 가장 그럴듯한 것만 이어 붙이면 (greedy): "Deep learning is a very powerful tool for learning about the world around us. It's a tool that can help us".</div>
   </div>
   <p class="key"><b>기억할 한 줄.</b> LLM = causal Transformer를 "다음 token 맞히기"로 아주 많이 학습한 것. 출력은 확률이고, 온도로 고르는 법을 정한다.</p>
@@ -241,7 +271,7 @@
       <tr><td>1 attention</td><td>어디를 볼지 비율을 정해 섞기</td><td>it → animal 0.846</td></tr>
       <tr><td>2 Q, K, V</td><td>softmax(QKᵀ/√d)V</td><td>(0.576, 0.140, 0.284)</td></tr>
       <tr><td>3 multi-head</td><td>head마다 다른 관계</td><td>바로 앞 99.9%</td></tr>
-      <tr><td>4 위치</td><td>token + 자리 무늬</td><td>sin 1 = 0.8415</td></tr>
+      <tr><td>4 위치</td><td>token + 자리 무늬</td><td>PE(0)·PE(1) = PE(1)·PE(2) = 1.540</td></tr>
       <tr><td>5 block</td><td>attention + FFN, residual, LN</td><td>49,984개 (d 64)</td></tr>
       <tr><td>6 mask</td><td>미래를 −∞로</td><td>(0.196, 0.804)</td></tr>
       <tr><td>7 ViT</td><td>patch를 token으로</td><td>96.7% vs CNN 98.6%</td></tr>

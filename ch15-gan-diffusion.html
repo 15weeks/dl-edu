@@ -115,7 +115,14 @@
   <h2 data-short="Diffusion idea"><span class="no">4</span>The idea of diffusion: add noise, then undo it</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Turning a picture into noise is easy. What if a network could learn the reverse, turning noise into a picture?</p></div>
   <div class="eq" data-tex="\Co{x_t} = \Cb{\sqrt{\bar\alpha_t}} \, x_0 + \Cr{\sqrt{1 - \bar\alpha_t}} \, \varepsilon, \qquad \varepsilon \sim \mathcal{N}(0, I)"></div>
-  <ul class="legend"><li class="c-sig"><b>√ᾱ_t</b> the picture's share (1 → 0)</li><li class="c-fa"><b>√(1−ᾱ_t)</b> the noise's share (0 → 1)</li></ul>
+  <ul class="legend"><li class="c-sig"><b>√ᾱ_t</b> the picture's share (1 → 0)</li><li class="c-fa"><b>√(1−ᾱ_t)</b> the noise's share (0 → 1)</li><li><b>ᾱ_t</b> a number computed from β_t in section 5; here we borrow section 5's values</li><li><b>ε</b> noise drawn from a standard normal, the same size as the picture</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: one white pixel x₀ = 1, drawn noise ε = −0.5</p>
+    <p>Borrow section 5's values ᾱ₁₀₀ = 0.897 and ᾱ₅₀₀ = 0.0786 and compute at t = 100 and t = 500.</p>
+    <div class="eq" data-tex="\begin{aligned} t = 100: \; x_{100} &= \sqrt{0.897} \times 1 + \sqrt{1 - 0.897} \times (-0.5) \\ &= 0.947 - 0.321 \times 0.5 = \Co{0.787} \end{aligned}"></div>
+    <div class="eq" data-tex="\begin{aligned} t = 500: \; x_{500} &= \sqrt{0.0786} \times 1 + \sqrt{1 - 0.0786} \times (-0.5) \\ &= 0.280 - 0.960 \times 0.5 = \Co{-0.200} \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> At t = 100 the original value 1 still shows as 0.79, but at t = 500 the result is −0.20 and the noise dominates. The two shares squared always add to 1 (0.947² + 0.321² = 1): only the mixing ratio changes.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>t <input type="range" id="i4t" min="0" max="1000" step="10" value="250"><output id="o4t"></output></label>
@@ -156,6 +163,14 @@
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What does the network learn to predict?</p></div>
   <div class="eq" data-tex="L = \mathbb{E}_{x_0,\, t,\, \varepsilon} \Big\| \, \Cr{\varepsilon} - \Cb{\varepsilon_\theta}\big( \sqrt{\bar\alpha_t}\, x_0 + \sqrt{1 - \bar\alpha_t}\, \Cr{\varepsilon},\; t \big) \Big\|^2"></div>
   <p class="say">In words: pick any picture x₀ and any time t, mix in noise ε to make x_t. The network ε_θ looks at x_t and t and guesses "what noise was mixed in". The same idea as chapter 10's denoising autoencoder, done for every noise level.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: a 2-pixel picture x₀ = (1, −1), t = 500 (√ᾱ = 0.280, √(1−ᾱ) = 0.960)</p>
+    <p>Draw noise ε = (0.3, −1.2) and mix it in.</p>
+    <div class="eq" data-tex="\begin{aligned} x_{500} &= 0.280 \times (1,\ -1) + 0.960 \times (\Cr{0.3},\ \Cr{-1.2}) \\ &= (0.280 + 0.288,\ -0.280 - 1.152) = (0.568,\ -1.432) \end{aligned}"></div>
+    <p>Say the network looks at x₅₀₀ and t = 500 and guesses the noise as ε_θ = (0.5, −1.0). Square the difference in each pixel.</p>
+    <div class="eq" data-tex="\begin{aligned} \big\| \Cr{\varepsilon} - \Cb{\varepsilon_\theta} \big\|^2 &= (0.3 - 0.5)^2 + \big(-1.2 - (-1.0)\big)^2 = 0.04 + 0.04 = 0.08 \\ \text{mse\_loss} &= 0.08 \div 2 = 0.04 \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> The network predicts the mixed-in noise, not x₀. The formula's ‖·‖² is a sum over pixels, while F.mse_loss in the code below is the mean, so with 2 pixels it is half: a different size, the same thing being minimised.</div>
+  </div>
   <div class="stage">
     <svg viewBox="0 0 700 200" role="img" aria-label="This chapter's U-Net: down from 28 to 14 and 7, back up to 28, joining equal sizes" style="font-family: var(--sans); width: 100%; height: auto;">
       <defs><marker id="m15-a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
@@ -189,7 +204,16 @@ loss.backward(); opt.step()</code></pre></div>
   <h2 data-short="Sampling"><span class="no">7</span>Sampling: from noise to an image</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>With a trained ε_θ, how is a new picture made?</p></div>
   <div class="eq" data-tex="x_T \sim \mathcal{N}(0, I), \qquad \Co{x_{t-1}} = \frac{1}{\sqrt{\alpha_t}} \left( x_t - \frac{\beta_t}{\sqrt{1 - \bar\alpha_t}} \, \Cb{\varepsilon_\theta(x_t, t)} \right) + \sqrt{\beta_t}\, z, \quad t = T, \dots, 1"></div>
+  <ul class="legend"><li><b>α_t</b> = 1 − β_t, the share kept in one step (α without the bar; ᾱ_t is α multiplied from 1 to t)</li><li class="c-sig"><b>ε_θ(x_t, t)</b> the noise the network guesses</li><li><b>z</b> fresh noise drawn at each step, 𝒩(0, I)</li></ul>
   <p class="say">In words: start from pure noise; 1000 times, subtract a little of the noise the network guesses and add a little fresh noise (z). The last step adds no z.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: take section 4's pixel one step back from t = 500</p>
+    <p>x₅₀₀ = −0.1996 (section 4's −0.200), β₅₀₀ = 0.01004, α₅₀₀ = 1 − 0.01004 = 0.98996 and √(1 − ᾱ₅₀₀) = 0.9599. Say the network guessed the noise exactly, ε_θ = −0.5, and the fresh noise drawn is z = 0.1. First the factor on the noise to subtract:</p>
+    <div class="eq" data-tex="\frac{\beta_{500}}{\sqrt{1 - \bar\alpha_{500}}} = \frac{0.01004}{0.9599} = 0.01046"></div>
+    <p>Put everything into the formula.</p>
+    <div class="eq" data-tex="\begin{aligned} x_{499} &= \frac{-0.1996 - 0.01046 \times (\Cb{-0.5})}{\sqrt{0.98996}} + \sqrt{0.01004} \times 0.1 \\[4pt] &= \frac{-0.1996 + 0.0052}{0.9950} + 0.1002 \times 0.1 = -0.1954 + 0.0100 = \Co{-0.1854} \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> One step changes the value by only about 0.01. Repeating such small steps from t = 500 down to 1 removes the noise bit by bit and brings the value back towards a picture. If the network's guesses are off, those errors also build up a little at every step.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>stage <input type="range" id="i7k" min="0" max="8" step="1" value="8"><output id="o7k"></output></label>
@@ -207,6 +231,11 @@ loss.backward(); opt.step()</code></pre></div>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How do we get it to draw what we ask for, like "a 7" or "a photo of a cat"?</p></div>
   <div class="eq" data-tex="\tilde\varepsilon = (1 + \Co{w})\, \varepsilon_\theta(x_t, t, \Cb{c}) - \Co{w}\, \varepsilon_\theta(x_t, t, \varnothing)"></div>
   <ul class="legend"><li class="c-sig"><b>c</b> condition (a digit, text)</li><li class="c-miss"><b>w</b> guidance scale: push the difference between with and without the condition w times further</li><li><b>∅</b> no condition (the class was dropped 10% of the time in training)</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: one pixel, the guess is 0.6 with condition c = "7" and 0.2 without</p>
+    <div class="eq" data-tex="\begin{aligned} w = 0&: \; 0.6 \\ w = 1&: \; 2 \times 0.6 - 1 \times 0.2 = 1.0 \\ w = 3&: \; 4 \times 0.6 - 3 \times 0.2 = \Co{1.8} \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> The change the condition makes (0.6 − 0.2 = 0.4) is added w more times: 0.6 + w × 0.4. The larger w, the more "seven-ness" is exaggerated. As the results below show, the samples become more accurate but more alike.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><div class="seg" id="g8w"><span>guidance w</span><button type="button" data-v="0" aria-pressed="true">0</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">3</button></div></div>
     <canvas id="cv8" aria-label="Digits 0 to 9 generated at each guidance scale"></canvas>
@@ -268,10 +297,10 @@ loss.backward(); opt.step()</code></pre></div>
       <tr><td>1 Generative models</td><td>learn a distribution, draw new ones</td><td>height N(170, 7²)</td></tr>
       <tr><td>2 GAN</td><td>G fools, D catches</td><td>D(x) → 0.5</td></tr>
       <tr><td>3 Image GANs</td><td>transpose-conv G, conv D</td><td>MNIST, FMNIST, CIFAR10</td></tr>
-      <tr><td>4 Diffusion</td><td>reverse the noising</td><td>x_t = √ᾱ x₀ + √(1−ᾱ) ε</td></tr>
+      <tr><td>4 Diffusion</td><td>reverse the noising</td><td>x₀ = 1 → x₅₀₀ = −0.200</td></tr>
       <tr><td>5 Schedule</td><td>ᾱ_t: 1 → 0</td><td>ᾱ₅₀₀ = 0.0786</td></tr>
-      <tr><td>6 DDPM loss</td><td>guess the mixed-in noise</td><td>U-Net</td></tr>
-      <tr><td>7 Sampling</td><td>step back 1000 times</td><td>t = 1000 → 0</td></tr>
+      <tr><td>6 DDPM loss</td><td>guess the mixed-in noise</td><td>‖ε − ε_θ‖² = 0.08</td></tr>
+      <tr><td>7 Sampling</td><td>step back 1000 times</td><td>x₅₀₀ −0.200 → x₄₉₉ −0.185</td></tr>
       <tr><td>8 Guidance</td><td>follow the condition w times harder</td><td>w 0 → 3: 90% → 100%</td></tr>
       <tr><td>9 Ethics, learning</td><td>sources, per-group performance, rebuild</td><td>three passes</td></tr>
     </tbody>

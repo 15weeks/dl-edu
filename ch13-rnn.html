@@ -147,7 +147,14 @@ bias_hh_l1 (16,)</code></pre></div>
   <h2 data-short="Embeddings, generating text"><span class="no">5</span>Hidden states and embeddings</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Characters and words are not numbers, so how do they go in? What does an LSTM learn by predicting the next character?</p></div>
   <div class="eq" data-tex="\text{character } k \;\to\; \Cv{e_k} = E[k] \in \mathbb{R}^{8} \;\to\; \text{LSTM} \;\to\; h_t \;\to\; \operatorname{softmax}(W h_t / \Cr{T}) = \text{next-character probabilities}"></div>
-  <ul class="legend"><li class="c-vio"><b>E</b> a learned table of 8-number vectors, one per character (nn.Embedding)</li><li class="c-fa"><b>T</b> temperature: high = more even, low = only the most likely</li></ul>
+  <ul class="legend"><li class="c-vio"><b>E</b> a learned table of 8-number vectors, one per character (nn.Embedding)</li><li><b>W</b> a matrix that turns h_t into one score per character</li><li class="c-fa"><b>T</b> temperature: high = more even, low = only the most likely</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: three next characters with scores (2, 1, 0), at T = 0.5, 1, 2</p>
+    <p>Divide the scores by T, then apply softmax. With T = 0.5 the scores become (4, 2, 0), so the gaps double.</p>
+    <div class="eq" data-tex="T = 0.5: \; \frac{(e^{4},\ e^{2},\ e^{0})}{e^{4} + e^{2} + e^{0}} = \frac{(54.60,\ 7.39,\ 1)}{62.99} = (\Cr{0.867},\ 0.117,\ 0.016)"></div>
+    <div class="eq" data-tex="T = 1: \; (0.665,\ 0.245,\ 0.090), \qquad T = 2: \; (0.506,\ 0.307,\ \Cr{0.186})"></div>
+    <div class="mean"><b>→ Meaning.</b> With a low T the top character takes 87% and the text tends to repeat itself; with a high T even the third character gets 19%, so the text is new but has wrong characters in it. The text in the table below was made with T = 0.8.</div>
+  </div>
   <div class="stage">
     <canvas id="cv5" aria-label="A 2-D map of the character embeddings"></canvas>
     <div class="ctl">
@@ -169,8 +176,18 @@ bias_hh_l1 (16,)</code></pre></div>
 <section id="s6">
   <h2 data-short="GRU, LSTM"><span class="no">6</span>GRU and LSTM: gates that control memory</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>How can the network decide for itself what to forget and what to keep?</p></div>
-  <div class="eq" data-tex="\begin{aligned} \Cr{f_t}, \Cb{i_t}, \Co{o_t} &= \sigma(W [h_{t-1}, x_t] + b) \;\;(\text{three gates, 0 to 1}), \qquad g_t = \tanh(W_g [h_{t-1}, x_t] + b_g) \\ \Cg{c_t} &= \Cr{f_t} \odot \Cg{c_{t-1}} + \Cb{i_t} \odot g_t, \qquad h_t = \Co{o_t} \odot \tanh(\Cg{c_t}) \end{aligned}"></div>
-  <ul class="legend"><li class="c-fa"><b>f</b> forget: how much old memory to keep</li><li class="c-sig"><b>i</b> input: how much new to write</li><li class="c-miss"><b>o</b> output: how much memory to show</li><li class="c-ok"><b>c</b> cell state (long memory)</li></ul>
+  <div class="eq" data-tex="\begin{aligned} \Cr{f_t} &= \sigma(W_f [h_{t-1}, x_t] + b_f), \quad \Cb{i_t} = \sigma(W_i [h_{t-1}, x_t] + b_i), \quad \Co{o_t} = \sigma(W_o [h_{t-1}, x_t] + b_o) \\ g_t &= \tanh(W_g [h_{t-1}, x_t] + b_g) \\ \Cg{c_t} &= \Cr{f_t} \odot \Cg{c_{t-1}} + \Cb{i_t} \odot g_t, \qquad h_t = \Co{o_t} \odot \tanh(\Cg{c_t}) \end{aligned}"></div>
+  <ul class="legend"><li class="c-fa"><b>f</b> forget: how much old memory to keep (0 to 1)</li><li class="c-sig"><b>i</b> input: how much new to write (0 to 1)</li><li class="c-miss"><b>o</b> output: how much memory to show (0 to 1)</li><li><b>g</b> the new candidate (−1 to 1)</li><li class="c-ok"><b>c</b> cell state (long memory)</li><li><b>[h, x]</b> the two vectors joined end to end</li><li><b>⊙</b> element-by-element product</li><li><b>W_f, W_i, W_o, W_g</b> separate learned weights for each gate</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: one step of a one-number LSTM, previous memory c_{t−1} = 2.0</p>
+    <p>Say the gates and the candidate have already been computed with the formulas above: f = 0.9, i = 0.5, g = −0.6, o = 0.8. First update the memory c.</p>
+    <div class="eq" data-tex="\Cg{c_t} = \Cr{0.9} \times 2.0 + \Cb{0.5} \times (-0.6) = 1.8 - 0.3 = \Cg{1.5}"></div>
+    <p>Squash that memory with tanh and show as much as the output gate allows.</p>
+    <div class="eq" data-tex="h_t = \Co{0.8} \times \tanh(1.5) = 0.8 \times 0.905 = 0.724"></div>
+    <p>c is carried only by multiplying and adding, so going one step back along c multiplies the gradient by f. Over 50 steps, f is multiplied 50 times.</p>
+    <div class="eq" data-tex="f = 0.9: \; 0.9^{50} = 0.0052, \qquad f = 0.99: \; 0.99^{50} = \Cg{0.605}"></div>
+    <div class="mean"><b>→ Meaning.</b> 90% of the old memory 2.0 is kept and half of the new candidate −0.6 is added. With f near 1, 60% of the gradient is still there after 50 steps. Section 2's RNN shrinks it at every step through tanh and W_h (section 7).</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>forget f <input type="range" id="i6f" min="0" max="1" step="0.01" value="0.9"><output id="o6f"></output></label>
@@ -180,7 +197,7 @@ bias_hh_l1 (16,)</code></pre></div>
     <canvas id="cv6" aria-label="Cell state and output for the chosen gate values"></canvas>
     <div class="read" id="r6" aria-live="polite"></div>
   </div>
-  <div class="eq" data-tex="\text{GRU}: \; \Cr{z_t} = \sigma(\cdot), \; r_t = \sigma(\cdot), \; \tilde{h}_t = \tanh(W x_t + U (r_t \odot h_{t-1})), \; h_t = (1 - \Cr{z_t}) \odot h_{t-1} + \Cr{z_t} \odot \tilde{h}_t"></div>
+  <div class="eq" data-tex="\begin{aligned} \text{GRU}: \; \Cr{z_t} &= \sigma(W_z x_t + U_z h_{t-1}), \quad r_t = \sigma(W_r x_t + U_r h_{t-1}) \\ \tilde{h}_t &= \tanh\big(W_h x_t + U_h (r_t \odot h_{t-1})\big) \\ h_t &= (1 - \Cr{z_t}) \odot h_{t-1} + \Cr{z_t} \odot \tilde{h}_t \qquad (\text{biases omitted}) \end{aligned}"></div>
   <div class="tbl"><table>
     <thead><tr><th>Input 8, hidden 64</th><th>Gate sets</th><th class="num">Parameters</th><th>Character</th></tr></thead>
     <tbody>

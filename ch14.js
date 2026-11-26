@@ -125,8 +125,8 @@ const F4 = fig("cv4", w => (w >= 640 ? 300 : 360), (ctx, w, h, c) => {
   for (let p = 0; p < NPOS; p++) for (let i = 0; i < DPE; i++) { const v = pe(p, i); ctx.fillStyle = cssRGB(mixRGB(bg, v >= 0 ? pos : neg, Math.abs(v) * 0.85)); ctx.fillRect(B.l + p * cwid, B.t + i * chgt, cwid + 0.5, chgt + 0.5); }
   ctx.strokeStyle = c.ink; ctx.lineWidth = 2; ctx.strokeRect(B.l + S4.p * cwid, B.t, cwid, B.h);
   axes(ctx, c, B, [0, NPOS], [DPE, 0], { xt: [0, 16, 32, 48, 63].map(v => [v + 0.5, String(v)]), yt: [[DPE - 0.5, "63"], [DPE - 32, "32"], [0.5, "0"]], xlabel: tr("자리 pos", "position pos"), grid: false });
-  panelTitle(ctx, c, tr("PE(pos, i): 파랑 +, 빨강 −. 위 차원은 빨리, 아래 차원은 천천히 흔들린다", "PE(pos, i): blue +, red −. Top dimensions swing fast, bottom ones slowly"), B.l, 16);
-  txt(ctx, tr("차원 i", "dim i"), 8, B.t + B.h / 2 - 16, { color: c.muted, size: 11 });
+  panelTitle(ctx, c, tr("PE(pos, k): 파랑 +, 빨강 −. 위 칸은 빨리, 아래 칸은 천천히 흔들린다", "PE(pos, k): blue +, red −. Top slots swing fast, bottom ones slowly"), B.l, 16);
+  txt(ctx, tr("칸 k", "slot k"), 8, B.t + B.h / 2 - 16, { color: c.muted, size: 11 });
 });
 const F4b = fig("cv4b", 220, (ctx, w, h, c) => {
   const B = { l: 52, t: 30, w: w - 70, h: h - 70 }, A = axes(ctx, c, B, [0, 63], [-0.2, 1], { xt: [0, 16, 32, 48, 63], yt: [0, 0.5, 1], xlabel: tr("다른 자리", "other position") });

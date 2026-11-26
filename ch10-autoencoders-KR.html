@@ -45,6 +45,13 @@
   <div class="eq" data-tex="\Cv{z} = \text{enc}(\Cb{x}), \qquad \Co{\hat{x}} = \text{dec}(\Cv{z}), \qquad L = \frac{1}{196}\sum_{i} (\Co{\hat{x}_i} - \Cb{x_i})^2"></div>
   <ul class="legend"><li class="c-sig"><b>x</b> 입력 그림 (196 pixel)</li><li class="c-vio"><b>z</b> latent code (16개)</li><li class="c-miss"><b>x̂</b> 복원한 그림</li></ul>
   <p class="say">말로: 정답 칸에 입력을 그대로 넣는다. 좁은 가운데를 지나야 하니 network는 "숫자 그림에서 중요한 것"만 16개 숫자에 담는 법을 배운다.</p>
+  <div class="calc">
+    <p class="h">예제: pixel 4개짜리 그림으로 loss 한 번</p>
+    <p>196칸은 손으로 계산하기 길어서 4칸으로 줄였다. 입력 x와 복원 x̂의 칸마다 차이를 제곱해 평균 낸다.</p>
+    <div class="eq" data-tex="\Cb{x} = (0,\ 1,\ 1,\ 0), \qquad \Co{\hat x} = (0.1,\ 0.8,\ 0.9,\ 0.0)"></div>
+    <div class="eq" data-tex="\begin{aligned} L &= \frac{(0.1 - 0)^2 + (0.8 - 1)^2 + (0.9 - 1)^2 + (0 - 0)^2}{4} \\[4pt] &= \frac{0.01 + 0.04 + 0.01 + 0}{4} = 0.015 \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 칸마다 평균 0.12 정도(√0.015) 틀렸다는 뜻이다. 2절 이후의 결과(시험 MSE 0.0147 등)도 같은 식을 196칸, 시험 그림 10,000장에 대해 평균 낸 값이다.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><button type="button" id="b1next">다른 숫자</button></div>
     <canvas id="cv1" aria-label="원래 숫자, 16개 code 막대, 복원한 숫자"></canvas>
@@ -163,6 +170,12 @@ xhat = torch.sigmoid(z @ W + b2)         # decoder: 같은 W를 뒤집어 쓴다
   <div class="ask"><p class="tag">알고 싶은 것</p><p>latent 공간의 아무 점이나 decoder에 넣으면 새 숫자가 나올까?</p></div>
   <div class="eq" data-tex="\Cv{z}(t) = (1 - t)\,\Cb{z_A} + t\,\Co{z_B}, \qquad t = 0, \tfrac{1}{8}, \dots, 1"></div>
   <ul class="legend"><li class="c-sig"><b>z_A</b> 숫자 A의 code</li><li class="c-miss"><b>z_B</b> 숫자 B의 code</li><li class="c-vio"><b>z(t)</b> 둘 사이 직선 위의 점</li></ul>
+  <div class="calc">
+    <p class="h">예제: 5절처럼 code가 2개일 때, t = 1/4</p>
+    <p>A의 code가 (−1, 2), B의 code가 (3, 0)이라 하자. t = 1/4이면 A 쪽으로 3/4, B 쪽으로 1/4만큼 섞는다. 칸마다 따로 계산한다.</p>
+    <div class="eq" data-tex="\Cv{z}(\tfrac14) = \tfrac34\,\Cb{(-1,\ 2)} + \tfrac14\,\Co{(3,\ 0)} = \big(\tfrac34 \cdot (-1) + \tfrac14 \cdot 3,\ \ \tfrac34 \cdot 2 + \tfrac14 \cdot 0\big) = (0,\ 1.5)"></div>
+    <div class="mean"><b>→ 뜻.</b> t = 0이면 z_A, t = 1이면 z_B, 그 사이는 두 점을 잇는 선분 위의 점이다. 이 점을 decoder에 넣으면 A에서 B로 바뀌어 가는 중간 그림이 나온다.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <button type="button" id="b7a">A 바꾸기</button>

@@ -147,7 +147,14 @@ bias_hh_l1 (16,)</code></pre></div>
   <h2 data-short="embedding, 글 생성"><span class="no">5</span>hidden state와 embedding</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>글자나 단어는 숫자가 아닌데 어떻게 넣나? 다음 글자를 맞히는 LSTM은 무엇을 배우나?</p></div>
   <div class="eq" data-tex="\text{글자 } k \;\to\; \Cv{e_k} = E[k] \in \mathbb{R}^{8} \;\to\; \text{LSTM} \;\to\; h_t \;\to\; \operatorname{softmax}(W h_t / \Cr{T}) = \text{다음 글자 확률}"></div>
-  <ul class="legend"><li class="c-vio"><b>E</b> 글자마다 학습되는 8개짜리 벡터 표 (nn.Embedding)</li><li class="c-fa"><b>T</b> 온도: 크면 고르게, 작으면 가장 그럴듯한 것만</li></ul>
+  <ul class="legend"><li class="c-vio"><b>E</b> 글자마다 학습되는 8개짜리 벡터 표 (nn.Embedding)</li><li><b>W</b> h_t를 글자마다 점수 하나로 바꾸는 matrix</li><li class="c-fa"><b>T</b> 온도: 크면 고르게, 작으면 가장 그럴듯한 것만</li></ul>
+  <div class="calc">
+    <p class="h">예제: 다음 글자 세 개의 점수가 (2, 1, 0)일 때 T = 0.5, 1, 2</p>
+    <p>점수를 T로 나눈 뒤 softmax한다. T = 0.5이면 점수가 (4, 2, 0)이 되어 차이가 두 배로 벌어진다.</p>
+    <div class="eq" data-tex="T = 0.5: \; \frac{(e^{4},\ e^{2},\ e^{0})}{e^{4} + e^{2} + e^{0}} = \frac{(54.60,\ 7.39,\ 1)}{62.99} = (\Cr{0.867},\ 0.117,\ 0.016)"></div>
+    <div class="eq" data-tex="T = 1: \; (0.665,\ 0.245,\ 0.090), \qquad T = 2: \; (0.506,\ 0.307,\ \Cr{0.186})"></div>
+    <div class="mean"><b>→ 뜻.</b> T가 작으면 1등 글자가 87%를 가져가 늘 같은 글을 되풀이하기 쉽고, 크면 3등 글자도 19%라 새롭지만 틀린 글자가 섞인다. 아래 표의 글은 T = 0.8로 만들었다.</div>
+  </div>
   <div class="stage">
     <canvas id="cv5" aria-label="글자 embedding의 2D 지도"></canvas>
     <div class="ctl">
@@ -169,8 +176,18 @@ bias_hh_l1 (16,)</code></pre></div>
 <section id="s6">
   <h2 data-short="GRU, LSTM"><span class="no">6</span>GRU와 LSTM: gate로 기억 조절</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>무엇을 잊고 무엇을 남길지 network가 스스로 정하게 하려면?</p></div>
-  <div class="eq" data-tex="\begin{aligned} \Cr{f_t}, \Cb{i_t}, \Co{o_t} &= \sigma(W [h_{t-1}, x_t] + b) \;\;(\text{gate 셋, 0~1}), \qquad g_t = \tanh(W_g [h_{t-1}, x_t] + b_g) \\ \Cg{c_t} &= \Cr{f_t} \odot \Cg{c_{t-1}} + \Cb{i_t} \odot g_t, \qquad h_t = \Co{o_t} \odot \tanh(\Cg{c_t}) \end{aligned}"></div>
-  <ul class="legend"><li class="c-fa"><b>f</b> forget: 옛 기억을 얼마나 남길지</li><li class="c-sig"><b>i</b> input: 새것을 얼마나 넣을지</li><li class="c-miss"><b>o</b> output: 기억을 얼마나 내보일지</li><li class="c-ok"><b>c</b> cell 상태 (긴 기억)</li></ul>
+  <div class="eq" data-tex="\begin{aligned} \Cr{f_t} &= \sigma(W_f [h_{t-1}, x_t] + b_f), \quad \Cb{i_t} = \sigma(W_i [h_{t-1}, x_t] + b_i), \quad \Co{o_t} = \sigma(W_o [h_{t-1}, x_t] + b_o) \\ g_t &= \tanh(W_g [h_{t-1}, x_t] + b_g) \\ \Cg{c_t} &= \Cr{f_t} \odot \Cg{c_{t-1}} + \Cb{i_t} \odot g_t, \qquad h_t = \Co{o_t} \odot \tanh(\Cg{c_t}) \end{aligned}"></div>
+  <ul class="legend"><li class="c-fa"><b>f</b> forget: 옛 기억을 얼마나 남길지 (0~1)</li><li class="c-sig"><b>i</b> input: 새것을 얼마나 넣을지 (0~1)</li><li class="c-miss"><b>o</b> output: 기억을 얼마나 내보일지 (0~1)</li><li><b>g</b> 새로 넣을 후보 (−1~1)</li><li class="c-ok"><b>c</b> cell 상태 (긴 기억)</li><li><b>[h, x]</b> 두 벡터를 이어 붙인 것</li><li><b>⊙</b> 칸끼리 곱하기</li><li><b>W_f, W_i, W_o, W_g</b> gate마다 따로 학습되는 weight</li></ul>
+  <div class="calc">
+    <p class="h">예제: 숫자 하나짜리 LSTM의 한 칸, 앞의 기억 c_{t−1} = 2.0</p>
+    <p>gate와 후보는 이미 위 식으로 계산되어 f = 0.9, i = 0.5, g = −0.6, o = 0.8이라 하자. 먼저 기억 c를 고친다.</p>
+    <div class="eq" data-tex="\Cg{c_t} = \Cr{0.9} \times 2.0 + \Cb{0.5} \times (-0.6) = 1.8 - 0.3 = \Cg{1.5}"></div>
+    <p>그 기억을 tanh로 누르고 output gate만큼 내보인다.</p>
+    <div class="eq" data-tex="h_t = \Co{0.8} \times \tanh(1.5) = 0.8 \times 0.905 = 0.724"></div>
+    <p>c는 곱하고 더하기로만 이어지므로, c를 따라 한 칸 거슬러 가면 gradient에 f가 곱해진다. 50칸이면 f를 50번 곱한다.</p>
+    <div class="eq" data-tex="f = 0.9: \; 0.9^{50} = 0.0052, \qquad f = 0.99: \; 0.99^{50} = \Cg{0.605}"></div>
+    <div class="mean"><b>→ 뜻.</b> 옛 기억 2.0의 90%를 남기고 새 후보 −0.6의 절반을 더했다. f가 1에 가까우면 50칸 뒤에도 gradient의 60%가 남는다. 2절의 RNN은 매 칸 tanh와 W_h를 지나며 줄어든다 (7절).</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>forget f <input type="range" id="i6f" min="0" max="1" step="0.01" value="0.9"><output id="o6f"></output></label>
@@ -180,7 +197,7 @@ bias_hh_l1 (16,)</code></pre></div>
     <canvas id="cv6" aria-label="gate 값에 따른 cell 상태와 출력"></canvas>
     <div class="read" id="r6" aria-live="polite"></div>
   </div>
-  <div class="eq" data-tex="\text{GRU}: \; \Cr{z_t} = \sigma(\cdot), \; r_t = \sigma(\cdot), \; \tilde{h}_t = \tanh(W x_t + U (r_t \odot h_{t-1})), \; h_t = (1 - \Cr{z_t}) \odot h_{t-1} + \Cr{z_t} \odot \tilde{h}_t"></div>
+  <div class="eq" data-tex="\begin{aligned} \text{GRU}: \; \Cr{z_t} &= \sigma(W_z x_t + U_z h_{t-1}), \quad r_t = \sigma(W_r x_t + U_r h_{t-1}) \\ \tilde{h}_t &= \tanh\big(W_h x_t + U_h (r_t \odot h_{t-1})\big) \\ h_t &= (1 - \Cr{z_t}) \odot h_{t-1} + \Cr{z_t} \odot \tilde{h}_t \qquad (\text{bias 생략}) \end{aligned}"></div>
   <div class="tbl"><table>
     <thead><tr><th>입력 8, hidden 64</th><th>gate 묶음</th><th class="num">parameter</th><th>특징</th></tr></thead>
     <tbody>

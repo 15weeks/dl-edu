@@ -141,6 +141,13 @@
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Does chapter 5's L2 (weight decay) still work as intended when combined with Adam?</p></div>
   <div class="eq" data-tex="\text{Adam + L2}: g \leftarrow g + \Cr{\lambda w} \;\;(\text{then divided by } \sqrt{\hat v}), \qquad \text{AdamW}: w \leftarrow w - \eta\Big(\frac{\hat m}{\sqrt{\hat v} + \varepsilon} + \Cg{\lambda w}\Big)"></div>
   <p class="say">In words: with Adam + L2 the penalty is mixed into the gradient and divided by √v, so weights with large gradients get a small penalty. AdamW takes the penalty out and gives every weight the same one.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the figure's two weights, both w = 1, η = 0.001, λ = 0.01</p>
+    <p>Weight A has small gradients (size 0.01) and weight B large ones (size 1). √v̂ is the average gradient size, so take 0.01 for A and 1 for B. Compare how much the penalty shrinks w in each step.</p>
+    <div class="eq" data-tex="\text{Adam + L2}: \frac{\eta\,\Cr{\lambda w}}{\sqrt{\hat v}} \;\Rightarrow\; \begin{cases} A: \dfrac{0.001 \times 0.01 \times 1}{0.01} = \Cr{0.001} \\[8pt] B: \dfrac{0.001 \times 0.01 \times 1}{1} = 0.00001 \end{cases}"></div>
+    <div class="eq" data-tex="\text{AdamW}: \eta\,\Cg{\lambda w} \;\Rightarrow\; A \text{ and } B: 0.001 \times 0.01 \times 1 = \Cg{0.00001}"></div>
+    <div class="mean"><b>→ Meaning.</b> With Adam + L2, A (small gradients) shrinks 100× more than B. The gradient size, not λ, ends up setting the strength of the penalty. AdamW shrinks both by 0.001% (a factor 0.00001) per step, exactly as λ says.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><label>gradient size of the second weight <input type="range" id="i5g" min="0.01" max="10" step="0.01" value="1"><output id="o5g"></output></label></div>
     <canvas id="cv5" aria-label="How much weights shrink under Adam + L2 and AdamW"></canvas>
@@ -156,7 +163,15 @@ torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)   # AdamW (pen
   <h2 data-short="Learning-rate schedules"><span class="no">6</span>Learning-rate decay and schedules</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What shape should chapter 2, section 6's "big steps first, small steps later" take?</p></div>
   <div class="eq" data-tex="\text{step}: \eta_0\,\gamma^{\lfloor t/s \rfloor}, \qquad \text{exp}: \eta_0\,\gamma^{t}, \qquad \text{cosine}: \eta_{\min} + \tfrac12(\eta_0 - \eta_{\min})\Big(1 + \cos\frac{\pi t}{T}\Big)"></div>
-  <ul class="legend"><li><b>η₀</b> starting η</li><li><b>γ</b> shrink factor</li><li><b>T</b> total epochs</li><li><b>warmup</b> ramp up from 0 over the first few epochs (common with Adam and Transformers)</li></ul>
+  <ul class="legend"><li><b>η₀</b> starting η</li><li><b>t</b> current epoch</li><li><b>γ</b> shrink factor</li><li><b>s</b> step length: shrink every s epochs</li><li><b>η_min</b> the η cosine ends at</li><li><b>T</b> total epochs</li><li><b>warmup</b> ramp up from 0 over the first few epochs (common with Adam and Transformers)</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: the figure's settings, η₀ = 0.1, T = 100 epochs</p>
+    <p>Step multiplies by γ = 0.5 every s = 25 epochs, exponential by γ = 0.97 every epoch, and cosine goes down to η_min = 0.001. Compute η at t = 10 and t = 50.</p>
+    <div class="eq" data-tex="\begin{aligned} \text{step}: \eta_{10} &= 0.1 \times 0.5^{\lfloor 10/25 \rfloor} = 0.1 \times 0.5^{0} = 0.1 \\ \eta_{50} &= 0.1 \times 0.5^{\lfloor 50/25 \rfloor} = 0.1 \times 0.5^{2} = 0.025 \end{aligned}"></div>
+    <div class="eq" data-tex="\text{exp}: \eta_{10} = 0.1 \times 0.97^{10} = 0.0737, \qquad \eta_{50} = 0.1 \times 0.97^{50} = 0.0218"></div>
+    <div class="eq" data-tex="\begin{aligned} \text{cosine}: \eta_{10} &= 0.001 + \tfrac12 (0.1 - 0.001)\big(1 + \cos(0.1\pi)\big) \\ &= 0.001 + 0.0495 \times 1.951 = 0.0976 \\ \eta_{50} &= 0.001 + 0.0495 \times \big(1 + \cos(0.5\pi)\big) = 0.0505 \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> Starting from the same 0.1, at the middle (t = 50) step gives 0.025, exponential 0.022 and cosine 0.051. Cosine stays large early on, then drops quickly at the end to settle at the bottom.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <div class="seg" id="g6k"><button type="button" data-v="const" aria-pressed="false">Constant</button><button type="button" data-v="step" aria-pressed="false">Step</button><button type="button" data-v="exp" aria-pressed="false">Exponential</button><button type="button" data-v="cos" aria-pressed="true">Cosine</button></div>

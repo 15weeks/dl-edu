@@ -125,8 +125,18 @@
 <section id="s3">
   <h2 data-short="Drawing a boundary"><span class="no">3</span>The geometric view: drawing a boundary line</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When one neuron splits points into two groups, what is it doing in the picture?</p></div>
-  <div class="eq" data-tex="\Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b} = 0 \quad (\text{boundary}), \qquad \Cb{\mathbf{w}} \leftarrow \Cb{\mathbf{w}} + \Co{\eta}\,(y - \hat y)\,\mathbf{x}"></div>
-  <ul class="legend"><li><b class="c-sig">w</b> an arrow perpendicular to the line</li><li><b class="c-vio">b</b> slides the line sideways</li><li>right-hand formula = the perceptron learning rule: turn the line towards a wrong point</li></ul>
+  <div class="eq" data-tex="\Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b} = 0 \quad (\text{boundary}), \qquad \Cb{\mathbf{w}} \leftarrow \Cb{\mathbf{w}} + \Co{\eta}\,(y - \hat y)\,\mathbf{x}, \quad \Cv{b} \leftarrow \Cv{b} + \Co{\eta}\,(y - \hat y)"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> an arrow perpendicular to the line</li><li><b class="c-vio">b</b> slides the line sideways</li><li><b>ŷ</b> here the step output: 1 if z &gt; 0, otherwise 0 (not section 2's σ)</li><li>right-hand two formulas = the perceptron learning rule: turn the line towards a wrong point</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: fix one wrong point, starting from the figure's line w = (0.4, −1), b = 0.2 (η = 0.3)</p>
+    <p>The point x = (1, 1) has answer y = 1. With the current line z is negative, so ŷ = 0: wrong.</p>
+    <div class="eq" data-tex="z = 0.4 \cdot 1 + (-1) \cdot 1 + 0.2 = -0.4 \lt 0 \;\Rightarrow\; \hat y = 0, \qquad y - \hat y = 1 - 0 = 1"></div>
+    <p>Correct w and b by the rule.</p>
+    <div class="eq" data-tex="\Cb{\mathbf{w}} \leftarrow (0.4,\ -1) + 0.3 \cdot 1 \cdot (1,\ 1) = (\Cb{0.7},\ \Cb{-0.7}), \qquad \Cv{b} \leftarrow 0.2 + 0.3 \cdot 1 = \Cv{0.5}"></div>
+    <p>Computing the same point again, it is now right.</p>
+    <div class="eq" data-tex="z = 0.7 \cdot 1 + (-0.7) \cdot 1 + 0.5 = 0.5 \gt 0 \;\Rightarrow\; \hat y = 1 = y"></div>
+    <div class="mean"><b>→ Meaning.</b> When a point with answer 1 comes out 0, adding that point x to w turns the line towards it, and raising b pushes the line past it. When a point with answer 0 comes out 1, the same amounts are subtracted. On a correct point y − ŷ = 0, so nothing changes.</div>
+  </div>
   <div class="stage">
     <div class="guide">
       <p class="tag">THINGS TO TRY</p>

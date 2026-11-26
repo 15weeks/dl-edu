@@ -45,6 +45,13 @@
   <div class="eq" data-tex="\Cv{z} = \text{enc}(\Cb{x}), \qquad \Co{\hat{x}} = \text{dec}(\Cv{z}), \qquad L = \frac{1}{196}\sum_{i} (\Co{\hat{x}_i} - \Cb{x_i})^2"></div>
   <ul class="legend"><li class="c-sig"><b>x</b> input picture (196 pixels)</li><li class="c-vio"><b>z</b> latent code (16 numbers)</li><li class="c-miss"><b>x̂</b> rebuilt picture</li></ul>
   <p class="say">In words: the input goes in the target slot as well. Because everything must pass through the narrow middle, the network learns to keep only "what matters in a digit" in 16 numbers.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: one loss on a 4-pixel picture</p>
+    <p>196 pixels are too many to do by hand, so use 4. Square the difference between input x and rebuild x̂ in each pixel and average.</p>
+    <div class="eq" data-tex="\Cb{x} = (0,\ 1,\ 1,\ 0), \qquad \Co{\hat x} = (0.1,\ 0.8,\ 0.9,\ 0.0)"></div>
+    <div class="eq" data-tex="\begin{aligned} L &= \frac{(0.1 - 0)^2 + (0.8 - 1)^2 + (0.9 - 1)^2 + (0 - 0)^2}{4} \\[4pt] &= \frac{0.01 + 0.04 + 0.01 + 0}{4} = 0.015 \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> Each pixel is off by about 0.12 on average (√0.015). The results from section 2 on (test MSE 0.0147 and so on) are the same formula averaged over 196 pixels and 10,000 test pictures.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><button type="button" id="b1next">Other digits</button></div>
     <canvas id="cv1" aria-label="Original digits, the 16-number code bars and the rebuilt digits"></canvas>
@@ -163,6 +170,12 @@ xhat = torch.sigmoid(z @ W + b2)         # decoder: the same W, transposed</code
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>If any point in latent space goes into the decoder, does a new digit come out?</p></div>
   <div class="eq" data-tex="\Cv{z}(t) = (1 - t)\,\Cb{z_A} + t\,\Co{z_B}, \qquad t = 0, \tfrac{1}{8}, \dots, 1"></div>
   <ul class="legend"><li class="c-sig"><b>z_A</b> code of digit A</li><li class="c-miss"><b>z_B</b> code of digit B</li><li class="c-vio"><b>z(t)</b> a point on the line between them</li></ul>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: a 2-number code as in section 5, t = 1/4</p>
+    <p>Say A's code is (−1, 2) and B's is (3, 0). With t = 1/4 we take 3/4 of A and 1/4 of B, one number at a time.</p>
+    <div class="eq" data-tex="\Cv{z}(\tfrac14) = \tfrac34\,\Cb{(-1,\ 2)} + \tfrac14\,\Co{(3,\ 0)} = \big(\tfrac34 \cdot (-1) + \tfrac14 \cdot 3,\ \ \tfrac34 \cdot 2 + \tfrac14 \cdot 0\big) = (0,\ 1.5)"></div>
+    <div class="mean"><b>→ Meaning.</b> t = 0 gives z_A, t = 1 gives z_B, and values in between give points on the segment joining them. Fed to the decoder, such a point draws a picture partway from A to B.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <button type="button" id="b7a">Change A</button>

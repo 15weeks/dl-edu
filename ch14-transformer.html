@@ -82,8 +82,17 @@
 <section id="s3">
   <h2 data-short="Self, multi-head"><span class="no">3</span>Self-attention and multi-head attention</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Where do Q, K and V come from? How can several kinds of relation (grammar, reference, the previous word) be seen at once?</p></div>
-  <div class="eq" data-tex="\Cb{Q} = X W^{Q}, \; \Cv{K} = X W^{K}, \; \Cg{V} = X W^{V} \qquad \text{MultiHead}(X) = [\text{head}_1, \dots, \text{head}_h] \, W^{O}"></div>
+  <div class="eq" data-tex="\begin{aligned} &\Cb{Q} = X W^{Q},\ \ \Cv{K} = X W^{K},\ \ \Cg{V} = X W^{V} \quad (\text{one head}) \\ &\text{head}_i = \text{Attention}(X W^{Q}_i,\ X W^{K}_i,\ X W^{V}_i) \\ &\text{MultiHead}(X) = [\text{head}_1, \dots, \text{head}_h] \, W^{O} \quad (h \text{ heads}) \end{aligned}"></div>
+  <ul class="legend"><li><b>X</b> one row per token (tokens × d)</li><li><b>W^Q_i, W^K_i, W^V_i</b> head i's weights, size d × d/h</li><li><b>W^O</b> weights that mix the joined result, d × d</li></ul>
   <p class="say">In words: Q, K and V are made from the same sentence X with three sets of weights (self). Split d into h pieces, run attention separately in each head, and join the results. GPT-2 small: d = 768 and 12 heads → 64 per head.</p>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: one GPT-2 small layer, a sentence of 10 tokens</p>
+    <p>With d = 768 and h = 12, each head is 768 ÷ 12 = 64 wide. Follow the shapes.</p>
+    <div class="eq" data-tex="\begin{aligned} &\underbrace{X}_{10 \times 768} \underbrace{W^{Q}_i}_{768 \times 64} = \underbrace{Q_i}_{10 \times 64} \;\to\; \text{head}_i: 10 \times 64 \\ &\xrightarrow{\text{join 12}}\; 10 \times 768 \;\xrightarrow{\times W^{O}\ (768 \times 768)}\; 10 \times 768 \end{aligned}"></div>
+    <p>Count the weights (without biases).</p>
+    <div class="eq" data-tex="Q, K, V: 3 \times 12 \times (768 \times 64) = 1{,}769{,}472, \qquad W^{O}: 768 \times 768 = 589{,}824"></div>
+    <div class="mean"><b>→ Meaning.</b> 3 × 12 × 768 × 64 equals 3 × 768 × 768: splitting into 12 heads leaves the number of weights and the amount of computation the same as one head. Instead, the 12 heads look at different relations separately. Input and output have the same shape (10 × 768), so layers can be stacked.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <label>layer <input type="range" id="i3l" min="1" max="12" step="1" value="5"><output id="o3l"></output></label>
@@ -107,11 +116,22 @@
 <section id="s4">
   <h2 data-short="Position encoding"><span class="no">4</span>Positional encoding</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>Attention does not know order (shuffle the words and the shares are the same). How is position given to it?</p></div>
-  <div class="eq" data-tex="PE(\Cb{pos}, 2i) = \sin\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad PE(\Cb{pos}, 2i{+}1) = \cos\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad x_{\text{in}} = e_{\text{token}} + PE(pos)"></div>
+  <div class="eq" data-tex="\begin{gathered} PE(\Cb{pos}) = \big[\, PE(\Cb{pos}, 0),\ PE(\Cb{pos}, 1),\ \dots,\ PE(\Cb{pos}, d-1) \,\big] \\[6pt] x_{\text{in}} = e_{\text{token}} + PE(\Cb{pos}) \end{gathered}"></div>
+  <div class="eq" data-tex="PE(\Cb{pos}, 2i) = \sin\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right), \qquad PE(\Cb{pos}, 2i{+}1) = \cos\!\left( \frac{\Cb{pos}}{10000^{2i/d}} \right)"></div>
+  <ul class="legend"><li class="c-sig"><b>pos</b> the token's position (counted from 0)</li><li><b>PE(pos)</b> the whole vector added at that position (d slots)</li><li><b>PE(pos, k)</b> slot k of that vector, a single number (k = 0 to d − 1)</li><li><b>i</b> the number of a pair of slots: slot 2i holds the sin, slot 2i + 1 the cos</li></ul>
   <div class="calc">
-    <p class="h">WORKED EXAMPLE: position 1, the first two dimensions (i = 0)</p>
-    <div class="eq" data-tex="PE(1, 0) = \sin(1) = 0.8415, \qquad PE(1, 1) = \cos(1) = 0.5403"></div>
-    <div class="mean"><b>→ Meaning.</b> Waves of different speeds in different dimensions add up to a unique pattern for every position (like a clock's second, minute and hour hands). GPT-2 learns a vector per position instead of using this formula, yet nearby positions still end up similar (positions 10 and 11: 0.998; 10 and 40: 0.64).</div>
+    <p class="h">WORKED EXAMPLE: the PE of positions 0, 1 and 2 with d = 4</p>
+    <p>With d = 4 the slots are k = 0, 1, 2, 3 and the pairs are i = 0 (slots 0, 1) and i = 1 (slots 2, 3). The denominator is 10000⁰ = 1 for i = 0 and 10000^(2/4) = 100 for i = 1.</p>
+    <p>One slot first: slot 2 of position 1 is the sin of pair i = 1.</p>
+    <div class="eq" data-tex="PE(1, 2) = \sin\!\left(\frac{1}{10000^{2 \cdot 1/4}}\right) = \sin\frac{1}{100} = \sin 0.01 = 0.010"></div>
+    <p>Filling in all four slots gives one vector per position (angles in radians).</p>
+    <div class="eq" data-tex="PE(0) = [\sin 0,\ \cos 0,\ \sin 0,\ \cos 0] = [0,\ 1,\ 0,\ 1]"></div>
+    <div class="eq" data-tex="PE(1) = [\sin 1,\ \cos 1,\ \sin 0.01,\ \cos 0.01] = [0.841,\ 0.540,\ 0.010,\ 1.000]"></div>
+    <div class="eq" data-tex="PE(2) = [\sin 2,\ \cos 2,\ \sin 0.02,\ \cos 0.02] = [0.909,\ -0.416,\ 0.020,\ 1.000]"></div>
+    <p>Compare the dot products of two pairs at distance 1 (0 and 1, 1 and 2).</p>
+    <div class="eq" data-tex="PE(0) \cdot PE(1) = 0 \times 0.841 + 1 \times 0.540 + 0 \times 0.010 + 1 \times 1.000 = \Cg{1.540}"></div>
+    <div class="eq" data-tex="\begin{aligned} PE(1) \cdot PE(2) &= 0.841 \times 0.909 + 0.540 \times (-0.416) + 0.010 \times 0.020 + 1.000 \times 1.000 \\[4pt] &= 0.7645 - 0.2246 + 0.0002 + 1.0000 = \Cg{1.540} \end{aligned}"></div>
+    <div class="mean"><b>→ Meaning.</b> The first pair (slots 0, 1) turns fast, 1 radian per position (a second hand); the second pair (slots 2, 3) turns slowly, 0.01 radian per position (an hour hand). Just as both dot products equal cos 1 + cos 0.01 = 1.540, the dot product of two PEs depends only on their distance, not on where they are. At distance 2 it drops to cos 2 + cos 0.02 = 0.584. GPT-2 learns a vector per position instead of using this formula, yet nearby positions still end up similar (cosine similarity: positions 10 and 11 0.998, 10 and 40 0.64).</div>
   </div>
   <div class="stage">
     <div class="ctl"><label>position pos <input type="range" id="i4p" min="0" max="63" step="1" value="10"><output id="o4p"></output></label></div>
@@ -167,6 +187,14 @@
   <h2 data-short="Encoder, decoder, mask"><span class="no">6</span>Encoder, decoder and masking</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>When writing text, the model must not see words it has not written yet. How is that prevented?</p></div>
   <div class="eq" data-tex="\text{mask}_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases} \qquad A = \operatorname{softmax}\!\left( \frac{QK^{\top}}{\sqrt{d_k}} + \text{mask} \right) \quad (e^{-\infty} = 0)"></div>
+  <div class="calc">
+    <p class="h">WORKED EXAMPLE: row 2 with section 2's Q, K, V (token 2 may see only tokens 1 and 2)</p>
+    <p>The dot products of q₂ = (0, 1) with the three keys, divided by √2, are (0, 1.414, 0.707). Adding the mask turns only token 3's slot into −∞.</p>
+    <div class="eq" data-tex="(0,\ 1.414,\ 0.707) + (0,\ 0,\ -\infty) = (0,\ 1.414,\ -\infty)"></div>
+    <div class="eq" data-tex="\operatorname{softmax}: \frac{(e^{0},\ e^{1.414},\ e^{-\infty})}{e^{0} + e^{1.414} + 0} = \frac{(1,\ 4.113,\ 0)}{5.113} = (\Co{0.196},\ \Co{0.804},\ 0)"></div>
+    <div class="eq" data-tex="o_2 = 0.196 \cdot (10, 0) + 0.804 \cdot (0, 10) + 0 \cdot (5, 5) = (1.96,\ 8.04)"></div>
+    <div class="mean"><b>→ Meaning.</b> Without the mask row 2 is (0.140, 0.576, 0.284), so it looks 28% at token 3, which has not been written yet. With the mask token 3's share is exactly 0 and the first two split the total of 1. When generating text, peeking at later words is ruled out.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><div class="seg" id="g6m"><span>causal mask</span><button type="button" data-v="on" aria-pressed="true">on</button><button type="button" data-v="off" aria-pressed="false">off</button></div></div>
     <canvas id="cv6" aria-label="Scores and softmax with the mask on and off"></canvas>
@@ -210,7 +238,7 @@
   <h2 data-short="LLM"><span class="no">8</span>LLMs: predicting the next token</h2>
   <div class="ask"><p class="tag">WHAT WE WANT TO KNOW</p><p>What, in the end, has an LLM like ChatGPT learned?</p></div>
   <div class="eq" data-tex="p(\Co{x_{t+1}} \mid x_1, \dots, x_t) = \operatorname{softmax}\!\left( \frac{W h_t}{\Cr{T}} \right), \qquad L = -\log p(\text{the true next token})"></div>
-  <ul class="legend"><li class="c-miss"><b>x_{t+1}</b> next token</li><li class="c-fa"><b>T</b> temperature (as in chapter 13, section 5)</li></ul>
+  <ul class="legend"><li class="c-miss"><b>x_{t+1}</b> next token</li><li><b>h_t</b> the vector the last layer gives at token position t (GPT-2: 768 numbers)</li><li><b>W</b> a matrix that turns h_t into one score per kind of token (GPT-2: 50,257 × 768)</li><li class="c-fa"><b>T</b> temperature (as in chapter 13, section 5)</li></ul>
   <div class="stage">
     <canvas id="cv8b" aria-label="An English and a Korean sentence split into GPT-2 tokens"></canvas>
   </div>
@@ -226,6 +254,8 @@
   <div class="calc">
     <p class="h">RESULTS: GPT-2 small (OpenAI 2019, 124,439,808 parameters, 12 layers × 12 heads, d 768, 50,257 tokens, context 1,024)</p>
     <div class="eq" data-tex="\text{I drank a cup of} \to \text{coffee } \Cg{27.4\%},\ \text{tea } 15.6\% \qquad \text{The capital of France is} \to \text{the } 8.5\%,\ \text{Paris } \Cr{3.2\%}"></div>
+    <p>The training loss is set by the probability given to the true next token. If the true next token was "coffee", or "Paris":</p>
+    <div class="eq" data-tex="L = -\ln 0.274 = \Cg{1.295}, \qquad L = -\ln 0.032 = \Cr{3.442}"></div>
     <div class="mean"><b>→ Meaning.</b> Small GPT-2 knows grammar but little about the world ("Paris" is 5th). Today's LLMs are the same structure grown thousands of times larger, trained on far more data and polished with human feedback. Appending only the most likely token (greedy) gives: "Deep learning is a very powerful tool for learning about the world around us. It's a tool that can help us".</div>
   </div>
   <p class="key"><b>One line to remember.</b> LLM = a causal Transformer trained on "guess the next token" at very large scale. Its output is probabilities; the temperature sets how to pick.</p>
@@ -241,7 +271,7 @@
       <tr><td>1 Attention</td><td>decide where to look, then mix</td><td>it → animal 0.846</td></tr>
       <tr><td>2 Q, K, V</td><td>softmax(QKᵀ/√d)V</td><td>(0.576, 0.140, 0.284)</td></tr>
       <tr><td>3 Multi-head</td><td>a different relation per head</td><td>previous token 99.9%</td></tr>
-      <tr><td>4 Position</td><td>token + position pattern</td><td>sin 1 = 0.8415</td></tr>
+      <tr><td>4 Position</td><td>token + position pattern</td><td>PE(0)·PE(1) = PE(1)·PE(2) = 1.540</td></tr>
       <tr><td>5 Block</td><td>attention + FFN, residual, LN</td><td>49,984 (d 64)</td></tr>
       <tr><td>6 Mask</td><td>the future to −∞</td><td>(0.196, 0.804)</td></tr>
       <tr><td>7 ViT</td><td>patches as tokens</td><td>96.7% vs CNN 98.6%</td></tr>

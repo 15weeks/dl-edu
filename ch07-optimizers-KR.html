@@ -141,6 +141,13 @@
   <div class="ask"><p class="tag">알고 싶은 것</p><p>5장의 L2(weight decay)를 Adam과 같이 쓰면 그대로 작동하나?</p></div>
   <div class="eq" data-tex="\text{Adam + L2}: g \leftarrow g + \Cr{\lambda w} \;\;(\text{그 뒤 } \sqrt{\hat v}\text{로 나뉜다}), \qquad \text{AdamW}: w \leftarrow w - \eta\Big(\frac{\hat m}{\sqrt{\hat v} + \varepsilon} + \Cg{\lambda w}\Big)"></div>
   <p class="say">말로: Adam + L2는 벌점도 gradient에 섞여 √v로 나뉜다. gradient가 큰 weight는 벌도 작게 받는다. AdamW는 벌을 따로 빼서 모든 weight에 똑같이 준다.</p>
+  <div class="calc">
+    <p class="h">예제: 그림과 같은 weight 두 개, 둘 다 w = 1, η = 0.001, λ = 0.01</p>
+    <p>weight A는 gradient가 작고(크기 0.01) weight B는 크다(크기 1). √v̂는 gradient 크기의 평균이므로 A는 0.01, B는 1로 둔다. 벌 때문에 걸음마다 w가 줄어드는 양을 비교한다.</p>
+    <div class="eq" data-tex="\text{Adam + L2}: \frac{\eta\,\Cr{\lambda w}}{\sqrt{\hat v}} \;\Rightarrow\; \begin{cases} A: \dfrac{0.001 \times 0.01 \times 1}{0.01} = \Cr{0.001} \\[8pt] B: \dfrac{0.001 \times 0.01 \times 1}{1} = 0.00001 \end{cases}"></div>
+    <div class="eq" data-tex="\text{AdamW}: \eta\,\Cg{\lambda w} \;\Rightarrow\; A, B \text{ 모두 } 0.001 \times 0.01 \times 1 = \Cg{0.00001}"></div>
+    <div class="mean"><b>→ 뜻.</b> Adam + L2에서는 gradient가 작은 A가 B보다 100배 세게 줄어든다. 벌의 세기를 λ가 아니라 gradient 크기가 정해 버린다. AdamW는 둘 다 걸음마다 0.001%(0.00001배)씩, λ가 말한 그대로 줄인다.</div>
+  </div>
   <div class="stage">
     <div class="ctl"><label>둘째 weight의 gradient 크기 <input type="range" id="i5g" min="0.01" max="10" step="0.01" value="1"><output id="o5g"></output></label></div>
     <canvas id="cv5" aria-label="Adam + L2와 AdamW에서 weight가 줄어드는 비율"></canvas>
@@ -156,7 +163,15 @@ torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)   # AdamW (벌
   <h2 data-short="learning rate schedule"><span class="no">6</span>learning rate decay와 schedule</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>2장 6절의 "처음엔 크게, 나중엔 작게"를 어떤 모양으로?</p></div>
   <div class="eq" data-tex="\text{step}: \eta_0\,\gamma^{\lfloor t/s \rfloor}, \qquad \text{exp}: \eta_0\,\gamma^{t}, \qquad \text{cosine}: \eta_{\min} + \tfrac12(\eta_0 - \eta_{\min})\Big(1 + \cos\frac{\pi t}{T}\Big)"></div>
-  <ul class="legend"><li><b>η₀</b> 처음 η</li><li><b>γ</b> 줄이는 비율</li><li><b>T</b> 전체 epoch</li><li><b>warmup</b> 처음 몇 epoch은 0에서 천천히 올린다 (Adam·Transformer에서 흔함)</li></ul>
+  <ul class="legend"><li><b>η₀</b> 처음 η</li><li><b>t</b> 지금 epoch</li><li><b>γ</b> 줄이는 비율</li><li><b>s</b> 계단 길이: 몇 epoch마다 줄이나</li><li><b>η_min</b> cosine이 끝에 닿는 η</li><li><b>T</b> 전체 epoch</li><li><b>warmup</b> 처음 몇 epoch은 0에서 천천히 올린다 (Adam·Transformer에서 흔함)</li></ul>
+  <div class="calc">
+    <p class="h">예제: 그림의 설정, η₀ = 0.1, T = 100 epoch</p>
+    <p>계단은 s = 25 epoch마다 γ = 0.5배, 지수는 epoch마다 γ = 0.97배, cosine은 η_min = 0.001까지 내려간다. t = 10과 t = 50에서 η를 구한다.</p>
+    <div class="eq" data-tex="\begin{aligned} \text{step}: \eta_{10} &= 0.1 \times 0.5^{\lfloor 10/25 \rfloor} = 0.1 \times 0.5^{0} = 0.1 \\ \eta_{50} &= 0.1 \times 0.5^{\lfloor 50/25 \rfloor} = 0.1 \times 0.5^{2} = 0.025 \end{aligned}"></div>
+    <div class="eq" data-tex="\text{exp}: \eta_{10} = 0.1 \times 0.97^{10} = 0.0737, \qquad \eta_{50} = 0.1 \times 0.97^{50} = 0.0218"></div>
+    <div class="eq" data-tex="\begin{aligned} \text{cosine}: \eta_{10} &= 0.001 + \tfrac12 (0.1 - 0.001)\big(1 + \cos(0.1\pi)\big) \\ &= 0.001 + 0.0495 \times 1.951 = 0.0976 \\ \eta_{50} &= 0.001 + 0.0495 \times \big(1 + \cos(0.5\pi)\big) = 0.0505 \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> 같은 0.1에서 출발해도 가운데(t = 50)에서 계단 0.025, 지수 0.022, cosine 0.051로 다르다. cosine은 앞쪽에서 크게 유지하다 끝에서 빠르게 줄여 바닥에 앉는다.</div>
+  </div>
   <div class="stage">
     <div class="ctl">
       <div class="seg" id="g6k"><button type="button" data-v="const" aria-pressed="false">고정</button><button type="button" data-v="step" aria-pressed="false">계단</button><button type="button" data-v="exp" aria-pressed="false">지수</button><button type="button" data-v="cos" aria-pressed="true">cosine</button></div>

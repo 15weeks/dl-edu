@@ -125,8 +125,18 @@
 <section id="s3">
   <h2 data-short="경계선 긋기"><span class="no">3</span>기하로 보면: 경계선 긋기</h2>
   <div class="ask"><p class="tag">알고 싶은 것</p><p>neuron 하나가 점들을 두 무리로 나눌 때, 그림으로는 무엇을 하나?</p></div>
-  <div class="eq" data-tex="\Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b} = 0 \quad (\text{경계선}), \qquad \Cb{\mathbf{w}} \leftarrow \Cb{\mathbf{w}} + \Co{\eta}\,(y - \hat y)\,\mathbf{x}"></div>
-  <ul class="legend"><li><b class="c-sig">w</b> 선에 수직인 화살표</li><li><b class="c-vio">b</b> 선을 평행하게 민다</li><li>오른쪽 식 = perceptron 학습 규칙: 틀린 점 쪽으로 선을 돌린다</li></ul>
+  <div class="eq" data-tex="\Cb{w_1}x_1 + \Cb{w_2}x_2 + \Cv{b} = 0 \quad (\text{경계선}), \qquad \Cb{\mathbf{w}} \leftarrow \Cb{\mathbf{w}} + \Co{\eta}\,(y - \hat y)\,\mathbf{x}, \quad \Cv{b} \leftarrow \Cv{b} + \Co{\eta}\,(y - \hat y)"></div>
+  <ul class="legend"><li><b class="c-sig">w</b> 선에 수직인 화살표</li><li><b class="c-vio">b</b> 선을 평행하게 민다</li><li><b>ŷ</b> 여기서는 step 출력: z &gt; 0이면 1, 아니면 0 (2절의 σ가 아니다)</li><li>오른쪽 두 식 = perceptron 학습 규칙: 틀린 점 쪽으로 선을 돌린다</li></ul>
+  <div class="calc">
+    <p class="h">예제: 그림의 시작 선 w = (0.4, −1), b = 0.2에서 틀린 점 하나 고치기 (η = 0.3)</p>
+    <p>점 x = (1, 1)의 정답은 y = 1이다. 지금 선으로 계산하면 z가 음수라 ŷ = 0: 틀렸다.</p>
+    <div class="eq" data-tex="z = 0.4 \cdot 1 + (-1) \cdot 1 + 0.2 = -0.4 \lt 0 \;\Rightarrow\; \hat y = 0, \qquad y - \hat y = 1 - 0 = 1"></div>
+    <p>규칙대로 w와 b를 고친다.</p>
+    <div class="eq" data-tex="\Cb{\mathbf{w}} \leftarrow (0.4,\ -1) + 0.3 \cdot 1 \cdot (1,\ 1) = (\Cb{0.7},\ \Cb{-0.7}), \qquad \Cv{b} \leftarrow 0.2 + 0.3 \cdot 1 = \Cv{0.5}"></div>
+    <p>같은 점을 다시 계산하면 이제 맞는다.</p>
+    <div class="eq" data-tex="z = 0.7 \cdot 1 + (-0.7) \cdot 1 + 0.5 = 0.5 \gt 0 \;\Rightarrow\; \hat y = 1 = y"></div>
+    <div class="mean"><b>→ 뜻.</b> 정답 1인 점이 0으로 나오면 그 점 x를 w에 더해 선을 그 점 쪽으로 돌리고, b도 키워 선을 밀어 낸다. 정답 0인 점이 1로 나오면 반대로 뺀다. 맞힌 점에서는 y − ŷ = 0이라 아무것도 바뀌지 않는다.</div>
+  </div>
   <div class="stage">
     <div class="guide">
       <p class="tag">해 볼 것</p>

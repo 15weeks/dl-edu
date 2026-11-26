@@ -78,6 +78,16 @@
     <dt>정확도</dt><dd><b>accuracy</b>. 맞힌 수 ÷ 전체.</dd>
   </dl></div>
   <div class="eq" data-tex="\text{class} = \begin{cases}1 & \sigma(z) > 0.5\\ 0 & \text{아니면}\end{cases}, \qquad \text{정확도} = \frac{\text{맞힌 수}}{\text{전체}}"></div>
+  <div class="calc">
+    <p class="h">예제: 겹침이 정하는 최고 정확도 (이 그림의 data: x₁ 방향 중심 1과 1 + d, 퍼짐 = 표준편차 1)</p>
+    <p>가장 좋은 경계는 두 중심의 한가운데 x₁ = 1 + d/2다. 그래도 점이 잡음 때문에 d/2보다 멀리 반대쪽으로 밀리면 틀린다. 그래서 최고 정확도는 "표준편차 1인 잡음이 d/2보다 작을 확률" Φ(d/2)다 (Φ = 표준 정규분포에서 그 값보다 작을 확률).</p>
+    <div class="eq" data-tex="\text{최고 정확도} = P(\text{잡음} \lt d/2) = \Phi(d/2)"></div>
+    <p>d = 2이면 잡음이 표준편차 하나(1)보다 클 확률 15.9%만큼 틀린다.</p>
+    <div class="eq" data-tex="\Phi(2/2) = \Phi(1) = 1 - 0.159 = \Cg{0.841}"></div>
+    <p>d = 1과 4도 같은 방법으로 구하고, 그림의 network(2-8-1, Adam 150 epoch)가 실제로 얻은 정확도와 비교한다.</p>
+    <div class="eq" data-tex="\begin{aligned} d = 1&: \; \Phi(0.5) = 0.691 \;\; (\text{network } 0.690) \\ d = 2&: \; \Phi(1) = 0.841 \;\; (\text{network } 0.835) \\ d = 4&: \; \Phi(2) = 0.977 \;\; (\text{network } 0.980) \end{aligned}"></div>
+    <div class="mean"><b>→ 뜻.</b> network가 이 한계에 거의 닿았다. d = 2에서 network를 더 키우거나 오래 학습해 84%를 넘긴다면 새 data에도 통하는 규칙이 아니라 이 200개 점의 잡음을 외운 것이다 (5장 overfitting). d = 4의 0.980이 한계보다 조금 높은 것도 점이 200개뿐이라 생긴 우연이다.</div>
+  </div>
   <div class="stage">
     <div class="guide">
       <p class="tag">해 볼 것</p>
